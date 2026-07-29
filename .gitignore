@@ -13,3 +13,5 @@ frontend/.next/
 .env
 backend/.env
 frontend/.env.local
+plan/
+guide/
