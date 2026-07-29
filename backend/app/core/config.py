@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     api_host: str = "0.0.0.0"
     api_port: int = 8000
     frontend_origin: str = "http://localhost:3000"
+    database_url: str = "sqlite:///./data/app.db"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
