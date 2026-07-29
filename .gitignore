@@ -1,0 +1,15 @@
+# Python environments and generated files
+backend/.venv/
+__pycache__/
+.pytest_cache/
+pytest-cache-files-*/
+.tmp/
+
+# JavaScript dependencies and build artifacts
+frontend/node_modules/
+frontend/.next/
+
+# Local configuration
+.env
+backend/.env
+frontend/.env.local
