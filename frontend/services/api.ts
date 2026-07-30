@@ -26,6 +26,63 @@ export type ImportValidationError = {
   message: string;
 };
 
+export type SheetStatus = "not_started" | "learning" | "learned" | "due";
+export type SheetPriority = "high" | "medium" | "low";
+
+export type WorkbookListItem = {
+  id: number;
+  name: string;
+  original_filename: string;
+  sheet_count: number;
+  total_cards: number;
+  imported_at: string;
+};
+
+export type SheetSummary = {
+  id: number;
+  name: string;
+  position: number;
+  card_count: number;
+  status: SheetStatus;
+  priority: SheetPriority;
+  next_review_at: string | null;
+};
+
+export type WorkbookDetail = WorkbookListItem & {
+  sheets: SheetSummary[];
+};
+
+export type SheetDetail = SheetSummary & {
+  first_learned_at: string | null;
+  last_reviewed_at: string | null;
+  srs_level: number;
+  interval_days: number;
+  review_count: number;
+  lapse_count: number;
+  workbook: { id: number; name: string };
+};
+
+export type FlashcardListItem = {
+  id: number;
+  position: number;
+  phrase: string;
+  meaning: string;
+  example_en: string | null;
+  example_vi: string | null;
+  is_weak: boolean;
+  is_bookmarked: boolean;
+};
+
+export class ApiRequestError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+  ) {
+    super(message);
+    this.name = "ApiRequestError";
+  }
+}
+
 export class WorkbookImportError extends Error {
   constructor(
     message: string,
@@ -76,6 +133,61 @@ export async function importWorkbook(
   }
 
   return (await response.json()) as WorkbookImportResponse;
+}
+
+export async function getWorkbooks(): Promise<WorkbookListItem[]> {
+  return requestJson<WorkbookListItem[]>("/api/v1/workbooks");
+}
+
+export async function getWorkbook(id: string): Promise<WorkbookDetail> {
+  return requestJson<WorkbookDetail>(`/api/v1/workbooks/${encodeURIComponent(id)}`);
+}
+
+export async function deleteWorkbook(id: string): Promise<void> {
+  const response = await fetch(`${apiBaseUrl}/api/v1/workbooks/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+  });
+  if (!response.ok) {
+    throw await toApiRequestError(response);
+  }
+}
+
+export async function getSheet(id: string): Promise<SheetDetail> {
+  return requestJson<SheetDetail>(`/api/v1/sheets/${encodeURIComponent(id)}`);
+}
+
+export async function getSheetCards(id: string): Promise<FlashcardListItem[]> {
+  return requestJson<FlashcardListItem[]>(
+    `/api/v1/sheets/${encodeURIComponent(id)}/cards`,
+  );
+}
+
+export async function updateSheetPriority(
+  id: string,
+  priority: SheetPriority,
+): Promise<SheetDetail> {
+  return requestJson<SheetDetail>(`/api/v1/sheets/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ priority }),
+  });
+}
+
+async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(`${apiBaseUrl}${path}`, init);
+  if (!response.ok) {
+    throw await toApiRequestError(response);
+  }
+  return (await response.json()) as T;
+}
+
+async function toApiRequestError(response: Response): Promise<ApiRequestError> {
+  const body: unknown = await response.json().catch(() => null);
+  const message =
+    typeof body === "object" && body !== null && "detail" in body && typeof body.detail === "string"
+      ? body.detail
+      : `Request failed with status ${response.status}. Please try again.`;
+  return new ApiRequestError(message, response.status);
 }
 
 async function toWorkbookImportError(
