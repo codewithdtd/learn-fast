@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import type { WorkbookImportResponse } from "@/services/api";
 
 type ImportResultProps = {
@@ -28,6 +30,9 @@ export function ImportResult({ workbook }: ImportResultProps) {
           </li>
         ))}
       </ul>
+      <Link href={`/workbooks/${workbook.id}`} className="mt-5 inline-block text-sm font-semibold text-emerald-800 underline">
+        Open workbook
+      </Link>
     </section>
   );
 }
