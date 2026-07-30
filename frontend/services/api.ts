@@ -173,6 +173,34 @@ export async function updateSheetPriority(
   });
 }
 
+export async function updateFlashcardWeak(
+  id: string,
+  isWeak: boolean,
+): Promise<FlashcardListItem> {
+  return requestJson<FlashcardListItem>(
+    `/api/v1/flashcards/${encodeURIComponent(id)}/weak`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ is_weak: isWeak }),
+    },
+  );
+}
+
+export async function updateFlashcardBookmark(
+  id: string,
+  isBookmarked: boolean,
+): Promise<FlashcardListItem> {
+  return requestJson<FlashcardListItem>(
+    `/api/v1/flashcards/${encodeURIComponent(id)}/bookmark`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ is_bookmarked: isBookmarked }),
+    },
+  );
+}
+
 async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${apiBaseUrl}${path}`, init);
   if (!response.ok) {

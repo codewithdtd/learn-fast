@@ -95,7 +95,13 @@ export function SheetDetailView({ sheetId }: SheetDetailProps) {
         <h2 className="text-xl font-semibold">Study actions</h2>
         <p className="mt-2 text-sm text-slate-600">Các chế độ học sẽ được mở ở các ngày tiếp theo.</p>
         <div className="mt-4 flex flex-wrap gap-3">
-          {['Study', 'Quick Recall', 'Table View'].map((action) => (
+          <Link
+            href={`/sheets/${sheet.id}/table`}
+            className="rounded-lg bg-sky-700 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-800"
+          >
+            Table View
+          </Link>
+          {['Study', 'Quick Recall'].map((action) => (
             <button key={action} type="button" disabled className="rounded-lg border border-slate-300 bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-500 disabled:cursor-not-allowed">
               {action} · Sắp có
             </button>
