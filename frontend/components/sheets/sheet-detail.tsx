@@ -101,7 +101,13 @@ export function SheetDetailView({ sheetId }: SheetDetailProps) {
           >
             Table View
           </Link>
-          {['Study', 'Quick Recall'].map((action) => (
+          <Link
+            href={`/sheets/${sheet.id}/quick-recall`}
+            className="rounded-lg bg-sky-700 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-800"
+          >
+            Quick Recall
+          </Link>
+          {['Study'].map((action) => (
             <button key={action} type="button" disabled className="rounded-lg border border-slate-300 bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-500 disabled:cursor-not-allowed">
               {action} · Sắp có
             </button>
