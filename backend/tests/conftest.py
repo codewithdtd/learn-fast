@@ -5,7 +5,7 @@ from collections.abc import Generator
 from pathlib import Path
 
 import pytest
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from sqlalchemy.orm import Session, sessionmaker
 
 
@@ -30,6 +30,11 @@ def migrated_engine(database_url: str):
     )
 
     engine = create_engine(database_url, connect_args={"check_same_thread": False})
+
+    @event.listens_for(engine, "connect")
+    def enable_foreign_keys(dbapi_connection, _connection_record) -> None:
+        dbapi_connection.execute("PRAGMA foreign_keys=ON")
+
     try:
         yield engine
     finally:

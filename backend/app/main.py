@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.health import router as health_router
+from app.api.sheets import router as sheets_router
 from app.api.workbooks import router as workbooks_router
 from app.core.config import settings
 
@@ -14,9 +15,10 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[settings.frontend_origin],
     allow_credentials=False,
-    allow_methods=["GET", "POST"],
+    allow_methods=["GET", "POST", "DELETE", "PATCH"],
     allow_headers=["Content-Type"],
 )
 
 app.include_router(health_router, prefix="/api/v1")
 app.include_router(workbooks_router, prefix="/api/v1")
+app.include_router(sheets_router, prefix="/api/v1")
