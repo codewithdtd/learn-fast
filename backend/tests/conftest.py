@@ -5,9 +5,12 @@ from collections.abc import Generator
 from pathlib import Path
 
 import pytest
+from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import Session, sessionmaker
 
+from app.core.database import get_db
+from app.main import app
 
 BACKEND_DIR = Path(__file__).resolve().parents[1]
 
@@ -48,3 +51,16 @@ def db_session(migrated_engine) -> Generator[Session, None, None]:
         yield session
     finally:
         session.close()
+
+
+@pytest.fixture()
+def api_client(db_session: Session) -> Generator[TestClient, None, None]:
+    """Give every API test an isolated database-backed FastAPI client."""
+
+    def override_get_db() -> Generator[Session, None, None]:
+        yield db_session
+
+    app.dependency_overrides[get_db] = override_get_db
+    with TestClient(app) as client:
+        yield client
+    app.dependency_overrides.clear()
