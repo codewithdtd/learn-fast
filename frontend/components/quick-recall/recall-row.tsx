@@ -1,20 +1,26 @@
 "use client";
 
 import { getRecallSides, type RecallDirection } from "@/lib/quick-recall";
-import type { FlashcardListItem } from "@/services/api";
+import type { FlashcardListItem, QuickRecallResult } from "@/services/api";
 
 type RecallRowProps = {
   card: FlashcardListItem;
   direction: RecallDirection;
   isRevealed: boolean;
+  selectedResult: QuickRecallResult | undefined;
+  isResultSelectionDisabled: boolean;
   onRevealChange: (cardId: number, shouldReveal: boolean) => void;
+  onResultChange: (cardId: number, result: QuickRecallResult) => void;
 };
 
 export function RecallRow({
   card,
   direction,
   isRevealed,
+  selectedResult,
+  isResultSelectionDisabled,
   onRevealChange,
+  onResultChange,
 }: RecallRowProps) {
   const sides = getRecallSides(card, direction);
   const answerId = `recall-answer-${card.id}`;
@@ -48,11 +54,65 @@ export function RecallRow({
           {sides.answerLabel}
         </p>
         {isRevealed ? (
-          <p className="mt-1 whitespace-pre-wrap font-medium">{sides.answer}</p>
+          <>
+            <p className="mt-1 whitespace-pre-wrap font-medium">{sides.answer}</p>
+            <div className="mt-4 flex flex-wrap gap-2 border-t border-sky-100 pt-4">
+              <ResultButton
+                result="remembered"
+                label="Remembered"
+                selectedResult={selectedResult}
+                disabled={isResultSelectionDisabled}
+                onClick={() => onResultChange(card.id, "remembered")}
+              />
+              <ResultButton
+                result="need_review"
+                label="Need Review"
+                selectedResult={selectedResult}
+                disabled={isResultSelectionDisabled}
+                onClick={() => onResultChange(card.id, "need_review")}
+              />
+            </div>
+          </>
         ) : (
           <p className="mt-1 italic">Tự nhớ đáp án rồi bấm Show.</p>
         )}
       </div>
     </article>
+  );
+}
+
+function ResultButton({
+  result,
+  label,
+  selectedResult,
+  disabled,
+  onClick,
+}: {
+  result: QuickRecallResult;
+  label: string;
+  selectedResult: QuickRecallResult | undefined;
+  disabled: boolean;
+  onClick: () => void;
+}) {
+  const isSelected = selectedResult === result;
+  const selectedClassName =
+    result === "remembered"
+      ? "bg-emerald-700 text-white"
+      : "bg-amber-500 text-slate-950";
+
+  return (
+    <button
+      type="button"
+      aria-pressed={isSelected}
+      disabled={disabled}
+      onClick={onClick}
+      className={`rounded-md px-3 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60 ${
+        isSelected
+          ? selectedClassName
+          : "border border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+      }`}
+    >
+      {label}
+    </button>
   );
 }

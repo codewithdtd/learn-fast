@@ -73,6 +73,22 @@ export type FlashcardListItem = {
   is_bookmarked: boolean;
 };
 
+export type QuickRecallResult = "remembered" | "need_review";
+
+export type QuickRecallCardResultInput = {
+  flashcard_id: number;
+  result: QuickRecallResult;
+};
+
+export type QuickRecallCompletion = {
+  sheet_id: number;
+  total_cards: number;
+  remembered_count: number;
+  need_review_count: number;
+  recall_percentage: number;
+  completed_at: string;
+};
+
 export class ApiRequestError extends Error {
   constructor(
     message: string,
@@ -197,6 +213,20 @@ export async function updateFlashcardBookmark(
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ is_bookmarked: isBookmarked }),
+    },
+  );
+}
+
+export async function completeQuickRecall(
+  sheetId: string,
+  results: QuickRecallCardResultInput[],
+): Promise<QuickRecallCompletion> {
+  return requestJson<QuickRecallCompletion>(
+    `/api/v1/sheets/${encodeURIComponent(sheetId)}/quick-recall/complete`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ results }),
     },
   );
 }

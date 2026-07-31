@@ -11,12 +11,16 @@ import {
   type RecallFilter,
 } from "@/lib/quick-recall";
 import { RecallRow } from "@/components/quick-recall/recall-row";
+import { QuickRecallSummary } from "@/components/quick-recall/quick-recall-summary";
 import { QuickRecallToolbar } from "@/components/quick-recall/quick-recall-toolbar";
 import {
   ApiRequestError,
+  completeQuickRecall,
   getSheet,
   getSheetCards,
   type FlashcardListItem,
+  type QuickRecallCompletion,
+  type QuickRecallResult,
   type SheetDetail,
 } from "@/services/api";
 
@@ -31,6 +35,13 @@ export function QuickRecallView({ sheetId }: QuickRecallViewProps) {
   const [revealedCardIds, setRevealedCardIds] = useState<Set<number>>(new Set());
   const [direction, setDirection] = useState<RecallDirection>("en_to_vi");
   const [filter, setFilter] = useState<RecallFilter>("all");
+  const [resultsByCardId, setResultsByCardId] = useState<
+    Map<number, QuickRecallResult>
+  >(new Map());
+  const [completion, setCompletion] = useState<QuickRecallCompletion | null>(null);
+  const [isFinishing, setIsFinishing] = useState(false);
+  const [finishAttempted, setFinishAttempted] = useState(false);
+  const [finishError, setFinishError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [notFound, setNotFound] = useState(false);
@@ -50,6 +61,11 @@ export function QuickRecallView({ sheetId }: QuickRecallViewProps) {
       setRevealedCardIds(new Set());
       setDirection("en_to_vi");
       setFilter("all");
+      setResultsByCardId(new Map());
+      setCompletion(null);
+      setIsFinishing(false);
+      setFinishAttempted(false);
+      setFinishError(null);
     } catch (caughtError) {
       if (caughtError instanceof ApiRequestError && caughtError.status === 404) {
         setNotFound(true);
@@ -79,6 +95,11 @@ export function QuickRecallView({ sheetId }: QuickRecallViewProps) {
         setRevealedCardIds(new Set());
         setDirection("en_to_vi");
         setFilter("all");
+        setResultsByCardId(new Map());
+        setCompletion(null);
+        setIsFinishing(false);
+        setFinishAttempted(false);
+        setFinishError(null);
       })
       .catch((caughtError: unknown) => {
         if (!isCurrent) return;
@@ -108,6 +129,20 @@ export function QuickRecallView({ sheetId }: QuickRecallViewProps) {
   const visibleCards = useMemo(
     () => filterRecallCards(orderedCards, filter),
     [filter, orderedCards],
+  );
+  const rememberedCount = useMemo(
+    () =>
+      Array.from(resultsByCardId.values()).filter(
+        (result) => result === "remembered",
+      ).length,
+    [resultsByCardId],
+  );
+  const needReviewCount = useMemo(
+    () =>
+      Array.from(resultsByCardId.values()).filter(
+        (result) => result === "need_review",
+      ).length,
+    [resultsByCardId],
   );
 
   function changeDirection(nextDirection: RecallDirection) {
@@ -146,6 +181,48 @@ export function QuickRecallView({ sheetId }: QuickRecallViewProps) {
 
   function shuffleCards() {
     setOrderedCardIds((currentIds) => shuffleCardIds(currentIds));
+  }
+
+  function changeResult(cardId: number, result: QuickRecallResult) {
+    setResultsByCardId((currentResults) => {
+      const nextResults = new Map(currentResults);
+      // Replacing a result locally lets the user correct a self-assessment
+      // before Finish without incrementing any server-side counters twice.
+      nextResults.set(cardId, result);
+      return nextResults;
+    });
+  }
+
+  async function finishQuickRecall() {
+    if (
+      resultsByCardId.size !== cards.length ||
+      cards.length === 0 ||
+      finishAttempted
+    ) {
+      return;
+    }
+
+    setFinishAttempted(true);
+    setIsFinishing(true);
+    setFinishError(null);
+    try {
+      const results = cards.map((card) => ({
+        flashcard_id: card.id,
+        result: resultsByCardId.get(card.id)!,
+      }));
+      setCompletion(await completeQuickRecall(sheetId, results));
+    } catch (caughtError) {
+      // Without a persisted session/idempotency key, a timeout can be
+      // ambiguous. Lock a second submission and ask the user to verify the
+      // saved card state instead of risking duplicate counter increments.
+      setFinishError(
+        caughtError instanceof Error
+          ? `${caughtError.message} Refresh or check Table View before submitting another completion.`
+          : "Could not confirm completion. Refresh or check Table View before submitting another completion.",
+      );
+    } finally {
+      setIsFinishing(false);
+    }
   }
 
   if (isLoading) return <PageMessage>Đang tải Quick Recall…</PageMessage>;
@@ -215,10 +292,27 @@ export function QuickRecallView({ sheetId }: QuickRecallViewProps) {
               card={card}
               direction={direction}
               isRevealed={revealedCardIds.has(card.id)}
+              selectedResult={resultsByCardId.get(card.id)}
+              isResultSelectionDisabled={!revealedCardIds.has(card.id) || finishAttempted}
               onRevealChange={changeReveal}
+              onResultChange={changeResult}
             />
           ))}
         </div>
+      )}
+
+      {cards.length > 0 && (
+        <QuickRecallSummary
+          totalCards={cards.length}
+          rememberedCount={rememberedCount}
+          needReviewCount={needReviewCount}
+          completion={completion}
+          isFinishing={isFinishing}
+          isFinishLocked={finishAttempted}
+          finishError={finishError}
+          onFinish={() => void finishQuickRecall()}
+          sheetId={sheet.id}
+        />
       )}
     </section>
   );
