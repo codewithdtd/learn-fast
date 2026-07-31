@@ -6,17 +6,14 @@ from sqlalchemy import ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
-from app.models.enums import SheetPriority, SheetStatus
+from app.models.enums import SheetPriority, SheetStatus, enum_values
 from app.models.mixins import TimestampMixin
 
 if TYPE_CHECKING:
     from app.models.flashcard import Flashcard
+    from app.models.study_session import StudySession
     from app.models.workbook import Workbook
 
-
-def enum_values(enum_class: type[SheetStatus] | type[SheetPriority]) -> list[str]:
-    """Persist enum values, not member names, to keep API and DB values aligned."""
-    return [member.value for member in enum_class]
 
 
 class StudySheet(TimestampMixin, Base):
@@ -72,4 +69,10 @@ class StudySheet(TimestampMixin, Base):
         cascade="all, delete-orphan",
         passive_deletes=True,
         order_by="Flashcard.position",
+    )
+    study_sessions: Mapped[list["StudySession"]] = relationship(
+        back_populates="sheet",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+        order_by="StudySession.started_at",
     )

@@ -9,6 +9,7 @@ from app.models.mixins import TimestampMixin
 
 if TYPE_CHECKING:
     from app.models.study_sheet import StudySheet
+    from app.models.study_session_card import StudySessionCard
 
 
 class Flashcard(TimestampMixin, Base):
@@ -40,3 +41,7 @@ class Flashcard(TimestampMixin, Base):
     last_reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     sheet: Mapped["StudySheet"] = relationship(back_populates="flashcards")
+    study_session_cards: Mapped[list["StudySessionCard"]] = relationship(
+        back_populates="flashcard",
+        passive_deletes=True,
+    )
