@@ -82,6 +82,7 @@ export type StudyDirection = "en_to_vi" | "vi_to_en" | "mixed";
 export type StudyAnswerDirection = Exclude<StudyDirection, "mixed">;
 export type StudySessionStatus = "active" | "completed" | "abandoned";
 export type StudyAnswerResult = "again" | "remembered";
+export type SrsRating = "forgot" | "hard" | "good" | "easy";
 
 export type StudySessionCard = {
   id: number;
@@ -108,8 +109,13 @@ export type StudySession = {
   first_try_correct: number;
   again_count: number;
   mastery_score: number | null;
-  sheet_rating: string | null;
+  sheet_rating: SrsRating | null;
   session_cards: StudySessionCard[];
+};
+
+export type StudySessionRatingResponse = {
+  session: StudySession;
+  sheet: SheetDetail;
 };
 
 export type StudySessionCreateInput = {
@@ -237,6 +243,14 @@ export async function getSheet(id: string): Promise<SheetDetail> {
   return requestJson<SheetDetail>(`/api/v1/sheets/${encodeURIComponent(id)}`);
 }
 
+export async function getDueSheets(): Promise<SheetSummary[]> {
+  return requestJson<SheetSummary[]>("/api/v1/sheets/due");
+}
+
+export async function getNotStartedSheets(): Promise<SheetSummary[]> {
+  return requestJson<SheetSummary[]>("/api/v1/sheets/not-started");
+}
+
 export async function getSheetCards(id: string): Promise<FlashcardListItem[]> {
   return requestJson<FlashcardListItem[]>(
     `/api/v1/sheets/${encodeURIComponent(id)}/cards`,
@@ -331,6 +345,20 @@ export async function completeStudySession(sessionId: string): Promise<StudySess
   return requestJson<StudySession>(
     `/api/v1/study-sessions/${encodeURIComponent(sessionId)}/complete`,
     { method: "POST" },
+  );
+}
+
+export async function rateStudySession(
+  sessionId: string,
+  rating: SrsRating,
+): Promise<StudySessionRatingResponse> {
+  return requestJson<StudySessionRatingResponse>(
+    `/api/v1/study-sessions/${encodeURIComponent(sessionId)}/rating`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ rating }),
+    },
   );
 }
 
