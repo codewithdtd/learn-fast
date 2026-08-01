@@ -173,3 +173,39 @@ def record_study_answer(
         session_first_try_correct=session.first_try_correct,
         remaining_cards=sum(not item.remembered for item in session.session_cards),
     )
+
+
+def complete_study_session(db: Session, session_id: int) -> StudySessionDetail:
+    session = get_study_session_or_404(db, session_id)
+    if session.status is StudySessionStatus.COMPLETED:
+        # Completion is idempotent: a browser can retry after a timeout without
+        # changing the persisted timestamp, score, or study counters.
+        return StudySessionDetail.model_validate(session)
+    if session.status is not StudySessionStatus.ACTIVE:
+        raise StudySessionConflictError("Only an active study session can be completed.")
+
+    remaining_cards = sum(not item.remembered for item in session.session_cards)
+    if remaining_cards:
+        raise StudySessionPayloadError(
+            f"Study session still has {remaining_cards} card(s) to remember."
+        )
+    if session.total_cards <= 0:
+        raise StudySessionPayloadError("Study session has no cards to complete.")
+
+    session.status = StudySessionStatus.COMPLETED
+    session.completed_at = datetime.now(timezone.utc)
+    # first_try_correct is updated atomically by answer events. Use that
+    # persisted value instead of browser state so score survives refreshes.
+    session.mastery_score = round((session.first_try_correct / session.total_cards) * 100, 2)
+
+    try:
+        db.commit()
+    except SQLAlchemyError as error:
+        db.rollback()
+        logger.exception("Study session completion failed after database rollback.")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Study session could not be completed. Please try again.",
+        ) from error
+
+    return StudySessionDetail.model_validate(get_study_session_or_404(db, session.id))
