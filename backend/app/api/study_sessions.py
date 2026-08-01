@@ -8,6 +8,8 @@ from app.schemas.study_session import (
     StudySessionCreate,
     StudySessionDetail,
 )
+from app.schemas.srs import StudySessionRatingRequest, StudySessionRatingResponse
+from app.schemas.sheet import SheetDetail
 from app.services.study_session import (
     StudySessionConflictError,
     StudySessionPayloadError,
@@ -15,6 +17,12 @@ from app.services.study_session import (
     create_study_session,
     get_study_session_or_404,
     record_study_answer,
+)
+from app.services.srs import (
+    SrsConflictError,
+    SrsPayloadError,
+    SrsPersistenceError,
+    rate_completed_session,
 )
 
 
@@ -88,3 +96,36 @@ def complete_session(
             status_code=status.HTTP_409_CONFLICT,
             detail=str(error),
         ) from error
+
+
+@router.post(
+    "/study-sessions/{session_id}/rating",
+    response_model=StudySessionRatingResponse,
+)
+def rate_session(
+    session_id: int,
+    payload: StudySessionRatingRequest,
+    db: Session = Depends(get_db),
+) -> StudySessionRatingResponse:
+    try:
+        session, sheet = rate_completed_session(db, session_id, payload.rating)
+    except SrsPayloadError as error:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail=str(error),
+        ) from error
+    except SrsConflictError as error:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(error),
+        ) from error
+    except SrsPersistenceError as error:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Sheet review schedule could not be saved. Please try again.",
+        ) from error
+
+    return StudySessionRatingResponse(
+        session=StudySessionDetail.model_validate(session),
+        sheet=SheetDetail.model_validate(sheet),
+    )
