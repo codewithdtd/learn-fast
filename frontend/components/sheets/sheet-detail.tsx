@@ -93,7 +93,7 @@ export function SheetDetailView({ sheetId }: SheetDetailProps) {
       </dl>
       <section className="mt-10">
         <h2 className="text-xl font-semibold">Study actions</h2>
-        <p className="mt-2 text-sm text-slate-600">Các chế độ học sẽ được mở ở các ngày tiếp theo.</p>
+        <p className="mt-2 text-sm text-slate-600">Choose detailed Flashcard Study, Table View, or Quick Recall.</p>
         <div className="mt-4 flex flex-wrap gap-3">
           <Link
             href={`/sheets/${sheet.id}/table`}
@@ -107,11 +107,12 @@ export function SheetDetailView({ sheetId }: SheetDetailProps) {
           >
             Quick Recall
           </Link>
-          {['Study'].map((action) => (
-            <button key={action} type="button" disabled className="rounded-lg border border-slate-300 bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-500 disabled:cursor-not-allowed">
-              {action} · Sắp có
-            </button>
-          ))}
+          <Link
+            href={`/sheets/${sheet.id}/study`}
+            className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800"
+          >
+            Study Flashcards
+          </Link>
         </div>
       </section>
     </section>
