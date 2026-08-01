@@ -327,6 +327,13 @@ export async function answerStudySessionCard(
   );
 }
 
+export async function completeStudySession(sessionId: string): Promise<StudySession> {
+  return requestJson<StudySession>(
+    `/api/v1/study-sessions/${encodeURIComponent(sessionId)}/complete`,
+    { method: "POST" },
+  );
+}
+
 async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${apiBaseUrl}${path}`, init);
   if (!response.ok) {

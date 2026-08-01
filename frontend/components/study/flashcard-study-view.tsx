@@ -2,18 +2,21 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { Flashcard } from "@/components/study/flashcard";
 import { StudyProgress } from "@/components/study/study-progress";
 import {
+  advanceMasteryQueue,
+  buildMasteryQueue,
   countRememberedCards,
   getCardStudyDirection,
-  getFirstUnrememberedCardId,
-  getNextUnrememberedCardId,
+  getRetryGap,
 } from "@/lib/study-session";
 import {
   answerStudySessionCard,
   ApiRequestError,
+  completeStudySession,
   getStudySession,
   type StudyAnswerResult,
   type StudySession,
@@ -24,24 +27,22 @@ type FlashcardStudyViewProps = {
 };
 
 export function FlashcardStudyView({ sessionId }: FlashcardStudyViewProps) {
+  const router = useRouter();
   const [session, setSession] = useState<StudySession | null>(null);
-  const [currentCardId, setCurrentCardId] = useState<number | null>(null);
+  const [queueCardIds, setQueueCardIds] = useState<number[]>([]);
   const [isFlipped, setIsFlipped] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isAnswerSubmitting, setIsAnswerSubmitting] = useState(false);
+  const [isCompleting, setIsCompleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notFound, setNotFound] = useState(false);
 
   const applyLoadedSession = useCallback((loadedSession: StudySession) => {
     setSession(loadedSession);
-    setCurrentCardId((previousCardId) => {
-      const currentCardStillNeedsStudy = loadedSession.session_cards.some(
-        (card) => card.id === previousCardId && !card.remembered,
-      );
-      return currentCardStillNeedsStudy
-        ? previousCardId
-        : getFirstUnrememberedCardId(loadedSession.session_cards);
-    });
+    // Queue placement is browser state. Rebuilding from persisted unremembered
+    // cards after refresh keeps learning progress, even though it cannot retain
+    // the exact retry placement that was visible before the refresh.
+    setQueueCardIds(buildMasteryQueue(loadedSession.session_cards, loadedSession.id));
     setIsFlipped(false);
   }, []);
 
@@ -94,6 +95,7 @@ export function FlashcardStudyView({ sessionId }: FlashcardStudyViewProps) {
     };
   }, [applyLoadedSession, sessionId]);
 
+  const currentCardId = queueCardIds[0] ?? null;
   const currentCardIndex = useMemo(
     () => session?.session_cards.findIndex((card) => card.id === currentCardId) ?? -1,
     [currentCardId, session],
@@ -106,12 +108,43 @@ export function FlashcardStudyView({ sessionId }: FlashcardStudyViewProps) {
     : null;
   const rememberedCards = countRememberedCards(session?.session_cards ?? []);
   const remainingCards = (session?.session_cards.length ?? 0) - rememberedCards;
+  const isInteractionLocked = isAnswerSubmitting || isCompleting;
   const canAnswer = Boolean(
-    session?.status === "active" && currentCard && currentDirection && isFlipped && !isAnswerSubmitting,
+    session?.status === "active" && currentCard && currentDirection && isFlipped && !isInteractionLocked,
   );
 
+  const finishSession = useCallback(async () => {
+    if (isCompleting) return;
+
+    setIsCompleting(true);
+    setError(null);
+    try {
+      const completedSession = await completeStudySession(sessionId);
+      setSession(completedSession);
+      router.replace(`/study-sessions/${completedSession.id}/result`);
+    } catch (caughtError) {
+      const message = caughtError instanceof Error
+        ? caughtError.message
+        : "Could not save the session result.";
+
+      try {
+        const refreshedSession = await getStudySession(sessionId);
+        applyLoadedSession(refreshedSession);
+        if (refreshedSession.status === "completed") {
+          router.replace(`/study-sessions/${refreshedSession.id}/result`);
+          return;
+        }
+        setError(`${message} Session progress was reloaded before retrying completion.`);
+      } catch {
+        setError(`${message} Refresh this page before trying again.`);
+      }
+    } finally {
+      setIsCompleting(false);
+    }
+  }, [applyLoadedSession, isCompleting, router, sessionId]);
+
   const submitAnswer = useCallback(async (result: StudyAnswerResult) => {
-    if (!session || !currentCard || !currentDirection || !isFlipped || isAnswerSubmitting) {
+    if (!session || !currentCard || !currentDirection || !isFlipped || isInteractionLocked) {
       return;
     }
 
@@ -142,20 +175,24 @@ export function FlashcardStudyView({ sessionId }: FlashcardStudyViewProps) {
         session_cards: updatedCards,
       });
 
-      if (result === "remembered") {
-        setCurrentCardId(getNextUnrememberedCardId(updatedCards, currentCard.id));
-      }
-      // Day 10 deliberately keeps an Again card in place. Day 11 will replace
-      // this with the Mastery queue that re-inserts it after other cards.
+      const retryGap = result === "again"
+        ? getRetryGap(session.id, currentCard.id, response.again_count)
+        : undefined;
+      const nextQueue = advanceMasteryQueue(queueCardIds, result, retryGap);
+      setQueueCardIds(nextQueue);
       setIsFlipped(false);
+
+      if (result === "remembered" && nextQueue.length === 0) {
+        await finishSession();
+      }
     } catch (caughtError) {
       const message = caughtError instanceof Error
         ? caughtError.message
         : "Could not save this answer.";
 
       try {
-        // A network timeout can happen after the server commits. Reload first
-        // instead of blindly re-posting and potentially counting an attempt twice.
+        // A timeout can happen after the server commits. Rebuild the queue from
+        // GET state instead of retrying the answer and double-counting attempts.
         applyLoadedSession(await getStudySession(sessionId));
         setError(`${message} Session progress was reloaded before another answer.`);
       } catch {
@@ -164,7 +201,7 @@ export function FlashcardStudyView({ sessionId }: FlashcardStudyViewProps) {
     } finally {
       setIsAnswerSubmitting(false);
     }
-  }, [applyLoadedSession, currentCard, currentDirection, isAnswerSubmitting, isFlipped, session, sessionId]);
+  }, [applyLoadedSession, currentCard, currentDirection, finishSession, isFlipped, isInteractionLocked, queueCardIds, session, sessionId]);
 
   useEffect(() => {
     function isTypingTarget(target: EventTarget | null): boolean {
@@ -181,7 +218,7 @@ export function FlashcardStudyView({ sessionId }: FlashcardStudyViewProps) {
         || event.metaKey
         || isTypingTarget(event.target)
         || session?.status !== "active"
-        || isAnswerSubmitting
+        || isInteractionLocked
       ) {
         return;
       }
@@ -200,14 +237,19 @@ export function FlashcardStudyView({ sessionId }: FlashcardStudyViewProps) {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [canAnswer, isAnswerSubmitting, session?.status, submitAnswer]);
+  }, [canAnswer, isInteractionLocked, session?.status, submitAnswer]);
 
   if (isLoading) return <PageMessage>Loading study session…</PageMessage>;
   if (notFound) return <NotFound />;
   if (error && !session) return <RetryError message={error} onRetry={loadSession} />;
   if (!session) return null;
 
-  const isActive = session.status === "active";
+  if (session.status === "completed") {
+    return <CompletedSession sessionId={session.id} />;
+  }
+  if (session.status !== "active") {
+    return <InactiveSession status={session.status} sheetId={session.sheet_id} />;
+  }
 
   return (
     <section>
@@ -230,6 +272,7 @@ export function FlashcardStudyView({ sessionId }: FlashcardStudyViewProps) {
           totalCards={session.total_cards}
           rememberedCards={rememberedCards}
           remainingCards={remainingCards}
+          queueLength={queueCardIds.length}
           totalAttempts={session.total_attempts}
         />
       </div>
@@ -240,19 +283,19 @@ export function FlashcardStudyView({ sessionId }: FlashcardStudyViewProps) {
         </p>
       )}
 
-      {!isActive ? (
-        <InactiveSession status={session.status} sheetId={session.sheet_id} />
+      {isCompleting ? (
+        <PageMessage>Saving session result…</PageMessage>
       ) : currentCard && currentDirection ? (
         <div className="mt-6">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-sm text-slate-600">
-            <span>Current card {currentCardIndex + 1} of {session.total_cards}</span>
+            <span>Queue: {queueCardIds.length} card{queueCardIds.length === 1 ? "" : "s"} left</span>
             <span>Flip, then choose Again (1) or Remembered (2).</span>
           </div>
           <Flashcard
             sessionCard={currentCard}
             direction={currentDirection}
             isFlipped={isFlipped}
-            isDisabled={isAnswerSubmitting}
+            isDisabled={isInteractionLocked}
             onFlip={() => setIsFlipped((flipped) => !flipped)}
           />
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -276,7 +319,7 @@ export function FlashcardStudyView({ sessionId }: FlashcardStudyViewProps) {
           {!isFlipped && <p className="mt-3 text-sm text-slate-600">Flip the card before recording your answer.</p>}
         </div>
       ) : (
-        <AllCardsRemembered sheetId={session.sheet_id} />
+        <FinishSessionPanel isCompleting={isCompleting} onFinish={finishSession} />
       )}
     </section>
   );
@@ -292,24 +335,40 @@ function formatSessionType(sessionType: StudySession["session_type"]) {
   return sessionType === "weak_cards" ? "Weak cards" : "All cards";
 }
 
-function InactiveSession({ status, sheetId }: { status: StudySession["status"]; sheetId: number }) {
+function FinishSessionPanel({ isCompleting, onFinish }: { isCompleting: boolean; onFinish: () => Promise<void> }) {
   return (
-    <section className="mt-6 rounded-xl border border-slate-200 bg-white p-6">
-      <h2 className="text-xl font-semibold">This session is {status}</h2>
-      <p className="mt-2 text-slate-600">It is read-only and cannot accept more answers.</p>
-      <Link href={`/sheets/${sheetId}`} className="mt-4 inline-block text-sm font-semibold text-sky-700 hover:underline">
-        Back to sheet
+    <section className="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 p-6 text-emerald-950">
+      <h2 className="text-xl font-semibold">All cards are marked Remembered</h2>
+      <p className="mt-2">Finish to save the Mastery result for this session.</p>
+      <button
+        type="button"
+        disabled={isCompleting}
+        onClick={() => void onFinish()}
+        className="mt-4 rounded-lg bg-emerald-800 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-900 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        {isCompleting ? "Saving result…" : "Finish session"}
+      </button>
+    </section>
+  );
+}
+
+function CompletedSession({ sessionId }: { sessionId: number }) {
+  return (
+    <section className="rounded-xl border border-emerald-200 bg-emerald-50 p-6 text-emerald-950">
+      <h1 className="text-xl font-semibold">This session is complete</h1>
+      <Link href={`/study-sessions/${sessionId}/result`} className="mt-4 inline-block font-semibold text-emerald-900 hover:underline">
+        View session result
       </Link>
     </section>
   );
 }
 
-function AllCardsRemembered({ sheetId }: { sheetId: number }) {
+function InactiveSession({ status, sheetId }: { status: StudySession["status"]; sheetId: number }) {
   return (
-    <section className="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 p-6 text-emerald-950">
-      <h2 className="text-xl font-semibold">All cards are marked Remembered</h2>
-      <p className="mt-2">Session completion and the Mastery result screen will be added in Day 11.</p>
-      <Link href={`/sheets/${sheetId}`} className="mt-4 inline-block text-sm font-semibold text-emerald-900 hover:underline">
+    <section className="rounded-xl border border-slate-200 bg-white p-6">
+      <h1 className="text-xl font-semibold">This session is {status}</h1>
+      <p className="mt-2 text-slate-600">It is read-only and cannot accept more answers.</p>
+      <Link href={`/sheets/${sheetId}`} className="mt-4 inline-block text-sm font-semibold text-sky-700 hover:underline">
         Back to sheet
       </Link>
     </section>
