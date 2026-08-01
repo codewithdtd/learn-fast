@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.models import (
     Flashcard,
+    SheetStatus,
     StudyDirection,
     StudySession,
     StudySessionCard,
@@ -62,6 +63,8 @@ def create_study_session(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Study sheet not found.",
         )
+    if payload.session_type is StudySessionType.SRS_REVIEW and sheet.status is not SheetStatus.DUE:
+        raise StudySessionPayloadError("Only a due study sheet can start an SRS review.")
 
     card_query = select(Flashcard).where(Flashcard.sheet_id == sheet.id)
     if payload.session_type is StudySessionType.WEAK_CARDS:
