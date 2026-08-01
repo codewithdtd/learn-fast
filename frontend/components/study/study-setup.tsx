@@ -15,6 +15,7 @@ import {
 
 type StudySetupProps = {
   sheetId: string;
+  initialMode: "default" | "review";
 };
 
 type Choice<T extends string> = {
@@ -54,11 +55,14 @@ const sourceChoices: Choice<StudySessionType>[] = [
   },
 ];
 
-export function StudySetupView({ sheetId }: StudySetupProps) {
+export function StudySetupView({ sheetId, initialMode }: StudySetupProps) {
   const router = useRouter();
+  const isReviewMode = initialMode === "review";
   const [sheet, setSheet] = useState<SheetDetail | null>(null);
   const [direction, setDirection] = useState<StudyDirection>("en_to_vi");
-  const [sessionType, setSessionType] = useState<StudySessionType>("new_learning");
+  const [sessionType, setSessionType] = useState<StudySessionType>(
+    isReviewMode ? "srs_review" : "new_learning",
+  );
   const [isLoading, setIsLoading] = useState(true);
   const [isStarting, setIsStarting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -155,9 +159,11 @@ export function StudySetupView({ sheetId }: StudySetupProps) {
       </Link>
       <div className="mt-4">
         <p className="text-sm text-slate-500">{sheet.workbook.name}</p>
-        <h1 className="mt-1 text-3xl font-semibold tracking-tight">Start Flashcard Study</h1>
-        <p className="mt-2 text-slate-600">
-          Choose how to practise {sheet.card_count} cards. Starting creates a new saved session.
+          <h1 className="mt-1 text-3xl font-semibold tracking-tight">{isReviewMode ? "Scheduled Review" : "Start Flashcard Study"}</h1>
+          <p className="mt-2 text-slate-600">
+          {isReviewMode
+            ? `Review all ${sheet.card_count} cards scheduled for this sheet. Starting creates a new saved review session.`
+            : `Choose how to practise ${sheet.card_count} cards. Starting creates a new saved session.`}
         </p>
       </div>
 
@@ -176,19 +182,31 @@ export function StudySetupView({ sheetId }: StudySetupProps) {
           isDisabled={isStarting}
           onChange={setDirection}
         />
-        <ChoiceGroup
-          legend="Cards to include"
-          name="study-source"
-          choices={sourceChoices}
-          selectedValue={sessionType}
-          isDisabled={isStarting}
-          onChange={setSessionType}
-        />
+        {isReviewMode ? (
+          <section className="rounded-xl border border-sky-200 bg-sky-50 p-4 text-sky-950">
+            <h2 className="font-semibold">Scheduled review</h2>
+            <p className="mt-1 text-sm">This session includes all cards and will update the sheet&apos;s SRS schedule after completion.</p>
+          </section>
+        ) : (
+          <ChoiceGroup
+            legend="Cards to include"
+            name="study-source"
+            choices={sourceChoices}
+            selectedValue={sessionType}
+            isDisabled={isStarting}
+            onChange={setSessionType}
+          />
+        )}
 
         {error && (
           <p role="alert" className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-900">
             {error}
           </p>
+        )}
+        {isReviewMode && error && (
+          <Link href="/" className="inline-block text-sm font-semibold text-sky-700 hover:underline">
+            Return to dashboard
+          </Link>
         )}
         <button
           type="submit"
