@@ -1,38 +1,8 @@
 import Link from "next/link";
 
+import { Icon } from "@/components/layout/app-shell";
 import type { WorkbookImportResponse } from "@/services/api";
 
-type ImportResultProps = {
-  workbook: WorkbookImportResponse;
-};
-
-export function ImportResult({ workbook }: ImportResultProps) {
-  return (
-    <section
-      aria-live="polite"
-      className="mt-8 rounded-xl border border-emerald-200 bg-emerald-50 p-5 text-emerald-950"
-    >
-      <p className="text-sm font-semibold uppercase tracking-wide text-emerald-700">
-        Import successful
-      </p>
-      <h2 className="mt-2 text-xl font-semibold">{workbook.name}</h2>
-      <p className="mt-1 text-sm text-emerald-800">
-        {workbook.sheet_count} sheet{workbook.sheet_count === 1 ? "" : "s"} ·{" "}
-        {workbook.total_cards} card{workbook.total_cards === 1 ? "" : "s"}
-      </p>
-      <ul className="mt-4 space-y-2 border-t border-emerald-200 pt-4 text-sm">
-        {workbook.sheets.map((sheet) => (
-          <li key={sheet.id} className="flex justify-between gap-4">
-            <span>
-              {sheet.position}. {sheet.name}
-            </span>
-            <span>{sheet.card_count} cards</span>
-          </li>
-        ))}
-      </ul>
-      <Link href={`/workbooks/${workbook.id}`} className="mt-5 inline-block text-sm font-semibold text-emerald-800 underline">
-        Open workbook
-      </Link>
-    </section>
-  );
+export function ImportResult({ workbook }: { workbook: WorkbookImportResponse }) {
+  return <section aria-live="polite" className="import-success"><div className="import-success-heading"><div className="import-status-icon"><Icon name="check" size={23} /></div><div><p className="import-success-kicker">Import successful</p><h2>{workbook.name}</h2><p>{workbook.original_filename}</p></div></div><dl className="import-result-stats"><div><dt>Sheets</dt><dd>{workbook.sheet_count}</dd></div><div><dt>Cards</dt><dd>{workbook.total_cards}</dd></div></dl><ul className="import-sheet-list">{workbook.sheets.map((sheet) => <li key={sheet.id}><span>{sheet.position}. {sheet.name}</span><strong>{sheet.card_count} cards</strong></li>)}</ul><Link href={`/workbooks/${workbook.id}`} className="import-open-link">Open workbook <Icon name="arrow" size={18} /></Link></section>;
 }
