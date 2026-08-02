@@ -1,24 +1,10 @@
 from datetime import datetime, timedelta, timezone
 
-import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.core.database import get_db
-from app.main import app
 from app.models import Flashcard, StudySheet, Workbook
-
-
-@pytest.fixture()
-def api_client(db_session: Session):
-    def override_get_db():
-        yield db_session
-
-    app.dependency_overrides[get_db] = override_get_db
-    with TestClient(app) as client:
-        yield client
-    app.dependency_overrides.clear()
 
 
 def create_workbook(db: Session, name: str, imported_at: datetime) -> Workbook:
