@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-type IconName = "home" | "books" | "import" | "study" | "calendar" | "review" | "arrow" | "clock" | "check" | "weak" | "refresh";
+type IconName = "home" | "books" | "import" | "study" | "calendar" | "review" | "arrow" | "clock" | "check" | "weak" | "refresh" | "search" | "flame" | "bookmark" | "eye" | "chevronDown" | "back" | "play";
 
 export function Icon({ name, size = 24 }: { name: IconName; size?: number }) {
   const paths: Record<IconName, React.ReactNode> = {
@@ -15,6 +15,13 @@ export function Icon({ name, size = 24 }: { name: IconName; size?: number }) {
     check: <><circle cx="12" cy="12" r="8" /><path d="m8.5 12 2.2 2.2 4.8-5" /></>,
     weak: <><path d="m12 20-7-8a4.5 4.5 0 0 1 7-5.5A4.5 4.5 0 0 1 19 12z" /><path d="M12 9v4M12 16h.01" /></>,
     refresh: <><path d="M20 11a8 8 0 0 0-14.7-3L4 10" /><path d="M4 5v5h5M4 13a8 8 0 0 0 14.7 3L20 14" /><path d="M20 19v-5h-5" /></>,
+    search: <><circle cx="10.8" cy="10.8" r="6.8" /><path d="m16 16 5 5" /></>,
+    flame: <path d="M12 21c4.2 0 7-2.8 7-6.8 0-3.2-1.7-5.5-4.8-8.2.1 2.2-.8 3.4-2 4.2.2-3.3-1.4-6-4-8.2.1 3.2-2.2 5.5-2.2 8.8C6 18 8.7 21 12 21Z" />,
+    bookmark: <path d="M6 4.5A1.5 1.5 0 0 1 7.5 3h9A1.5 1.5 0 0 1 18 4.5V21l-6-3-6 3z" />,
+    eye: <><path d="M2.5 12s3.3-5 9.5-5 9.5 5 9.5 5-3.3 5-9.5 5-9.5-5-9.5-5Z" /><circle cx="12" cy="12" r="2.5" /></>,
+    chevronDown: <path d="m6 9 6 6 6-6" />,
+    back: <><path d="M19 12H5" /><path d="m11 6-6 6 6 6" /></>,
+    play: <path d="m8 5 11 7-11 7z" />,
   };
 
   return <svg aria-hidden="true" className="icon" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">{paths[name]}</svg>;
