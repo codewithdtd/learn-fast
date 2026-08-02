@@ -2726,6 +2726,54 @@ a {
   }
 }
 
+/* Delete confirmation dialog */
+.delete-workbook-control { position: relative; text-align: right; }
+.delete-trigger { min-height: 40px; border: 1px solid #f0a8a8; border-radius: 9px; padding: 0 12px; color: var(--error); background: transparent; font: inherit; font-size: 13px; font-weight: 900; cursor: pointer; }
+.delete-trigger:hover { background: var(--error-soft); }
+.delete-trigger:disabled { cursor: not-allowed; opacity: .58; }
+.delete-trigger-error { max-width: 192px; margin: 6px 0 0 auto; color: var(--error); font-size: 12px; line-height: 1.4; overflow-wrap: anywhere; }
+.delete-dialog-backdrop { position: fixed; z-index: 100; inset: 0; display: grid; place-items: center; padding: 24px; background: rgb(27 27 36 / 42%); backdrop-filter: blur(4px); }
+.delete-dialog { width: min(100%, 600px); border: 1px solid var(--outline); border-radius: 22px; padding: 40px; color: var(--foreground); background: var(--surface); box-shadow: 0 22px 60px rgb(27 27 36 / 24%); text-align: center; }
+.delete-dialog-handle { display: none; }
+.delete-dialog-icon { display: inline-flex; align-items: center; justify-content: center; width: 72px; height: 72px; border-radius: 50%; color: var(--error); background: var(--error-soft); }
+.delete-dialog h2 { margin: 23px 0 8px; color: var(--foreground); font-size: 29px; letter-spacing: -.04em; }
+.delete-dialog-intro { margin: 0; color: var(--muted); font-size: 16px; line-height: 1.5; overflow-wrap: anywhere; }
+.delete-dialog-intro strong { color: var(--foreground); }
+.delete-dialog-warning { margin-top: 24px; border: 1px solid #d9d3ee; border-radius: 13px; padding: 18px; color: var(--foreground); background: var(--surface-low); text-align: left; }
+.delete-dialog-warning p { margin: 0; font-size: 15px; font-weight: 700; line-height: 1.5; }
+.delete-dialog-warning ul { display: grid; gap: 10px; margin: 14px 0 0; padding: 0; list-style: none; color: var(--muted); font-size: 14px; }
+.delete-dialog-warning li { display: flex; align-items: flex-start; gap: 9px; }
+.delete-dialog-warning li::before { width: 17px; height: 17px; flex: 0 0 auto; border: 2px solid var(--error); border-radius: 50%; color: var(--error); content: "✓"; font-size: 11px; font-weight: 900; line-height: 13px; text-align: center; }
+.delete-dialog-error { margin: 16px 0 0; border: 1px solid #ffc5c5; border-radius: 10px; padding: 11px 12px; color: #991b1b; background: #fff2f2; font-size: 13px; line-height: 1.45; text-align: left; overflow-wrap: anywhere; }
+.delete-dialog-actions { display: grid; grid-template-columns: minmax(120px, .8fr) minmax(190px, 1.2fr); gap: 12px; margin-top: 26px; }
+.delete-cancel, .delete-confirm { min-height: 50px; border-radius: 11px; padding: 0 18px; font: inherit; font-size: 14px; font-weight: 900; cursor: pointer; }
+.delete-cancel { border: 1px solid transparent; color: var(--primary); background: transparent; }
+.delete-cancel:hover { background: var(--primary-soft); }
+.delete-confirm { border: 1px solid #c51717; color: #fff; background: #c51717; box-shadow: 0 7px 14px rgb(197 23 23 / 18%); }
+.delete-confirm:hover { background: #a91515; }
+.delete-cancel:disabled, .delete-confirm:disabled { cursor: not-allowed; opacity: .5; }
+.delete-cancel:focus-visible, .delete-confirm:focus-visible, .delete-trigger:focus-visible { outline: 3px solid #8b83ff; outline-offset: 3px; }
+@media (max-width: 639px) { .delete-dialog-backdrop { align-items: end; padding: 0; } .delete-dialog { width: 100%; max-height: min(92dvh, 760px); overflow: auto; border-right: 0; border-bottom: 0; border-left: 0; border-radius: 26px 26px 0 0; padding: 18px 24px calc(24px + env(safe-area-inset-bottom)); } .delete-dialog-handle { display: block; width: 58px; height: 6px; margin: 0 auto 28px; border-radius: 999px; background: var(--outline); } .delete-dialog-icon { width: 72px; height: 72px; } .delete-dialog h2 { margin-top: 22px; font-size: 30px; } .delete-dialog-intro { font-size: 17px; } .delete-dialog-warning { margin-top: 24px; padding: 18px; } .delete-dialog-warning p { font-size: 16px; } .delete-dialog-warning ul { font-size: 15px; } .delete-dialog-actions { display: flex; flex-direction: column-reverse; margin-top: 24px; } .delete-cancel, .delete-confirm { width: 100%; min-height: 52px; } }
+
+/* Flashcard presentation */
+.study-flashcard { border-radius: 18px; }
+.study-flashcard-topline { justify-content: center; padding: 15px 24px; background: var(--surface); }
+.study-flashcard-topline span:first-child { color: var(--muted); }
+.study-flashcard-topline span:last-child { display: none; }
+.study-flashcard-body { display: flex; min-height: 390px; align-items: stretch; justify-content: center; padding: 48px 48px 28px; text-align: center; }
+.study-flashcard-front, .study-flashcard-back { display: flex; width: 100%; flex-direction: column; align-items: center; justify-content: center; }
+.study-flashcard-label { letter-spacing: .1em; }
+.study-flashcard-question { max-width: 100%; margin-top: 16px; color: var(--primary); font-size: clamp(40px, 5vw, 64px); line-height: 1.08; }
+.study-flashcard-hint { display: inline-flex; align-items: center; gap: 8px; margin: auto 0 0; color: var(--muted); font-size: 14px; }
+.study-flashcard-hint .icon { color: var(--primary); }
+.study-flashcard-back { align-items: stretch; text-align: left; }
+.study-flashcard-back .study-flashcard-label { text-align: center; }
+.study-flashcard-back .study-flashcard-answer-value { margin-top: 16px; text-align: center; }
+.study-flashcard-back .study-example { margin-top: 28px; }
+.study-reveal-button { margin: 0 auto 28px; }
+
+@media (max-width: 639px) { .study-flashcard-topline { padding: 14px 17px; } .study-flashcard-body { min-height: 390px; padding: 36px 22px 24px; } .study-flashcard-question { font-size: clamp(38px, 11vw, 54px); } .study-flashcard-hint { margin-top: auto; font-size: 14px; } .study-reveal-button { width: calc(100% - 44px); margin: 0 22px 22px; } }
+
 /* Workbook Import */
 .import-page { min-height: 100%; padding: 48px 56px 72px; }
 .import-content { width: min(100%, 780px); margin: 0 auto; }
