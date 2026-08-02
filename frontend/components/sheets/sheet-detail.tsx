@@ -3,13 +3,12 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+import { Icon } from "@/components/layout/app-shell";
 import { PrioritySelector } from "@/components/sheets/priority-selector";
 import { formatDate, formatLabel } from "@/lib/format";
 import { ApiRequestError, getSheet, type SheetDetail, type SheetPriority } from "@/services/api";
 
-type SheetDetailProps = {
-  sheetId: string;
-};
+type SheetDetailProps = { sheetId: string };
 
 export function SheetDetailView({ sheetId }: SheetDetailProps) {
   const [sheet, setSheet] = useState<SheetDetail | null>(null);
@@ -27,7 +26,7 @@ export function SheetDetailView({ sheetId }: SheetDetailProps) {
       if (caughtError instanceof ApiRequestError && caughtError.status === 404) {
         setNotFound(true);
       } else {
-        setError(caughtError instanceof Error ? caughtError.message : "Không thể tải sheet.");
+        setError(caughtError instanceof Error ? caughtError.message : "Could not load this sheet.");
       }
     } finally {
       setIsLoading(false);
@@ -37,8 +36,6 @@ export function SheetDetailView({ sheetId }: SheetDetailProps) {
   useEffect(() => {
     let isCurrent = true;
 
-    // The request resolves after mount; cancellation guards prevent an old
-    // route request from changing the screen after navigation.
     void getSheet(sheetId)
       .then((loadedSheet) => {
         if (isCurrent) setSheet(loadedSheet);
@@ -49,9 +46,7 @@ export function SheetDetailView({ sheetId }: SheetDetailProps) {
           setNotFound(true);
           return;
         }
-        setError(
-          caughtError instanceof Error ? caughtError.message : "Không thể tải sheet.",
-        );
+        setError(caughtError instanceof Error ? caughtError.message : "Could not load this sheet.");
       })
       .finally(() => {
         if (isCurrent) setIsLoading(false);
@@ -62,7 +57,7 @@ export function SheetDetailView({ sheetId }: SheetDetailProps) {
     };
   }, [sheetId]);
 
-  if (isLoading) return <p className="text-slate-600">Đang tải sheet…</p>;
+  if (isLoading) return <SheetState>Loading sheet…</SheetState>;
   if (notFound) return <NotFound />;
   if (error) return <RetryError message={error} onRetry={loadSheet} />;
   if (!sheet) return null;
@@ -72,61 +67,87 @@ export function SheetDetailView({ sheetId }: SheetDetailProps) {
   }
 
   return (
-    <section>
-      <Link href={`/workbooks/${sheet.workbook.id}`} className="text-sm font-medium text-sky-700 hover:underline">
-        ← {sheet.workbook.name}
-      </Link>
-      <div className="mt-4 flex flex-wrap items-start justify-between gap-5">
-        <div>
-          <p className="text-sm text-slate-500">Sheet {sheet.position}</p>
-          <h1 className="mt-1 text-3xl font-semibold tracking-tight">{sheet.name}</h1>
+    <section className="sheet-detail-content">
+      <header className="sheet-detail-header">
+        <nav className="sheet-detail-breadcrumb" aria-label="Breadcrumb">
+          <Link href="/workbooks">Workbooks</Link>
+          <span>›</span>
+          <Link href={`/workbooks/${sheet.workbook.id}`}>{sheet.workbook.name}</Link>
+          <span>›</span>
+          <span aria-current="page">{sheet.name}</span>
+        </nav>
+        <Link href={`/workbooks/${sheet.workbook.id}`} className="sheet-detail-back">
+          <Icon name="back" size={18} /> Back to {sheet.workbook.name}
+        </Link>
+        <div className="sheet-detail-title-row">
+          <div>
+            <p className="sheet-detail-kicker">Sheet {sheet.position} · {formatLabel(sheet.status)}</p>
+            <h1>{sheet.name}</h1>
+            <p className="sheet-detail-subtitle">Part of <Link href={`/workbooks/${sheet.workbook.id}`}>{sheet.workbook.name}</Link></p>
+          </div>
+          <StatusBadge status={sheet.status} />
         </div>
-        <PrioritySelector sheetId={sheet.id} priority={sheet.priority} onSaved={handlePrioritySaved} />
+      </header>
+
+      <div className="sheet-detail-layout">
+        <div className="sheet-detail-main">
+          <section className="sheet-detail-hero-card">
+            <div className="sheet-detail-hero-copy">
+              <p className="eyebrow">Ready to learn</p>
+              <h2>Choose your study mode</h2>
+              <p>Use the mode that fits your next focused learning session.</p>
+            </div>
+            <Link href={`/sheets/${sheet.id}/study`} className="sheet-detail-primary-action">
+              <span className="sheet-action-icon"><Icon name="study" size={22} /></span>
+              <span><strong>Study Flashcards</strong><small>Review this sheet with spaced repetition.</small></span>
+              <Icon name="arrow" size={20} />
+            </Link>
+          </section>
+
+          <section className="sheet-detail-actions" aria-labelledby="sheet-actions-title">
+            <div className="section-heading"><div><p className="eyebrow">More ways to practice</p><h2 id="sheet-actions-title">Learning modes</h2></div></div>
+            <div className="sheet-action-grid">
+              <ActionCard href={`/sheets/${sheet.id}/quick-recall`} icon="review" title="Quick Recall" description="Fast-paced recognition practice." tone="mint" />
+              <ActionCard href={`/sheets/${sheet.id}/table`} icon="books" title="Table View" description="Browse the full vocabulary list." tone="gold" />
+            </div>
+          </section>
+        </div>
+
+        <aside className="sheet-detail-sidebar">
+          <section className="sheet-detail-panel" aria-labelledby="sheet-overview-title">
+            <div className="section-heading"><div><p className="eyebrow">Sheet overview</p><h2 id="sheet-overview-title">Progress data</h2></div><Icon name="review" size={22} /></div>
+            <dl className="sheet-detail-stats">
+              <Stat label="Cards" value={String(sheet.card_count)} tone="primary" />
+              <Stat label="Priority" value={formatLabel(sheet.priority)} tone="mint" />
+              <Stat label="Reviews" value={String(sheet.review_count)} tone="lavender" />
+              <Stat label="Lapses" value={String(sheet.lapse_count)} tone="rose" />
+            </dl>
+            <div className="sheet-detail-meta-list">
+              <MetaRow label="Next review" value={formatDate(sheet.next_review_at)} />
+              <MetaRow label="First learned" value={formatDate(sheet.first_learned_at)} />
+              <MetaRow label="Last reviewed" value={formatDate(sheet.last_reviewed_at)} />
+              <MetaRow label="SRS level" value={String(sheet.srs_level)} />
+              <MetaRow label="Interval" value={`${sheet.interval_days} day${sheet.interval_days === 1 ? "" : "s"}`} />
+            </div>
+          </section>
+
+          <section className="sheet-detail-panel sheet-priority-panel" aria-labelledby="sheet-priority-title">
+            <div className="section-heading"><div><p className="eyebrow">Personalize review</p><h2 id="sheet-priority-title">Study priority</h2></div></div>
+            <PrioritySelector sheetId={sheet.id} priority={sheet.priority} onSaved={handlePrioritySaved} />
+          </section>
+        </aside>
       </div>
-      <dl className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <Stat label="Cards" value={String(sheet.card_count)} />
-        <Stat label="Status" value={formatLabel(sheet.status)} />
-        <Stat label="Next review" value={formatDate(sheet.next_review_at)} />
-        <Stat label="First learned" value={formatDate(sheet.first_learned_at)} />
-        <Stat label="Last reviewed" value={formatDate(sheet.last_reviewed_at)} />
-        <Stat label="Review count" value={String(sheet.review_count)} />
-      </dl>
-      <section className="mt-10">
-        <h2 className="text-xl font-semibold">Study actions</h2>
-        <p className="mt-2 text-sm text-slate-600">Choose detailed Flashcard Study, Table View, or Quick Recall.</p>
-        <div className="mt-4 flex flex-wrap gap-3">
-          <Link
-            href={`/sheets/${sheet.id}/table`}
-            className="rounded-lg bg-sky-700 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-800"
-          >
-            Table View
-          </Link>
-          <Link
-            href={`/sheets/${sheet.id}/quick-recall`}
-            className="rounded-lg bg-sky-700 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-800"
-          >
-            Quick Recall
-          </Link>
-          <Link
-            href={`/sheets/${sheet.id}/study`}
-            className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800"
-          >
-            Study Flashcards
-          </Link>
-        </div>
-      </section>
     </section>
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
-  return <div className="rounded-xl border border-slate-200 bg-white p-4"><dt className="text-sm text-slate-500">{label}</dt><dd className="mt-1 font-semibold text-slate-900">{value}</dd></div>;
+function ActionCard({ href, icon, title, description, tone }: { href: string; icon: "review" | "books"; title: string; description: string; tone: "mint" | "gold" }) {
+  return <Link href={href} className={`sheet-action-card ${tone}`}><span className="sheet-action-icon"><Icon name={icon} size={23} /></span><span><strong>{title}</strong><small>{description}</small></span><Icon name="arrow" size={20} /></Link>;
 }
 
-function NotFound() {
-  return <section className="rounded-xl border border-slate-200 bg-white p-8 text-center"><h1 className="text-xl font-semibold">Sheet not found</h1><Link href="/workbooks" className="mt-4 inline-block text-sky-700 hover:underline">Quay lại workbooks</Link></section>;
-}
-
-function RetryError({ message, onRetry }: { message: string; onRetry: () => Promise<void> }) {
-  return <section role="alert" className="rounded-xl border border-rose-200 bg-rose-50 p-5 text-rose-900"><p>{message}</p><button type="button" onClick={() => void onRetry()} className="mt-3 rounded-md border border-rose-300 px-3 py-1.5 text-sm font-semibold">Thử lại</button></section>;
-}
+function StatusBadge({ status }: { status: SheetDetail["status"] }) { return <span className={`sheet-status-badge ${status}`}>{formatLabel(status)}</span>; }
+function Stat({ label, value, tone }: { label: string; value: string; tone: string }) { return <div className={`sheet-stat ${tone}`}><dt>{label}</dt><dd>{value}</dd></div>; }
+function MetaRow({ label, value }: { label: string; value: string }) { return <div><dt>{label}</dt><dd>{value}</dd></div>; }
+function SheetState({ children }: { children: React.ReactNode }) { return <section className="sheet-detail-state">{children}</section>; }
+function NotFound() { return <section className="sheet-detail-state"><h1>Sheet not found</h1><Link href="/workbooks">Back to workbooks</Link></section>; }
+function RetryError({ message, onRetry }: { message: string; onRetry: () => Promise<void> }) { return <section role="alert" className="sheet-detail-state sheet-detail-state-error"><p>{message}</p><button type="button" onClick={() => void onRetry()}>Try again</button></section>; }
