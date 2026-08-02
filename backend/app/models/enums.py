@@ -36,3 +36,10 @@ class StudySessionStatus(str, Enum):
     ACTIVE = "active"
     COMPLETED = "completed"
     ABANDONED = "abandoned"
+
+
+class SrsRating(str, Enum):
+    FORGOT = "forgot"
+    HARD = "hard"
+    GOOD = "good"
+    EASY = "easy"

@@ -3,12 +3,16 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { formatDate } from "@/lib/format";
+import { formatDate, formatLabel } from "@/lib/format";
 import {
   ApiRequestError,
   completeStudySession,
+  getSheet,
   getStudySession,
+  rateStudySession,
+  type SheetDetail,
   type StudySession,
+  type SrsRating,
 } from "@/services/api";
 
 type StudySessionResultProps = {
@@ -19,7 +23,10 @@ export function StudySessionResult({ sessionId }: StudySessionResultProps) {
   const [session, setSession] = useState<StudySession | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isCompleting, setIsCompleting] = useState(false);
+  const [isRating, setIsRating] = useState(false);
+  const [scheduledSheet, setScheduledSheet] = useState<SheetDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [ratingError, setRatingError] = useState<string | null>(null);
   const [notFound, setNotFound] = useState(false);
 
   const loadSession = useCallback(async () => {
@@ -42,6 +49,28 @@ export function StudySessionResult({ sessionId }: StudySessionResultProps) {
       setIsLoading(false);
     }
   }, [sessionId]);
+
+  useEffect(() => {
+    if (!session?.sheet_rating) return;
+
+    let isCurrent = true;
+    void getSheet(String(session.sheet_id))
+      .then((sheet) => {
+        if (isCurrent) setScheduledSheet(sheet);
+      })
+      .catch((caughtError: unknown) => {
+        if (!isCurrent) return;
+        setRatingError(
+          caughtError instanceof Error
+            ? `The rating was saved, but its updated schedule could not be loaded: ${caughtError.message}`
+            : "The rating was saved, but its updated schedule could not be loaded.",
+        );
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [session?.id, session?.sheet_id, session?.sheet_rating]);
 
   useEffect(() => {
     let isCurrent = true;
@@ -102,6 +131,36 @@ export function StudySessionResult({ sessionId }: StudySessionResultProps) {
     }
   }
 
+  async function rateCompletedSession(rating: SrsRating) {
+    if (isRating) return;
+
+    setIsRating(true);
+    setRatingError(null);
+    try {
+      const result = await rateStudySession(sessionId, rating);
+      setSession(result.session);
+      setScheduledSheet(result.sheet);
+    } catch (caughtError) {
+      const message = caughtError instanceof Error
+        ? caughtError.message
+        : "Could not save this review rating.";
+      try {
+        const reloadedSession = await getStudySession(sessionId);
+        setSession(reloadedSession);
+        if (reloadedSession.sheet_rating) {
+          setScheduledSheet(await getSheet(String(reloadedSession.sheet_id)));
+          setRatingError(`${message} The saved session state was reloaded.`);
+        } else {
+          setRatingError(`${message} You can try rating the session again.`);
+        }
+      } catch {
+        setRatingError(`${message} Refresh this page before trying again.`);
+      }
+    } finally {
+      setIsRating(false);
+    }
+  }
+
   if (isLoading) return <PageMessage>Loading session result…</PageMessage>;
   if (notFound) return <NotFound />;
   if (error && !session) return <RetryError message={error} onRetry={loadSession} />;
@@ -117,16 +176,35 @@ export function StudySessionResult({ sessionId }: StudySessionResultProps) {
     return <FinishSessionPanel isCompleting={isCompleting} error={error} onFinish={finishSession} />;
   }
 
-  return <CompletedResult session={session} weakCards={weakCards} />;
+  return (
+    <CompletedResult
+      session={session}
+      weakCards={weakCards}
+      scheduledSheet={scheduledSheet}
+      isRating={isRating}
+      ratingError={ratingError}
+      onRate={rateCompletedSession}
+    />
+  );
 }
 
 function CompletedResult({
   session,
   weakCards,
+  scheduledSheet,
+  isRating,
+  ratingError,
+  onRate,
 }: {
   session: StudySession;
   weakCards: StudySession["session_cards"];
+  scheduledSheet: SheetDetail | null;
+  isRating: boolean;
+  ratingError: string | null;
+  onRate: (rating: SrsRating) => Promise<void>;
 }) {
+  const supportsSrsRating = session.session_type === "new_learning" || session.session_type === "srs_review";
+
   return (
     <section>
       <Link href={`/sheets/${session.sheet_id}`} className="text-sm font-medium text-sky-700 hover:underline">
@@ -162,6 +240,15 @@ function CompletedResult({
         )}
       </section>
 
+      <SrsRatingPanel
+        session={session}
+        scheduledSheet={scheduledSheet}
+        isRating={isRating}
+        error={ratingError}
+        supportsSrsRating={supportsSrsRating}
+        onRate={onRate}
+      />
+
       <div className="mt-6 flex flex-wrap gap-3">
         <Link href={`/sheets/${session.sheet_id}`} className="rounded-lg bg-sky-700 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-800">
           Back to sheet
@@ -174,6 +261,91 @@ function CompletedResult({
         </Link>
       </div>
     </section>
+  );
+}
+
+function SrsRatingPanel({
+  session,
+  scheduledSheet,
+  isRating,
+  error,
+  supportsSrsRating,
+  onRate,
+}: {
+  session: StudySession;
+  scheduledSheet: SheetDetail | null;
+  isRating: boolean;
+  error: string | null;
+  supportsSrsRating: boolean;
+  onRate: (rating: SrsRating) => Promise<void>;
+}) {
+  if (!supportsSrsRating) {
+    return (
+      <section className="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-5">
+        <h2 className="text-xl font-semibold">Review schedule</h2>
+        <p className="mt-2 text-slate-600">This practice session does not change the sheet review schedule.</p>
+      </section>
+    );
+  }
+
+  if (session.sheet_rating) {
+    return (
+      <section aria-live="polite" className="mt-6 rounded-xl border border-sky-200 bg-sky-50 p-5 text-sky-950">
+        <h2 className="text-xl font-semibold">Review schedule saved</h2>
+        <p className="mt-2">You rated this session <span className="font-semibold">{formatLabel(session.sheet_rating)}</span>.</p>
+        {scheduledSheet ? (
+          <dl className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <Stat label="Next review" value={formatDate(scheduledSheet.next_review_at)} />
+            <Stat label="SRS level" value={`Level ${scheduledSheet.srs_level}`} />
+            <Stat label="Interval" value={`${scheduledSheet.interval_days} day${scheduledSheet.interval_days === 1 ? "" : "s"}`} />
+            <Stat label="Schedule status" value={formatLabel(scheduledSheet.status)} />
+          </dl>
+        ) : (
+          <p className="mt-4 text-sm">Loading the schedule saved by the serverâ€¦</p>
+        )}
+        {error && <p role="alert" className="mt-4 text-sm text-rose-800">{error}</p>}
+      </section>
+    );
+  }
+
+  return (
+    <section className="mt-6 rounded-xl border border-sky-200 bg-sky-50 p-5 text-sky-950">
+      <h2 className="text-xl font-semibold">How well did you remember this sheet?</h2>
+      <p className="mt-2 text-sm">Choose one rating to save the next review date. The server calculates the schedule.</p>
+      {error && <p role="alert" className="mt-4 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-900">{error}</p>}
+      <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <RatingButton rating="forgot" label="Forgot" description="Review in 1 day" isRating={isRating} onRate={onRate} />
+        <RatingButton rating="hard" label="Hard" description="Keep the current interval" isRating={isRating} onRate={onRate} />
+        <RatingButton rating="good" label="Good" description="Advance one SRS level" isRating={isRating} onRate={onRate} />
+        <RatingButton rating="easy" label="Easy" description="Advance two SRS levels" isRating={isRating} onRate={onRate} />
+      </div>
+    </section>
+  );
+}
+
+function RatingButton({
+  rating,
+  label,
+  description,
+  isRating,
+  onRate,
+}: {
+  rating: SrsRating;
+  label: string;
+  description: string;
+  isRating: boolean;
+  onRate: (rating: SrsRating) => Promise<void>;
+}) {
+  return (
+    <button
+      type="button"
+      disabled={isRating}
+      onClick={() => void onRate(rating)}
+      className="rounded-lg border border-sky-300 bg-white p-3 text-left hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-50"
+    >
+      <span className="block font-semibold">{isRating ? "Savingâ€¦" : label}</span>
+      <span className="mt-1 block text-sm text-slate-600">{description}</span>
+    </button>
   );
 }
 

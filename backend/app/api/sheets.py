@@ -6,9 +6,11 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, selectinload
 
 from app.core.database import get_db
-from app.models import Flashcard, StudySheet
+from app.models import Flashcard, SheetStatus, StudySheet
 from app.schemas.flashcard import FlashcardListItem
 from app.schemas.sheet import SheetDetail, SheetUpdate
+from app.schemas.workbook import SheetSummary
+from app.services.srs import SrsPersistenceError, list_due_sheets
 
 
 logger = logging.getLogger(__name__)
@@ -24,6 +26,27 @@ def get_sheet_or_404(db: Session, sheet_id: int) -> StudySheet:
     if sheet is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Study sheet not found.")
     return sheet
+
+
+@router.get("/sheets/due", response_model=list[SheetSummary])
+def list_due_sheets_api(db: Session = Depends(get_db)) -> list[SheetSummary]:
+    try:
+        return [SheetSummary.model_validate(sheet) for sheet in list_due_sheets(db)]
+    except SrsPersistenceError as error:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Due sheets could not be synchronized. Please try again.",
+        ) from error
+
+
+@router.get("/sheets/not-started", response_model=list[SheetSummary])
+def list_not_started_sheets(db: Session = Depends(get_db)) -> list[SheetSummary]:
+    sheets = db.scalars(
+        select(StudySheet)
+        .where(StudySheet.status == SheetStatus.NOT_STARTED)
+        .order_by(StudySheet.workbook_id, StudySheet.position)
+    ).all()
+    return [SheetSummary.model_validate(sheet) for sheet in sheets]
 
 
 @router.get("/sheets/{sheet_id}", response_model=SheetDetail)

@@ -3,6 +3,7 @@
 from app.models.enums import (
     SheetPriority,
     SheetStatus,
+    SrsRating,
     StudyDirection,
     StudySessionStatus,
     StudySessionType,
@@ -17,6 +18,7 @@ __all__ = [
     "Flashcard",
     "SheetPriority",
     "SheetStatus",
+    "SrsRating",
     "StudyDirection",
     "StudySession",
     "StudySessionCard",
