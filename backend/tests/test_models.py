@@ -3,7 +3,18 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.models import Flashcard, SheetPriority, SheetStatus, StudySheet, Workbook
+from app.models import (
+    Flashcard,
+    SheetPriority,
+    SheetStatus,
+    StudyDirection,
+    StudySession,
+    StudySessionCard,
+    StudySessionStatus,
+    StudySessionType,
+    StudySheet,
+    Workbook,
+)
 
 
 def test_persists_workbook_sheet_and_flashcard_relationships(db_session: Session) -> None:
@@ -87,3 +98,33 @@ def test_positions_are_unique_per_parent_but_reusable_across_parents(
     with pytest.raises(IntegrityError):
         db_session.commit()
     db_session.rollback()
+
+
+def test_persists_study_session_and_session_card_defaults(db_session: Session) -> None:
+    workbook = Workbook(name="Session workbook", original_filename="session.xlsx")
+    sheet = StudySheet(name="Session sheet", position=0)
+    flashcard = Flashcard(position=0, phrase="carry out", meaning="thực hiện")
+    sheet.flashcards.append(flashcard)
+    workbook.sheets.append(sheet)
+    db_session.add(workbook)
+    db_session.commit()
+
+    session = StudySession(
+        sheet_id=sheet.id,
+        session_type=StudySessionType.NEW_LEARNING,
+        direction=StudyDirection.EN_TO_VI,
+        total_cards=1,
+    )
+    session.session_cards.append(
+        StudySessionCard(flashcard_id=flashcard.id, direction=StudyDirection.EN_TO_VI)
+    )
+    db_session.add(session)
+    db_session.commit()
+    db_session.refresh(session)
+
+    assert session.status is StudySessionStatus.ACTIVE
+    assert session.total_attempts == 0
+    assert session.again_count == 0
+    assert session.session_cards[0].remembered is False
+    assert session.session_cards[0].attempt_count == 0
+    assert session.session_cards[0].flashcard is flashcard

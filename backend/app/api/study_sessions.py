@@ -11,6 +11,7 @@ from app.schemas.study_session import (
 from app.services.study_session import (
     StudySessionConflictError,
     StudySessionPayloadError,
+    complete_study_session,
     create_study_session,
     get_study_session_or_404,
     record_study_answer,
@@ -55,6 +56,28 @@ def answer_session_card(
 ) -> StudySessionAnswerResponse:
     try:
         return record_study_answer(db, session_id, card_id, payload)
+    except StudySessionPayloadError as error:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail=str(error),
+        ) from error
+    except StudySessionConflictError as error:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(error),
+        ) from error
+
+
+@router.post(
+    "/study-sessions/{session_id}/complete",
+    response_model=StudySessionDetail,
+)
+def complete_session(
+    session_id: int,
+    db: Session = Depends(get_db),
+) -> StudySessionDetail:
+    try:
+        return complete_study_session(db, session_id)
     except StudySessionPayloadError as error:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,

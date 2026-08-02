@@ -2,6 +2,7 @@ type StudyProgressProps = {
   totalCards: number;
   rememberedCards: number;
   remainingCards: number;
+  queueLength: number;
   totalAttempts: number;
 };
 
@@ -9,6 +10,7 @@ export function StudyProgress({
   totalCards,
   rememberedCards,
   remainingCards,
+  queueLength,
   totalAttempts,
 }: StudyProgressProps) {
   const percentage = totalCards === 0 ? 0 : Math.round((rememberedCards / totalCards) * 100);
@@ -30,8 +32,9 @@ export function StudyProgress({
           style={{ width: `${percentage}%` }}
         />
       </div>
-      <dl className="mt-5 grid gap-3 sm:grid-cols-2">
+      <dl className="mt-5 grid gap-3 sm:grid-cols-3">
         <Stat label="Remaining cards" value={String(remainingCards)} />
+        <Stat label="Queue turns" value={String(queueLength)} />
         <Stat label="Total attempts" value={String(totalAttempts)} />
       </dl>
     </section>

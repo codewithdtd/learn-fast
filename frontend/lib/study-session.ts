@@ -43,3 +43,63 @@ export function getNextUnrememberedCardId(
 export function countRememberedCards(cards: StudySessionCard[]): number {
   return cards.filter((card) => card.remembered).length;
 }
+
+export function buildMasteryQueue(
+  cards: StudySessionCard[],
+  sessionId: number,
+): number[] {
+  const queue = cards.filter((card) => !card.remembered).map((card) => card.id);
+  let state = hashNumber(String(sessionId));
+
+  for (let index = queue.length - 1; index > 0; index -= 1) {
+    state = nextPseudoRandomState(state);
+    const swapIndex = state % (index + 1);
+    [queue[index], queue[swapIndex]] = [queue[swapIndex], queue[index]];
+  }
+
+  return queue;
+}
+
+export function getRetryGap(
+  sessionId: number,
+  sessionCardId: number,
+  nextAgainCount: number,
+): number {
+  return 4 + (hashNumber(`${sessionId}:${sessionCardId}:${nextAgainCount}`) % 4);
+}
+
+export function advanceMasteryQueue(
+  queue: number[],
+  result: "again" | "remembered",
+  retryGap = 4,
+): number[] {
+  const [currentCardId, ...remainingCardIds] = queue;
+  if (currentCardId === undefined || result === "remembered") {
+    return remainingCardIds;
+  }
+
+  // The current card is removed before insertion, so it can never exist twice
+  // in the queue. A short queue puts it after all available other cards.
+  const retryIndex = Math.min(remainingCardIds.length, retryGap);
+  return [
+    ...remainingCardIds.slice(0, retryIndex),
+    currentCardId,
+    ...remainingCardIds.slice(retryIndex),
+  ];
+}
+
+function hashNumber(value: string): number {
+  let hash = 2166136261;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+function nextPseudoRandomState(state: number): number {
+  let next = state + 0x6d2b79f5;
+  next = Math.imul(next ^ (next >>> 15), next | 1);
+  next ^= next + Math.imul(next ^ (next >>> 7), next | 61);
+  return (next ^ (next >>> 14)) >>> 0;
+}
