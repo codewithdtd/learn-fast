@@ -1,10 +1,11 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from app.models import (
     Flashcard,
+    SheetStatus,
     StudySession,
     StudySessionCard,
     StudySessionStatus,
@@ -31,6 +32,21 @@ def create_session(api_client: TestClient, sheet_id: int, **overrides):
     response = api_client.post("/api/v1/study-sessions", json=payload)
     assert response.status_code == 201
     return response.json()
+
+
+def complete_session_with_remembered_cards(
+    api_client: TestClient,
+    session_id: int,
+    cards: list[Flashcard],
+) -> None:
+    for card in cards:
+        answer = api_client.post(
+            f"/api/v1/study-sessions/{session_id}/cards/{card.id}/answer",
+            json={"direction": "en_to_vi", "result": "remembered"},
+        )
+        assert answer.status_code == 200
+    completion = api_client.post(f"/api/v1/study-sessions/{session_id}/complete")
+    assert completion.status_code == 200
 
 
 def test_create_and_get_session_snapshots_cards_in_import_order(
@@ -308,6 +324,150 @@ def test_complete_session_rejects_abandoned_session(
 
     assert completion.status_code == 409
     assert "active" in completion.json()["detail"]
+
+
+def test_rating_completed_session_schedules_sheet_and_is_idempotent(
+    api_client: TestClient, db_session: Session
+) -> None:
+    sheet, cards = create_session_source(db_session)
+    session = create_session(api_client, sheet.id)
+    complete_session_with_remembered_cards(api_client, session["id"], cards)
+
+    rated = api_client.post(
+        f"/api/v1/study-sessions/{session['id']}/rating",
+        json={"rating": "good"},
+    )
+    repeated = api_client.post(
+        f"/api/v1/study-sessions/{session['id']}/rating",
+        json={"rating": "good"},
+    )
+    conflicting = api_client.post(
+        f"/api/v1/study-sessions/{session['id']}/rating",
+        json={"rating": "easy"},
+    )
+
+    assert rated.status_code == 200
+    scheduled_sheet = rated.json()["sheet"]
+    assert rated.json()["session"]["sheet_rating"] == "good"
+    assert scheduled_sheet["status"] == "learned"
+    assert scheduled_sheet["srs_level"] == 1
+    assert scheduled_sheet["interval_days"] == 1
+    assert scheduled_sheet["review_count"] == 1
+    assert scheduled_sheet["lapse_count"] == 0
+    assert scheduled_sheet["first_learned_at"] is not None
+    assert scheduled_sheet["last_reviewed_at"] is not None
+    assert scheduled_sheet["next_review_at"] is not None
+    assert repeated.status_code == 200
+    assert repeated.json()["sheet"]["review_count"] == 1
+    assert repeated.json()["sheet"]["next_review_at"] == scheduled_sheet["next_review_at"]
+    assert conflicting.status_code == 409
+    assert db_session.get(StudySheet, sheet.id).srs_level == 1
+
+
+def test_rating_review_and_forgot_updates_existing_srs_state(
+    api_client: TestClient, db_session: Session
+) -> None:
+    sheet, cards = create_session_source(db_session)
+    sheet.status = SheetStatus.DUE
+    sheet.srs_level = 1
+    sheet.interval_days = 1
+    sheet.review_count = 2
+    sheet.lapse_count = 1
+    db_session.commit()
+    review_session = create_session(api_client, sheet.id, session_type="srs_review")
+    complete_session_with_remembered_cards(api_client, review_session["id"], cards)
+
+    good = api_client.post(
+        f"/api/v1/study-sessions/{review_session['id']}/rating",
+        json={"rating": "good"},
+    )
+
+    assert good.status_code == 200
+    assert good.json()["sheet"]["srs_level"] == 2
+    assert good.json()["sheet"]["interval_days"] == 3
+    assert good.json()["sheet"]["review_count"] == 3
+
+    sheet, cards = create_session_source(db_session, "Forgot review")
+    sheet.status = SheetStatus.DUE
+    sheet.srs_level = 5
+    sheet.interval_days = 30
+    sheet.lapse_count = 4
+    db_session.commit()
+    forgot_session = create_session(api_client, sheet.id, session_type="srs_review")
+    complete_session_with_remembered_cards(api_client, forgot_session["id"], cards)
+    forgot = api_client.post(
+        f"/api/v1/study-sessions/{forgot_session['id']}/rating",
+        json={"rating": "forgot"},
+    )
+
+    assert forgot.status_code == 200
+    assert forgot.json()["sheet"]["srs_level"] == 1
+    assert forgot.json()["sheet"]["interval_days"] == 1
+    assert forgot.json()["sheet"]["lapse_count"] == 5
+
+
+def test_rating_rejects_ineligible_or_incomplete_sessions(
+    api_client: TestClient, db_session: Session
+) -> None:
+    sheet, cards = create_session_source(db_session)
+    active_session = create_session(api_client, sheet.id)
+    active_rating = api_client.post(
+        f"/api/v1/study-sessions/{active_session['id']}/rating",
+        json={"rating": "good"},
+    )
+    cards[1].is_weak = True
+    db_session.commit()
+    weak_session = create_session(api_client, sheet.id, session_type="weak_cards")
+    complete_session_with_remembered_cards(api_client, weak_session["id"], [cards[1]])
+    weak_rating = api_client.post(
+        f"/api/v1/study-sessions/{weak_session['id']}/rating",
+        json={"rating": "good"},
+    )
+
+    assert active_rating.status_code == 409
+    assert weak_rating.status_code == 422
+    assert db_session.get(StudySheet, sheet.id).review_count == 0
+
+
+def test_due_and_not_started_routes_filter_sheets_and_keep_static_route_order(
+    api_client: TestClient, db_session: Session
+) -> None:
+    workbook = create_workbook(db_session, "SRS lists", datetime.now(timezone.utc))
+    due_sheet = next(sheet for sheet in workbook.sheets if sheet.position == 1)
+    future_sheet = next(sheet for sheet in workbook.sheets if sheet.position == 2)
+    due_sheet.status = SheetStatus.LEARNED
+    due_sheet.next_review_at = datetime.now(timezone.utc) - timedelta(seconds=1)
+    future_sheet.status = SheetStatus.LEARNED
+    future_sheet.next_review_at = datetime.now(timezone.utc) + timedelta(days=1)
+    untouched_workbook = create_workbook(db_session, "Unstarted", datetime.now(timezone.utc))
+    db_session.commit()
+
+    due = api_client.get("/api/v1/sheets/due")
+    not_started = api_client.get("/api/v1/sheets/not-started")
+
+    assert due.status_code == 200
+    assert [sheet["id"] for sheet in due.json()] == [due_sheet.id]
+    assert due.json()[0]["status"] == "due"
+    assert db_session.get(StudySheet, due_sheet.id).status is SheetStatus.DUE
+    assert not_started.status_code == 200
+    assert {sheet["id"] for sheet in not_started.json()} == {
+        sheet.id for sheet in untouched_workbook.sheets
+    }
+
+
+def test_study_session_rating_post_cors_preflight(api_client: TestClient) -> None:
+    response = api_client.options(
+        "/api/v1/study-sessions/1/rating",
+        headers={
+            "Origin": "http://localhost:3000",
+            "Access-Control-Request-Method": "POST",
+            "Access-Control-Request-Headers": "content-type",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.headers["access-control-allow-origin"] == "http://localhost:3000"
+    assert "POST" in response.headers["access-control-allow-methods"]
 
 
 def test_deleting_a_workbook_cascades_its_study_sessions(

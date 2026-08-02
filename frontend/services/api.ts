@@ -118,6 +118,42 @@ export type StudySessionRatingResponse = {
   sheet: SheetDetail;
 };
 
+export type DashboardSheetItem = SheetSummary & {
+  workbook_id: number;
+  workbook_name: string;
+};
+
+export type DashboardActiveSessionItem = {
+  id: number;
+  sheet: DashboardSheetItem;
+  session_type: StudySessionType;
+  direction: StudyDirection;
+  started_at: string;
+  total_cards: number;
+};
+
+export type DashboardRecentSessionItem = {
+  id: number;
+  sheet_id: number;
+  sheet_name: string;
+  workbook_id: number;
+  workbook_name: string;
+  session_type: StudySessionType;
+  completed_at: string;
+  total_cards: number;
+  total_attempts: number;
+  mastery_score: number | null;
+};
+
+export type DashboardSummary = {
+  generated_at: string;
+  due_sheets: DashboardSheetItem[];
+  active_sessions: DashboardActiveSessionItem[];
+  new_sheets: DashboardSheetItem[];
+  weak_card_count: number;
+  recent_sessions: DashboardRecentSessionItem[];
+};
+
 export type StudySessionCreateInput = {
   sheet_id: number;
   session_type: StudySessionType;
@@ -249,6 +285,10 @@ export async function getDueSheets(): Promise<SheetSummary[]> {
 
 export async function getNotStartedSheets(): Promise<SheetSummary[]> {
   return requestJson<SheetSummary[]>("/api/v1/sheets/not-started");
+}
+
+export async function getDashboard(): Promise<DashboardSummary> {
+  return requestJson<DashboardSummary>("/api/v1/dashboard");
 }
 
 export async function getSheetCards(id: string): Promise<FlashcardListItem[]> {

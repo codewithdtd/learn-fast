@@ -162,5 +162,6 @@ def list_due_sheets(db: Session, *, now: datetime | None = None) -> list[StudySh
             StudySheet.next_review_at.is_not(None),
             StudySheet.next_review_at <= due_at,
         )
+        .options(selectinload(StudySheet.workbook))
         .order_by(StudySheet.next_review_at, StudySheet.priority, StudySheet.workbook_id, StudySheet.position)
     ).all()
