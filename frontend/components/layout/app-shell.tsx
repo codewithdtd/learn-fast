@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-type IconName = "home" | "books" | "import" | "study" | "calendar" | "review" | "arrow" | "clock" | "check" | "weak";
+type IconName = "home" | "books" | "import" | "study" | "calendar" | "review" | "arrow" | "clock" | "check" | "weak" | "refresh";
 
 export function Icon({ name, size = 24 }: { name: IconName; size?: number }) {
   const paths: Record<IconName, React.ReactNode> = {
@@ -14,6 +14,7 @@ export function Icon({ name, size = 24 }: { name: IconName; size?: number }) {
     clock: <><circle cx="12" cy="12" r="8" /><path d="M12 7v5l3 2" /></>,
     check: <><circle cx="12" cy="12" r="8" /><path d="m8.5 12 2.2 2.2 4.8-5" /></>,
     weak: <><path d="m12 20-7-8a4.5 4.5 0 0 1 7-5.5A4.5 4.5 0 0 1 19 12z" /><path d="M12 9v4M12 16h.01" /></>,
+    refresh: <><path d="M20 11a8 8 0 0 0-14.7-3L4 10" /><path d="M4 5v5h5M4 13a8 8 0 0 0 14.7 3L20 14" /><path d="M20 19v-5h-5" /></>,
   };
 
   return <svg aria-hidden="true" className="icon" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">{paths[name]}</svg>;
@@ -25,7 +26,13 @@ const navItems = [
   { href: "/import", label: "Import", mobileLabel: "Import", icon: "import" as const },
 ];
 
-export function AppShell({ children }: { children: React.ReactNode }) {
+export function AppShell({
+  children,
+  activeHref = "/",
+}: {
+  children: React.ReactNode;
+  activeHref?: string;
+}) {
   return (
     <div className="app-shell">
       <aside className="desktop-sidebar">
@@ -34,7 +41,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <span><strong>DtdFLow</strong><small>Personal Mentor</small></span>
         </Link>
         <nav className="sidebar-nav" aria-label="Primary navigation">
-          {navItems.map((item) => <Link key={item.href} href={item.href} className={item.href === "/" ? "nav-link active" : "nav-link"}><Icon name={item.icon} /><span>{item.label}</span></Link>)}
+          {navItems.map((item) => <Link key={item.href} href={item.href} className={item.href === activeHref ? "nav-link active" : "nav-link"}><Icon name={item.icon} /><span>{item.label}</span></Link>)}
         </nav>
         <Link href="/workbooks" className="sidebar-action">Browse Workbooks <Icon name="arrow" size={18} /></Link>
       </aside>
@@ -47,7 +54,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div className="app-content">{children}</div>
 
       <nav className="mobile-bottom-nav" aria-label="Mobile navigation">
-        {navItems.map((item) => <Link key={item.href} href={item.href} className={item.href === "/" ? "mobile-nav-link active" : "mobile-nav-link"}><Icon name={item.icon} size={22} /><span>{item.mobileLabel}</span></Link>)}
+        {navItems.map((item) => <Link key={item.href} href={item.href} className={item.href === activeHref ? "mobile-nav-link active" : "mobile-nav-link"}><Icon name={item.icon} size={22} /><span>{item.mobileLabel}</span></Link>)}
       </nav>
     </div>
   );
