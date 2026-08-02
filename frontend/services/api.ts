@@ -73,6 +73,71 @@ export type FlashcardListItem = {
   is_bookmarked: boolean;
 };
 
+export type StudySessionType =
+  | "new_learning"
+  | "srs_review"
+  | "weak_cards"
+  | "quick_recall";
+export type StudyDirection = "en_to_vi" | "vi_to_en" | "mixed";
+export type StudyAnswerDirection = Exclude<StudyDirection, "mixed">;
+export type StudySessionStatus = "active" | "completed" | "abandoned";
+export type StudyAnswerResult = "again" | "remembered";
+
+export type StudySessionCard = {
+  id: number;
+  flashcard_id: number;
+  direction: StudyDirection | null;
+  attempt_count: number;
+  again_count: number;
+  remembered: boolean;
+  first_try_correct: boolean;
+  last_answered_at: string | null;
+  flashcard: FlashcardListItem;
+};
+
+export type StudySession = {
+  id: number;
+  sheet_id: number;
+  session_type: StudySessionType;
+  direction: StudyDirection;
+  status: StudySessionStatus;
+  started_at: string;
+  completed_at: string | null;
+  total_cards: number;
+  total_attempts: number;
+  first_try_correct: number;
+  again_count: number;
+  mastery_score: number | null;
+  sheet_rating: string | null;
+  session_cards: StudySessionCard[];
+};
+
+export type StudySessionCreateInput = {
+  sheet_id: number;
+  session_type: StudySessionType;
+  direction: StudyDirection;
+};
+
+export type StudySessionAnswerInput = {
+  direction: StudyAnswerDirection;
+  result: StudyAnswerResult;
+};
+
+export type StudySessionAnswerResponse = {
+  session_id: number;
+  card_id: number;
+  direction: StudyAnswerDirection;
+  result: StudyAnswerResult;
+  attempt_count: number;
+  again_count: number;
+  remembered: boolean;
+  first_try_correct: boolean;
+  total_attempts: number;
+  session_again_count: number;
+  session_first_try_correct: number;
+  remaining_cards: number;
+};
+
 export type QuickRecallResult = "remembered" | "need_review";
 
 export type QuickRecallCardResultInput = {
@@ -227,6 +292,37 @@ export async function completeQuickRecall(
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ results }),
+    },
+  );
+}
+
+export async function createStudySession(
+  input: StudySessionCreateInput,
+): Promise<StudySession> {
+  return requestJson<StudySession>("/api/v1/study-sessions", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+}
+
+export async function getStudySession(sessionId: string): Promise<StudySession> {
+  return requestJson<StudySession>(
+    `/api/v1/study-sessions/${encodeURIComponent(sessionId)}`,
+  );
+}
+
+export async function answerStudySessionCard(
+  sessionId: string,
+  cardId: number,
+  input: StudySessionAnswerInput,
+): Promise<StudySessionAnswerResponse> {
+  return requestJson<StudySessionAnswerResponse>(
+    `/api/v1/study-sessions/${encodeURIComponent(sessionId)}/cards/${cardId}/answer`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
     },
   );
 }
