@@ -13,6 +13,16 @@ const inter = Inter({
   variable: "--font-inter",
 });
 
+const themeScript = `(() => {
+  try {
+    const storedTheme = localStorage.getItem("learn-fast-theme");
+    const theme = storedTheme === "light" || storedTheme === "dark"
+      ? storedTheme
+      : (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.dataset.theme = theme;
+  } catch {}
+})();`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -20,7 +30,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="vi" className={`${inter.variable} h-full antialiased`} suppressHydrationWarning>
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        {children}
+      </body>
     </html>
   );
 }

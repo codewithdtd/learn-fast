@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ThemeToggle } from "./theme-toggle";
 
 type IconName = "home" | "books" | "import" | "study" | "calendar" | "review" | "arrow" | "clock" | "check" | "weak" | "refresh" | "search" | "flame" | "bookmark" | "eye" | "chevronDown" | "back" | "play";
 
@@ -50,12 +51,14 @@ export function AppShell({
         <nav className="sidebar-nav" aria-label="Primary navigation">
           {navItems.map((item) => <Link key={item.href} href={item.href} className={item.href === activeHref ? "nav-link active" : "nav-link"}><Icon name={item.icon} /><span>{item.label}</span></Link>)}
         </nav>
+        <ThemeToggle />
         <Link href="/workbooks" className="sidebar-action">Browse Workbooks <Icon name="arrow" size={18} /></Link>
       </aside>
 
       <header className="mobile-header">
         <Link href="/" className="mobile-brand">DtdFLow</Link>
         <span className="mobile-header-label">Today</span>
+        <ThemeToggle compact />
       </header>
 
       <div className="app-content">{children}</div>
