@@ -4,6 +4,10 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "English SRS & Mastery Learning",
   description: "Personal English learning application",
+  icons: {
+    icon: "/favicon.png",
+    apple: "/favicon.png"
+  }
 };
 
 export default function RootLayout({
