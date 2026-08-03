@@ -3409,3 +3409,210 @@ a {
     transform: none;
   }
 }
+
+/* Flashcard interaction */
+.study-flashcard {
+  cursor: pointer;
+  perspective: 1200px;
+}
+
+.study-flashcard.is-disabled {
+  cursor: not-allowed;
+}
+
+.study-flashcard-inner {
+  display: grid;
+  width: 100%;
+  min-height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 420ms ease-out;
+}
+
+.study-flashcard.is-flipped .study-flashcard-inner {
+  transform: rotateY(180deg);
+}
+
+.study-flashcard-face {
+  grid-area: 1 / 1;
+  min-width: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.study-flashcard-face.study-flashcard-back {
+  transform: rotateY(180deg);
+}
+
+.study-flashcard {
+  min-height: 0;
+  overflow: visible;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.study-flashcard-inner {
+  position: relative;
+  min-height: 0;
+}
+
+.study-flashcard-face {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--outline);
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: 0 12px 26px rgb(27 27 36 / 12%);
+}
+
+.study-flashcard-face.study-flashcard-back {
+  border-color: var(--outline);
+  color: var(--foreground);
+  background: var(--surface);
+}
+
+.study-flashcard-face .study-flashcard-topline {
+  flex: 0 0 auto;
+  border-bottom: 1px solid var(--outline);
+  background: inherit;
+}
+
+.study-flashcard-face.study-flashcard-back .study-flashcard-topline {
+  border-bottom-color: var(--outline);
+  color: var(--muted);
+}
+
+.study-flashcard-face .study-flashcard-body {
+  flex: 1 1 auto;
+  min-height: 390px;
+}
+
+.study-flashcard-face-content {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.study-flashcard-face.study-flashcard-back .study-flashcard-face-content {
+  align-items: stretch;
+  text-align: left;
+}
+
+.study-flashcard-face.study-flashcard-back .study-flashcard-label,
+.study-flashcard-face.study-flashcard-back .study-flashcard-answer-value {
+  color: var(--foreground);
+  text-align: center;
+}
+
+.study-flashcard-face.study-flashcard-back .study-flashcard-answer-value {
+  color: var(--primary);
+}
+
+.study-flashcard-face.study-flashcard-back .study-example {
+  color: var(--foreground);
+  background: var(--surface);
+}
+
+.study-answer-button.again {
+  border-color: var(--error-soft);
+  color: var(--error);
+  background: #fff1f3;
+}
+
+.study-answer-button.again:hover:not(:disabled) {
+  border-color: var(--error);
+  background: var(--error-soft);
+}
+
+.study-answer-button.remembered {
+  border-color: var(--primary-container);
+  color: white;
+  background: var(--primary-container);
+  box-shadow: 0 8px 16px rgb(53 37 205 / 22%);
+}
+
+.study-answer-button.remembered:hover:not(:disabled) {
+  border-color: var(--primary);
+  background: var(--primary);
+}
+
+.study-card-navigation {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.study-card-navigation > span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.study-card-navigation-button {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid var(--outline);
+  border-radius: 11px;
+  padding: 0 13px;
+  color: var(--primary);
+  background: var(--surface);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.study-card-navigation-button:first-child {
+  justify-self: start;
+}
+
+.study-card-navigation-button:last-child {
+  justify-self: end;
+}
+
+.study-card-navigation-button:hover:not(:disabled) {
+  border-color: var(--primary);
+  background: var(--surface-low);
+}
+
+.study-card-navigation-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+
+.study-answer-reminder {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .study-flashcard-inner {
+    transition: none;
+  }
+}
+
+@media (max-width: 639px) {
+  .study-card-navigation {
+    gap: 8px;
+    margin-top: 14px;
+  }
+
+  .study-card-navigation-button {
+    padding: 0 9px;
+    font-size: 12px;
+  }
+
+  .study-card-navigation > span {
+    font-size: 11px;
+  }
+}

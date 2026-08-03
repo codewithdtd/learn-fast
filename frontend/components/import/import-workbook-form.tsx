@@ -27,7 +27,23 @@ export function ImportWorkbookForm() {
 
   return <>
     <form className="import-card" onSubmit={handleSubmit}>
-      <div className="import-file-surface"><input ref={fileInputRef} id="workbook-file" name="file" type="file" accept=".xlsx" disabled={isImporting} onChange={(event) => selectFile(event.target.files?.[0] ?? null)} /><div className="import-file-icon"><Icon name="import" size={32} /></div>{file ? <><p className="import-file-name">{file.name}</p><p className="import-file-size">{formatFileSize(file.size)}</p><button type="button" className="import-change-button" onClick={() => fileInputRef.current?.click()} disabled={isImporting}>Change file</button></> : <><h2>Choose an Excel workbook</h2><p>Upload an .xlsx file with your vocabulary columns.</p><button type="button" className="import-choose-button" onClick={() => fileInputRef.current?.click()} disabled={isImporting}><Icon name="import" size={22} /> Choose Excel file</button></>}</div>
+      <div className="import-file-surface">
+        <input ref={fileInputRef} id="workbook-file" name="file" type="file" accept=".xlsx" disabled={isImporting} onChange={(event) => selectFile(event.target.files?.[0] ?? null)} />
+        {file ? 
+        <>
+          <p className="import-file-name">{file.name}</p>
+          <p className="import-file-size">{formatFileSize(file.size)}</p>
+          <button type="button" className="import-change-button" onClick={() => fileInputRef.current?.click()} disabled={isImporting}>Change file</button>
+        </> : 
+        <>
+          <h2>Choose an Excel workbook</h2>
+          <p>Upload an .xlsx file with your vocabulary columns.</p>
+          <button type="button" className="import-choose-button" onClick={() => fileInputRef.current?.click()} disabled={isImporting}>
+            <Icon name="import" size={22} /> 
+            Choose Excel file
+          </button>
+        </>}
+      </div>
       <section className="import-guidance"><Icon name="review" size={22} /><div><h2>File structure</h2><p>Use <strong>Phrase</strong> and <strong>Meaning</strong> columns. <strong>Example EN</strong> and <strong>Example VI</strong> are optional.</p></div></section>
       <div className="import-actions"><button type="submit" className="import-submit-button" disabled={!file || isImporting}>{isImporting ? "Importing…" : "Import workbook"}<Icon name="arrow" size={19} /></button>{(file || result || error) && <button type="button" className="import-reset-button" onClick={resetForm} disabled={isImporting}>Choose another file</button>}</div>
     </form>
