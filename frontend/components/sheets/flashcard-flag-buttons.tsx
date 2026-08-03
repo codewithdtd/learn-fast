@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 
+import { Icon } from "@/components/layout/app-shell";
+
 type FlashcardFlagButtonsProps = {
   isWeak: boolean;
   isBookmarked: boolean;
@@ -35,31 +37,29 @@ export function FlashcardFlagButtons({
   }
 
   return (
-    <div className="flex gap-2">
+    <div className="flashcard-flag-actions">
       <button
         type="button"
         aria-pressed={isWeak}
+        aria-label={isWeak ? "Remove weak flag" : "Mark card as weak"}
+        title={isWeak ? "Remove weak flag" : "Mark card as weak"}
         disabled={pendingFlag !== null}
         onClick={() => void changeFlag("weak", () => onWeakChange(!isWeak))}
-        className={`rounded-md px-2.5 py-1.5 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-60 ${
-          isWeak
-            ? "bg-amber-200 text-amber-950 hover:bg-amber-300"
-            : "border border-amber-300 text-amber-800 hover:bg-amber-50"
-        }`}
+        className={`flashcard-flag-button weak-flag ${isWeak ? "active" : ""}`}
       >
+        <Icon name="flame" size={19} />
         {pendingFlag === "weak" ? "Saving…" : isWeak ? "Weak" : "Mark weak"}
       </button>
       <button
         type="button"
         aria-pressed={isBookmarked}
+        aria-label={isBookmarked ? "Remove bookmark" : "Bookmark card"}
+        title={isBookmarked ? "Remove bookmark" : "Bookmark card"}
         disabled={pendingFlag !== null}
         onClick={() => void changeFlag("bookmark", () => onBookmarkChange(!isBookmarked))}
-        className={`rounded-md px-2.5 py-1.5 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-60 ${
-          isBookmarked
-            ? "bg-sky-200 text-sky-950 hover:bg-sky-300"
-            : "border border-sky-300 text-sky-800 hover:bg-sky-50"
-        }`}
+        className={`flashcard-flag-button bookmark-flag ${isBookmarked ? "active" : ""}`}
       >
+        <Icon name="bookmark" size={19} />
         {pendingFlag === "bookmark"
           ? "Saving…"
           : isBookmarked

@@ -1,3 +1,4 @@
+import { AppShell } from "@/components/layout/app-shell";
 import { StudySetupView } from "@/components/study/study-setup";
 
 type StudySetupPageProps = {
@@ -10,8 +11,10 @@ export default async function StudySetupPage({ params, searchParams }: StudySetu
   const initialMode = query.mode === "review" ? "review" : "default";
 
   return (
-    <main className="min-h-screen bg-slate-50 px-6 py-16 text-slate-900">
-      <div className="mx-auto w-full max-w-3xl"><StudySetupView sheetId={sheetId} initialMode={initialMode} /></div>
-    </main>
+    <AppShell activeHref="/workbooks">
+      <main className="study-setup-page">
+        <StudySetupView sheetId={sheetId} initialMode={initialMode} />
+      </main>
+    </AppShell>
   );
 }

@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { Icon } from "@/components/layout/app-shell";
 import { formatDate, formatLabel } from "@/lib/format";
 import type { SheetSummary } from "@/services/api";
 
@@ -8,29 +9,35 @@ type SheetListItemProps = {
 };
 
 export function SheetListItem({ sheet }: SheetListItemProps) {
+  const isDue = sheet.status === "due";
+  const isLearned = sheet.status === "learned";
+  const reviewDate = sheet.next_review_at ? formatDate(sheet.next_review_at) : "Not scheduled";
+
   return (
     <li>
       <Link
         href={`/sheets/${sheet.id}`}
-        className="block rounded-xl border border-slate-200 bg-white p-4 hover:border-sky-300 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
+        className={`workbook-sheet-row status-${sheet.status}`}
       >
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="font-semibold text-slate-900">
-            {sheet.position}. {sheet.name}
-          </h2>
-          <span className="text-sm text-slate-600">{sheet.card_count} cards</span>
-        </div>
-        <div className="mt-3 flex flex-wrap gap-2 text-xs font-medium">
-          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-700">
-            {formatLabel(sheet.status)}
+        <span className="workbook-sheet-icon"><Icon name={isLearned ? "check" : isDue ? "review" : "books"} size={25} /></span>
+        <span className="workbook-sheet-copy">
+          <span className="workbook-sheet-title-row">
+            <strong>{sheet.name}</strong>
+            {isDue && <span className="sheet-due-badge">Due</span>}
           </span>
-          <span className="rounded-full bg-sky-50 px-2.5 py-1 text-sky-800">
-            {formatLabel(sheet.priority)}
+          <span className="workbook-sheet-meta">
+            <span>{sheet.card_count} cards</span>
+            <span aria-hidden="true">•</span>
+            <span>{formatLabel(sheet.status)}</span>
           </span>
-          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-600">
-            Next review: {formatDate(sheet.next_review_at)}
-          </span>
-        </div>
+        </span>
+        <span className="workbook-sheet-side">
+          <span className={`sheet-status-badge status-${sheet.status}`}>{formatLabel(sheet.status)}</span>
+          <span className="sheet-review-date">Review: {reviewDate}</span>
+        </span>
+        <span className="workbook-sheet-arrow" aria-hidden="true">
+          <Icon name={isLearned ? "refresh" : "arrow"} size={22} />
+        </span>
       </Link>
     </li>
   );

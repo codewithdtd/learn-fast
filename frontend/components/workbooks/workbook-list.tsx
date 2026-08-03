@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { WorkbookCard } from "@/components/workbooks/workbook-card";
 import { getWorkbooks, type WorkbookListItem } from "@/services/api";
 
 export function WorkbookList() {
   const [workbooks, setWorkbooks] = useState<WorkbookListItem[]>([]);
+  const [search, setSearch] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -17,7 +18,7 @@ export function WorkbookList() {
     try {
       setWorkbooks(await getWorkbooks());
     } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : "Không thể tải workbooks.");
+      setError(caughtError instanceof Error ? caughtError.message : "Could not load your workbooks.");
     } finally {
       setIsLoading(false);
     }
@@ -26,19 +27,13 @@ export function WorkbookList() {
   useEffect(() => {
     let isCurrent = true;
 
-    // Fetching resolves asynchronously. Keeping the state updates in promise
-    // callbacks avoids a synchronous state update while React mounts.
     void getWorkbooks()
       .then((loadedWorkbooks) => {
         if (isCurrent) setWorkbooks(loadedWorkbooks);
       })
       .catch((caughtError: unknown) => {
         if (isCurrent) {
-          setError(
-            caughtError instanceof Error
-              ? caughtError.message
-              : "Không thể tải workbooks.",
-          );
+          setError(caughtError instanceof Error ? caughtError.message : "Could not load your workbooks.");
         }
       })
       .finally(() => {
@@ -50,45 +45,75 @@ export function WorkbookList() {
     };
   }, []);
 
-  if (isLoading) {
-    return <p className="mt-8 text-slate-600">Đang tải workbooks…</p>;
-  }
+  const filteredWorkbooks = useMemo(() => {
+    const normalizedSearch = search.trim().toLowerCase();
+    if (!normalizedSearch) return workbooks;
 
-  if (error) {
-    return (
-      <section role="alert" className="mt-8 rounded-xl border border-rose-200 bg-rose-50 p-5 text-rose-900">
-        <p>{error}</p>
-        <button
-          type="button"
-          onClick={() => void loadWorkbooks()}
-          className="mt-3 rounded-md border border-rose-300 px-3 py-1.5 text-sm font-semibold hover:bg-rose-100"
-        >
-          Thử lại
-        </button>
-      </section>
+    return workbooks.filter((workbook) =>
+      `${workbook.name} ${workbook.original_filename}`.toLowerCase().includes(normalizedSearch),
     );
-  }
+  }, [search, workbooks]);
 
-  if (workbooks.length === 0) {
-    return (
-      <section className="mt-8 rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center">
-        <h2 className="text-lg font-semibold">Chưa có workbook nào</h2>
-        <p className="mt-2 text-slate-600">Import một file Excel để bắt đầu học.</p>
-        <Link
-          href="/import"
-          className="mt-5 inline-flex rounded-lg bg-sky-700 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-800"
-        >
-          Import workbook
-        </Link>
-      </section>
-    );
-  }
+  if (isLoading) return <WorkbookLoading />;
+  if (error) return <WorkbookError message={error} onRetry={loadWorkbooks} />;
+  if (workbooks.length === 0) return <WorkbookEmpty />;
 
   return (
-    <div className="mt-8 space-y-4">
-      {workbooks.map((workbook) => (
-        <WorkbookCard key={workbook.id} workbook={workbook} onDeleted={loadWorkbooks} />
-      ))}
-    </div>
+    <section className="library-content" aria-label="Workbook library">
+      <div className="library-toolbar">
+        <label className="library-search">
+          <span className="sr-only">Search workbooks</span>
+          <svg aria-hidden="true" viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="7" />
+            <path d="m16 16 5 5" />
+          </svg>
+          <input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Search workbooks..."
+            type="search"
+          />
+        </label>
+        <span className="library-count">
+          {filteredWorkbooks.length} {filteredWorkbooks.length === 1 ? "workbook" : "workbooks"}
+        </span>
+      </div>
+
+      {filteredWorkbooks.length === 0 ? (
+        <p className="library-no-results">No workbooks match “{search}”.</p>
+      ) : (
+        <div className="workbook-grid">
+          {filteredWorkbooks.map((workbook) => (
+            <WorkbookCard key={workbook.id} workbook={workbook} onDeleted={loadWorkbooks} />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function WorkbookLoading() {
+  return <div className="workbook-loading" aria-label="Loading workbooks"><span /><span /><span /></div>;
+}
+
+function WorkbookError({ message, onRetry }: { message: string; onRetry: () => Promise<void> }) {
+  return (
+    <section role="alert" className="library-error">
+      <p>{message}</p>
+      <button type="button" className="library-button library-button-secondary" onClick={() => void onRetry()}>
+        Try again
+      </button>
+    </section>
+  );
+}
+
+function WorkbookEmpty() {
+  return (
+    <section className="library-empty">
+      <div className="library-empty-icon">+</div>
+      <h2>No workbooks yet</h2>
+      <p>Import an Excel workbook to start building your vocabulary library.</p>
+      <Link href="/import" className="library-button library-button-primary">Import workbook</Link>
+    </section>
   );
 }

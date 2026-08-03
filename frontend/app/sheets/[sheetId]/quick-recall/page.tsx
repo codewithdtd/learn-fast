@@ -1,3 +1,4 @@
+import { AppShell } from "@/components/layout/app-shell";
 import { QuickRecallView } from "@/components/quick-recall/quick-recall-view";
 
 type QuickRecallPageProps = {
@@ -8,10 +9,10 @@ export default async function QuickRecallPage({ params }: QuickRecallPageProps) 
   const { sheetId } = await params;
 
   return (
-    <main className="min-h-screen bg-slate-50 px-6 py-16 text-slate-900">
-      <div className="mx-auto w-full max-w-4xl">
+    <AppShell activeHref="/workbooks">
+      <main className="quick-recall-page">
         <QuickRecallView sheetId={sheetId} />
-      </div>
-    </main>
+      </main>
+    </AppShell>
   );
 }
