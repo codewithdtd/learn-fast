@@ -1,25 +1,33 @@
 @import "tailwindcss";
 
 :root {
-  --background: #fcf8ff;
-  --foreground: #1b1b24;
+  --background: #f7fbfc;
+  --foreground: #1d2733;
+
   --surface: #ffffff;
-  --surface-low: #f5f2ff;
-  --surface-high: #eae6f4;
-  --primary: #3525cd;
-  --primary-container: #4f46e5;
-  --primary-soft: #e4e1ee;
-  --green: #006c49;
-  --green-soft: #d8f8eb;
-  --gold: #684000;
-  --gold-soft: #ffddb8;
-  --muted: #464555;
-  --outline: #c7c4d8;
-  --error: #ba1a1a;
-  --error-soft: #ffdad6;
+  --surface-low: #eef7fa;
+  --surface-high: #e2f0f5;
+
+  --primary: #0ea5e9;
+  --primary-container: #0284c7;
+  --primary-soft: #dff5ff;
+
+  --green: #22c55e;
+  --green-soft: #e7faef;
+
+  --gold: #f59e0b;
+  --gold-soft: #fff4dd;
+
+  --error: #ef4444;
+  --error-soft: #ffe7e7;
+
+  --muted: #61717f;
+  --outline: #d5e3ea;
+
   --radius-md: 12px;
-  --radius-lg: 16px;
-  --shadow-soft: 0 1px 3px rgb(27 27 36 / 8%);
+  --radius-lg: 18px;
+
+  --shadow-soft: 0 6px 18px rgb(14 165 233 / 10%);
 }
 
 @theme inline {
@@ -3482,23 +3490,45 @@ a {
 /* Theme overrides */
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --background: #12111a;
-  --foreground: #f4f1ff;
-  --surface: #1d1b28;
-  --surface-low: #272438;
-  --surface-high: #343047;
-  --primary: #aaa4ff;
-  --primary-container: #6459e8;
-  --primary-soft: #39345e;
-  --green: #53d6a7;
-  --green-soft: #173d35;
-  --gold: #ffd08a;
-  --gold-soft: #4b351d;
-  --muted: #c2bed2;
-  --outline: #514d68;
-  --error: #ff9b9b;
-  --error-soft: #4b282f;
-  --shadow-soft: 0 1px 3px rgb(0 0 0 / 28%);
+
+  /* Base */
+  --background: #131821;
+  --foreground: #edf2f7;
+
+  /* Surface */
+  --surface: #1c2430;
+  --surface-low: #252f3d;
+  --surface-high: #313d4d;
+
+  /* Primary */
+  --primary: #6ba8c9;
+  --primary-container: #4f93b9;
+  --primary-soft: #233847;
+
+  /* Success */
+  --green: #69b88d;
+  --green-soft: #21362d;
+
+  /* Warning */
+  --gold: #cfa25f;
+  --gold-soft: #40331c;
+
+  /* Error */
+  --error: #d47a7a;
+  --error-soft: #432527;
+
+  /* Text */
+  --muted: #b4bcc8;
+
+  /* Border */
+  --outline: #394656;
+
+  /* Radius */
+  --radius-md: 12px;
+  --radius-lg: 18px;
+
+  /* Shadow */
+  --shadow-soft: 0 8px 24px rgb(0 0 0 / 32%);
 }
 
 :root[data-theme="dark"] body {
@@ -3563,16 +3593,16 @@ a {
 :root[data-theme="dark"] .import-error,
 :root[data-theme="dark"] .delete-dialog-error,
 :root[data-theme="dark"] .study-setup-error {
-  border-color: #8e4f58;
-  color: #ffc2c2;
-  background: #3d252c;
+  border-color: #8fa8b8;
+  color: #d9e9f2;
+  background: #243440;
 }
 
 :root[data-theme="dark"] .study-answer-button.again,
 :root[data-theme="dark"] .recall-result-button.need_review.is-selected {
-  border-color: #a76e32;
-  color: #ffd09a;
-  background: #4a321e;
+  border-color: #8fa8b8;
+  color: #d9e9f2;
+  background: #243440;
 }
 
 :root[data-theme="dark"] .study-answer-button.remembered,
