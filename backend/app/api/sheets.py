@@ -70,7 +70,12 @@ def update_sheet(
     db: Session = Depends(get_db),
 ) -> SheetDetail:
     sheet = get_sheet_or_404(db, sheet_id)
-    sheet.priority = update.priority
+    # The endpoint remains a partial update so existing priority controls keep
+    # working while name editing can reuse the same resource URL.
+    if update.name is not None:
+        sheet.name = update.name
+    if update.priority is not None:
+        sheet.priority = update.priority
     try:
         db.commit()
         db.refresh(sheet, attribute_names=["workbook"])

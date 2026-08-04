@@ -8,7 +8,12 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.core.database import get_db
 from app.models import Workbook
-from app.schemas.workbook import WorkbookDetail, WorkbookImportResponse, WorkbookListItem
+from app.schemas.workbook import (
+    WorkbookDetail,
+    WorkbookImportResponse,
+    WorkbookListItem,
+    WorkbookUpdate,
+)
 from app.services.excel_parser import parse_excel_workbook
 from app.services.excel_types import ExcelParseError, ExcelValidationError
 from app.services.workbook_import import (
@@ -49,6 +54,30 @@ def list_workbooks(db: Session = Depends(get_db)) -> list[WorkbookListItem]:
 def get_workbook(workbook_id: int, db: Session = Depends(get_db)) -> WorkbookDetail:
     workbook = get_workbook_or_404(db, workbook_id, include_sheets=True)
     return WorkbookDetail.model_validate(workbook)
+
+
+@router.patch("/workbooks/{workbook_id}", response_model=WorkbookDetail)
+def update_workbook(
+    workbook_id: int,
+    update: WorkbookUpdate,
+    db: Session = Depends(get_db),
+) -> WorkbookDetail:
+    workbook = get_workbook_or_404(db, workbook_id)
+    workbook.name = update.name
+    try:
+        db.commit()
+        # Re-query with the detail loader so the response reflects the saved
+        # name and keeps the existing sheet ordering contract.
+        updated_workbook = get_workbook_or_404(db, workbook_id, include_sheets=True)
+    except SQLAlchemyError as error:
+        db.rollback()
+        logger.exception("Workbook update failed after database rollback.")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Workbook could not be updated. Please try again.",
+        ) from error
+
+    return WorkbookDetail.model_validate(updated_workbook)
 
 
 @router.delete("/workbooks/{workbook_id}", status_code=status.HTTP_204_NO_CONTENT)
