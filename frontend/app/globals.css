@@ -3857,3 +3857,102 @@ a {
     font-size: 11px;
   }
 }
+
+/* Inline entity name editor */
+.workbook-detail-title-row,
+.sheet-detail-name-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.workbook-detail-title-row h1,
+.sheet-detail-name-row h1 {
+  min-width: 0;
+}
+
+.inline-name-edit-trigger {
+  min-height: 32px;
+  border: 1px solid var(--outline);
+  border-radius: 999px;
+  padding: 0 12px;
+  color: var(--primary);
+  background: var(--surface);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.inline-name-edit-trigger:hover {
+  border-color: var(--primary);
+  background: var(--surface-low);
+}
+
+.inline-name-editor {
+  display: flex;
+  flex: 1 1 100%;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  max-width: 720px;
+}
+
+.inline-name-input {
+  min-width: min(280px, 100%);
+  flex: 1 1 280px;
+  min-height: 44px;
+  border: 1px solid var(--primary);
+  border-radius: 10px;
+  padding: 0 12px;
+  color: var(--foreground);
+  background: var(--surface);
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.inline-name-input:focus-visible,
+.inline-name-edit-trigger:focus-visible,
+.inline-name-editor .button:focus-visible {
+  outline: 3px solid var(--primary-soft);
+  outline-offset: 2px;
+}
+
+.inline-name-editor .button {
+  min-height: 40px;
+  padding: 0 14px;
+}
+
+.inline-name-editor .button:disabled {
+  cursor: wait;
+  opacity: .6;
+}
+
+.inline-name-error {
+  flex-basis: 100%;
+  margin: 0;
+  color: var(--error);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+@media (max-width: 639px) {
+  .workbook-detail-title-row,
+  .sheet-detail-name-row {
+    align-items: flex-start;
+  }
+
+  .inline-name-edit-trigger {
+    margin-top: 4px;
+  }
+
+  .inline-name-editor {
+    max-width: none;
+  }
+
+  .inline-name-editor .button {
+    flex: 1 1 auto;
+  }
+}

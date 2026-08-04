@@ -4,9 +4,16 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { Icon } from "@/components/layout/app-shell";
+import { InlineNameEditor } from "@/components/shared/inline-name-editor";
 import { SheetListItem } from "@/components/sheets/sheet-list-item";
 import { formatDate } from "@/lib/format";
-import { ApiRequestError, getWorkbook, type SheetSummary, type WorkbookDetail } from "@/services/api";
+import {
+  ApiRequestError,
+  getWorkbook,
+  updateWorkbookName,
+  type SheetSummary,
+  type WorkbookDetail,
+} from "@/services/api";
 
 type WorkbookDetailProps = {
   workbookId: string;
@@ -82,7 +89,17 @@ export function WorkbookDetailView({ workbookId }: WorkbookDetailProps) {
     return null;
   }
 
-  */ const loadedWorkbook = workbook; if (!loadedWorkbook) return null; return <WorkbookDetailContent workbook={loadedWorkbook} />; /*
+  */
+  const loadedWorkbook = workbook;
+  return (
+    <WorkbookDetailContent
+      workbook={loadedWorkbook}
+      onWorkbookRenamed={async (name) => {
+        setWorkbook(await updateWorkbookName(workbookId, name));
+      }}
+    />
+  );
+  /*
     <section>
       <Link href="/workbooks" className="text-sm font-medium text-sky-700 hover:underline">
         ← Workbooks
@@ -112,7 +129,13 @@ type WorkbookSummary = {
   progress: number;
 };
 
-function WorkbookDetailContent({ workbook }: { workbook: WorkbookDetail }) {
+function WorkbookDetailContent({
+  workbook,
+  onWorkbookRenamed,
+}: {
+  workbook: WorkbookDetail;
+  onWorkbookRenamed: (name: string) => Promise<void>;
+}) {
   const summary = getWorkbookSummary(workbook.sheets);
 
   return (
@@ -124,7 +147,10 @@ function WorkbookDetailContent({ workbook }: { workbook: WorkbookDetail }) {
             <Icon name="arrow" size={15} />
             <span aria-current="page">{workbook.name}</span>
           </nav>
-          <h1>{workbook.name}</h1>
+          <div className="workbook-detail-title-row">
+            <h1>{workbook.name}</h1>
+            <InlineNameEditor value={workbook.name} label="workbook name" onSave={onWorkbookRenamed} />
+          </div>
           <div className="workbook-detail-meta">
             <span><Icon name="calendar" size={17} /> Imported {formatDate(workbook.imported_at)}</span>
             <span><Icon name="books" size={17} /> {workbook.original_filename}</span>

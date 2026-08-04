@@ -266,6 +266,20 @@ export async function getWorkbook(id: string): Promise<WorkbookDetail> {
   return requestJson<WorkbookDetail>(`/api/v1/workbooks/${encodeURIComponent(id)}`);
 }
 
+export async function updateWorkbookName(
+  id: string,
+  name: string,
+): Promise<WorkbookDetail> {
+  return requestJson<WorkbookDetail>(
+    `/api/v1/workbooks/${encodeURIComponent(id)}`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name }),
+    },
+  );
+}
+
 export async function deleteWorkbook(id: string): Promise<void> {
   const response = await fetch(`${apiBaseUrl}/api/v1/workbooks/${encodeURIComponent(id)}`, {
     method: "DELETE",
@@ -305,6 +319,17 @@ export async function updateSheetPriority(
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ priority }),
+  });
+}
+
+export async function updateSheetName(
+  id: string,
+  name: string,
+): Promise<SheetDetail> {
+  return requestJson<SheetDetail>(`/api/v1/sheets/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name }),
   });
 }
 
