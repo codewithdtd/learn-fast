@@ -54,6 +54,39 @@ def test_list_and_detail_order_workbook_content(api_client: TestClient, db_sessi
     assert [sheet["position"] for sheet in detail["sheets"]] == [1, 2]
 
 
+def test_patch_workbook_name_persists_without_changing_sheets(
+    api_client: TestClient, db_session: Session
+) -> None:
+    workbook = create_workbook(db_session, "Vocabulary", datetime.now(timezone.utc))
+
+    response = api_client.patch(
+        f"/api/v1/workbooks/{workbook.id}",
+        json={"name": "  Daily vocabulary  "},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["name"] == "Daily vocabulary"
+    assert [sheet["position"] for sheet in response.json()["sheets"]] == [1, 2]
+    assert db_session.get(Workbook, workbook.id).name == "Daily vocabulary"
+
+
+def test_patch_workbook_name_rejects_invalid_payloads(
+    api_client: TestClient, db_session: Session
+) -> None:
+    workbook = create_workbook(db_session, "Vocabulary", datetime.now(timezone.utc))
+
+    empty_name = api_client.patch(f"/api/v1/workbooks/{workbook.id}", json={"name": "   "})
+    too_long = api_client.patch(f"/api/v1/workbooks/{workbook.id}", json={"name": "x" * 256})
+    unknown_field = api_client.patch(
+        f"/api/v1/workbooks/{workbook.id}", json={"name": "New name", "total_cards": 99}
+    )
+
+    assert empty_name.status_code == 422
+    assert too_long.status_code == 422
+    assert unknown_field.status_code == 422
+    assert db_session.get(Workbook, workbook.id).name == "Vocabulary"
+
+
 def test_sheet_detail_and_cards_keep_position_order(
     api_client: TestClient, db_session: Session
 ) -> None:
@@ -87,6 +120,39 @@ def test_patch_sheet_priority_persists_and_rejects_invalid_payloads(
     assert unknown_field.status_code == 422
 
 
+def test_patch_sheet_name_and_priority_persist_together(
+    api_client: TestClient, db_session: Session
+) -> None:
+    workbook = create_workbook(db_session, "Vocabulary", datetime.now(timezone.utc))
+    sheet_id = workbook.sheets[0].id
+
+    response = api_client.patch(
+        f"/api/v1/sheets/{sheet_id}",
+        json={"name": "  Travel phrases  ", "priority": "high"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["name"] == "Travel phrases"
+    assert response.json()["priority"] == "high"
+    updated_sheet = db_session.get(StudySheet, sheet_id)
+    assert updated_sheet.name == "Travel phrases"
+    assert updated_sheet.priority.value == "high"
+
+
+def test_patch_sheet_name_rejects_invalid_payloads(
+    api_client: TestClient, db_session: Session
+) -> None:
+    workbook = create_workbook(db_session, "Vocabulary", datetime.now(timezone.utc))
+    sheet_id = workbook.sheets[0].id
+
+    empty_name = api_client.patch(f"/api/v1/sheets/{sheet_id}", json={"name": "\t"})
+    too_long = api_client.patch(f"/api/v1/sheets/{sheet_id}", json={"name": "x" * 256})
+
+    assert empty_name.status_code == 422
+    assert too_long.status_code == 422
+    assert db_session.get(StudySheet, sheet_id).name == "First"
+
+
 def test_not_found_resources_return_consistent_messages(api_client: TestClient) -> None:
     workbook_response = api_client.get("/api/v1/workbooks/999")
     sheet_response = api_client.get("/api/v1/sheets/999")
@@ -98,6 +164,16 @@ def test_not_found_resources_return_consistent_messages(api_client: TestClient) 
     assert sheet_response.json() == {"detail": "Study sheet not found."}
     assert cards_response.status_code == 404
     assert cards_response.json() == {"detail": "Study sheet not found."}
+
+
+def test_patch_rename_resources_return_not_found(api_client: TestClient) -> None:
+    workbook_response = api_client.patch("/api/v1/workbooks/999", json={"name": "Missing"})
+    sheet_response = api_client.patch("/api/v1/sheets/999", json={"name": "Missing"})
+
+    assert workbook_response.status_code == 404
+    assert workbook_response.json() == {"detail": "Workbook not found."}
+    assert sheet_response.status_code == 404
+    assert sheet_response.json() == {"detail": "Study sheet not found."}
 
 
 def test_delete_workbook_removes_child_sheets_and_cards(

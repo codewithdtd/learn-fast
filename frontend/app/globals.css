@@ -1,25 +1,33 @@
 @import "tailwindcss";
 
 :root {
-  --background: #fcf8ff;
-  --foreground: #1b1b24;
+  --background: #f7fbfc;
+  --foreground: #1d2733;
+
   --surface: #ffffff;
-  --surface-low: #f5f2ff;
-  --surface-high: #eae6f4;
-  --primary: #3525cd;
-  --primary-container: #4f46e5;
-  --primary-soft: #e4e1ee;
-  --green: #006c49;
-  --green-soft: #d8f8eb;
-  --gold: #684000;
-  --gold-soft: #ffddb8;
-  --muted: #464555;
-  --outline: #c7c4d8;
-  --error: #ba1a1a;
-  --error-soft: #ffdad6;
+  --surface-low: #eef7fa;
+  --surface-high: #e2f0f5;
+
+  --primary: #0ea5e9;
+  --primary-container: #0284c7;
+  --primary-soft: #dff5ff;
+
+  --green: #22c55e;
+  --green-soft: #e7faef;
+
+  --gold: #f59e0b;
+  --gold-soft: #fff4dd;
+
+  --error: #ef4444;
+  --error-soft: #ffe7e7;
+
+  --muted: #61717f;
+  --outline: #d5e3ea;
+
   --radius-md: 12px;
-  --radius-lg: 16px;
-  --shadow-soft: 0 1px 3px rgb(27 27 36 / 8%);
+  --radius-lg: 18px;
+
+  --shadow-soft: 0 6px 18px rgb(14 165 233 / 10%);
 }
 
 @theme inline {
@@ -3482,23 +3490,45 @@ a {
 /* Theme overrides */
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --background: #12111a;
-  --foreground: #f4f1ff;
-  --surface: #1d1b28;
-  --surface-low: #272438;
-  --surface-high: #343047;
-  --primary: #aaa4ff;
-  --primary-container: #6459e8;
-  --primary-soft: #39345e;
-  --green: #53d6a7;
-  --green-soft: #173d35;
-  --gold: #ffd08a;
-  --gold-soft: #4b351d;
-  --muted: #c2bed2;
-  --outline: #514d68;
-  --error: #ff9b9b;
-  --error-soft: #4b282f;
-  --shadow-soft: 0 1px 3px rgb(0 0 0 / 28%);
+
+  /* Base */
+  --background: #131821;
+  --foreground: #edf2f7;
+
+  /* Surface */
+  --surface: #1c2430;
+  --surface-low: #252f3d;
+  --surface-high: #313d4d;
+
+  /* Primary */
+  --primary: #6ba8c9;
+  --primary-container: #4f93b9;
+  --primary-soft: #233847;
+
+  /* Success */
+  --green: #69b88d;
+  --green-soft: #21362d;
+
+  /* Warning */
+  --gold: #cfa25f;
+  --gold-soft: #40331c;
+
+  /* Error */
+  --error: #d47a7a;
+  --error-soft: #432527;
+
+  /* Text */
+  --muted: #b4bcc8;
+
+  /* Border */
+  --outline: #394656;
+
+  /* Radius */
+  --radius-md: 12px;
+  --radius-lg: 18px;
+
+  /* Shadow */
+  --shadow-soft: 0 8px 24px rgb(0 0 0 / 32%);
 }
 
 :root[data-theme="dark"] body {
@@ -3563,16 +3593,16 @@ a {
 :root[data-theme="dark"] .import-error,
 :root[data-theme="dark"] .delete-dialog-error,
 :root[data-theme="dark"] .study-setup-error {
-  border-color: #8e4f58;
-  color: #ffc2c2;
-  background: #3d252c;
+  border-color: #8fa8b8;
+  color: #d9e9f2;
+  background: #243440;
 }
 
 :root[data-theme="dark"] .study-answer-button.again,
 :root[data-theme="dark"] .recall-result-button.need_review.is-selected {
-  border-color: #a76e32;
-  color: #ffd09a;
-  background: #4a321e;
+  border-color: #8fa8b8;
+  color: #d9e9f2;
+  background: #243440;
 }
 
 :root[data-theme="dark"] .study-answer-button.remembered,
@@ -3825,5 +3855,104 @@ a {
 
   .study-card-navigation > span {
     font-size: 11px;
+  }
+}
+
+/* Inline entity name editor */
+.workbook-detail-title-row,
+.sheet-detail-name-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.workbook-detail-title-row h1,
+.sheet-detail-name-row h1 {
+  min-width: 0;
+}
+
+.inline-name-edit-trigger {
+  min-height: 32px;
+  border: 1px solid var(--outline);
+  border-radius: 999px;
+  padding: 0 12px;
+  color: var(--primary);
+  background: var(--surface);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.inline-name-edit-trigger:hover {
+  border-color: var(--primary);
+  background: var(--surface-low);
+}
+
+.inline-name-editor {
+  display: flex;
+  flex: 1 1 100%;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  max-width: 720px;
+}
+
+.inline-name-input {
+  min-width: min(280px, 100%);
+  flex: 1 1 280px;
+  min-height: 44px;
+  border: 1px solid var(--primary);
+  border-radius: 10px;
+  padding: 0 12px;
+  color: var(--foreground);
+  background: var(--surface);
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.inline-name-input:focus-visible,
+.inline-name-edit-trigger:focus-visible,
+.inline-name-editor .button:focus-visible {
+  outline: 3px solid var(--primary-soft);
+  outline-offset: 2px;
+}
+
+.inline-name-editor .button {
+  min-height: 40px;
+  padding: 0 14px;
+}
+
+.inline-name-editor .button:disabled {
+  cursor: wait;
+  opacity: .6;
+}
+
+.inline-name-error {
+  flex-basis: 100%;
+  margin: 0;
+  color: var(--error);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+@media (max-width: 639px) {
+  .workbook-detail-title-row,
+  .sheet-detail-name-row {
+    align-items: flex-start;
+  }
+
+  .inline-name-edit-trigger {
+    margin-top: 4px;
+  }
+
+  .inline-name-editor {
+    max-width: none;
+  }
+
+  .inline-name-editor .button {
+    flex: 1 1 auto;
   }
 }

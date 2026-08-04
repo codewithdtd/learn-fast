@@ -1,8 +1,9 @@
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, field_validator
 
 from app.models.enums import SheetPriority, SheetStatus
+from app.schemas.common import normalize_entity_name
 
 
 class ImportedSheetResponse(BaseModel):
@@ -51,6 +52,17 @@ class SheetSummary(BaseModel):
 
 class WorkbookDetail(WorkbookListItem):
     sheets: list[SheetSummary]
+
+
+class WorkbookUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: str
+
+    @field_validator("name")
+    @classmethod
+    def normalize_name(cls, value: str) -> str:
+        return normalize_entity_name(value)
 
 
 class WorkbookReference(BaseModel):

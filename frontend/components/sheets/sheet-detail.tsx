@@ -4,9 +4,16 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { Icon } from "@/components/layout/app-shell";
+import { InlineNameEditor } from "@/components/shared/inline-name-editor";
 import { PrioritySelector } from "@/components/sheets/priority-selector";
 import { formatDate, formatLabel } from "@/lib/format";
-import { ApiRequestError, getSheet, type SheetDetail, type SheetPriority } from "@/services/api";
+import {
+  ApiRequestError,
+  getSheet,
+  updateSheetName,
+  type SheetDetail,
+  type SheetPriority,
+} from "@/services/api";
 
 type SheetDetailProps = { sheetId: string };
 
@@ -66,6 +73,10 @@ export function SheetDetailView({ sheetId }: SheetDetailProps) {
     setSheet((currentSheet) => currentSheet && { ...currentSheet, priority });
   }
 
+  async function handleSheetRenamed(name: string) {
+    setSheet(await updateSheetName(sheetId, name));
+  }
+
   return (
     <section className="sheet-detail-content">
       <header className="sheet-detail-header">
@@ -82,7 +93,10 @@ export function SheetDetailView({ sheetId }: SheetDetailProps) {
         <div className="sheet-detail-title-row">
           <div>
             <p className="sheet-detail-kicker">Sheet {sheet.position} · {formatLabel(sheet.status)}</p>
-            <h1>{sheet.name}</h1>
+            <div className="sheet-detail-name-row">
+              <h1>{sheet.name}</h1>
+              <InlineNameEditor value={sheet.name} label="sheet name" onSave={handleSheetRenamed} />
+            </div>
             <p className="sheet-detail-subtitle">Part of <Link href={`/workbooks/${sheet.workbook.id}`}>{sheet.workbook.name}</Link></p>
           </div>
           <StatusBadge status={sheet.status} />
