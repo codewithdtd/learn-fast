@@ -1945,6 +1945,135 @@ a {
   }
 }
 
+/* Day 18: a round is a finite, persisted queue; selected answers remain visible
+   so learners can safely correct an accidental response before the round locks. */
+.study-answer-button.is-selected {
+  box-shadow: 0 0 0 3px var(--primary-soft), var(--shadow-soft);
+  transform: translateY(-1px);
+}
+
+.study-flashcard-answer-status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  border: 1px solid var(--outline);
+  border-radius: 999px;
+  padding: 0 10px;
+  color: var(--muted);
+  background: var(--surface-low);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .04em;
+  white-space: nowrap;
+}
+
+.study-flashcard-answer-status.again {
+  border-color: var(--error);
+  color: var(--error);
+  background: var(--error-soft);
+}
+
+.study-flashcard-answer-status.remembered {
+  border-color: var(--green);
+  color: var(--green);
+  background: var(--green-soft);
+}
+
+.study-complete-round-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 46px;
+  margin: 18px auto 0;
+  padding: 0 18px;
+  border: 1px solid var(--primary);
+  border-radius: var(--radius-md);
+  background: var(--primary);
+  color: var(--surface);
+  font: inherit;
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+}
+
+.study-complete-round-button:hover:not(:disabled) {
+  background: var(--primary-container);
+  transform: translateY(-1px);
+}
+
+.study-complete-round-button:active:not(:disabled) { background: var(--primary-container); }
+.study-complete-round-button:disabled { cursor: not-allowed; opacity: .52; }
+
+.study-complete-round-button:focus-visible,
+.study-round-summary-actions button:focus-visible,
+.study-answer-button:focus-visible {
+  outline: 3px solid var(--primary-soft);
+  outline-offset: 3px;
+}
+
+.study-round-summary {
+  max-width: 720px;
+  margin: 28px auto 0;
+  padding: clamp(24px, 5vw, 40px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-soft);
+  text-align: center;
+}
+
+.study-round-summary h2 { margin: 6px 0 20px; font-size: clamp(30px, 6vw, 48px); }
+.study-round-summary > p:last-of-type { max-width: 500px; margin: 20px auto 0; color: var(--muted-foreground); }
+
+.study-round-summary dl {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin: 0;
+}
+
+.study-round-summary dl div { padding: 14px 10px; border-radius: var(--radius-md); background: var(--surface-low); }
+.study-round-summary dt { color: var(--muted-foreground); font-size: 13px; font-weight: 700; }
+.study-round-summary dd { margin: 5px 0 0; color: var(--foreground); font-size: 23px; font-weight: 800; }
+
+.study-round-summary-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 26px; }
+.study-round-summary-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 46px;
+  padding: 0 16px;
+  border: 1px solid var(--primary);
+  border-radius: var(--radius-md);
+  background: var(--primary);
+  color: var(--surface);
+  font: inherit;
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 160ms ease, transform 160ms ease;
+}
+.study-round-summary-actions button:hover:not(:disabled) { background: var(--primary-container); transform: translateY(-1px); }
+.study-round-summary-actions button:active:not(:disabled) { background: var(--primary-container); }
+.study-round-summary-actions button.secondary { border-color: var(--border); background: var(--surface); color: var(--foreground); }
+.study-round-summary-actions button.secondary:hover:not(:disabled) { background: var(--surface-low); }
+.study-round-summary-actions button:disabled { cursor: wait; opacity: .58; }
+
+@media (max-width: 414px) {
+  .study-round-summary dl { grid-template-columns: 1fr; }
+  .study-round-summary-actions { flex-direction: column; }
+  .study-round-summary-actions button { width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .study-complete-round-button,
+  .study-round-summary-actions button,
+  .study-answer-button { transition: none; }
+}
+
 @media (max-width: 1023px) {
   .workbook-detail-page {
     width: min(100% - 48px, 720px);

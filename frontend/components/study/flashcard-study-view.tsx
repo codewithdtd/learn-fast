@@ -7,152 +7,130 @@ import { useRouter } from "next/navigation";
 import { Icon } from "@/components/layout/app-shell";
 import { Flashcard } from "@/components/study/flashcard";
 import { StudyProgress } from "@/components/study/study-progress";
-import { advanceMasteryQueue, buildMasteryQueue, countRememberedCards, getCardStudyDirection, getRetryGap } from "@/lib/study-session";
-import { answerStudySessionCard, ApiRequestError, completeStudySession, getStudySession, type StudyAnswerResult, type StudySession } from "@/services/api";
+import { countRoundAnswers, getCardStudyDirection, getInitialRoundCardIndex } from "@/lib/study-session";
+import {
+  answerStudySessionRoundCard,
+  ApiRequestError,
+  completeStudySession,
+  createStudySessionRound,
+  getStudySession,
+  type StudyAnswerResult,
+  type StudyRoundScope,
+  type StudySession,
+} from "@/services/api";
 
 type FlashcardStudyViewProps = { sessionId: string };
 
 export function FlashcardStudyView({ sessionId }: FlashcardStudyViewProps) {
   const router = useRouter();
   const [session, setSession] = useState<StudySession | null>(null);
-  const [queueCardIds, setQueueCardIds] = useState<number[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isAnswerSubmitting, setIsAnswerSubmitting] = useState(false);
-  const [isCompleting, setIsCompleting] = useState(false);
+  const [isFinishing, setIsFinishing] = useState(false);
+  const [isStartingRound, setIsStartingRound] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notFound, setNotFound] = useState(false);
 
   const applyLoadedSession = useCallback((loadedSession: StudySession) => {
     setSession(loadedSession);
-    setQueueCardIds(buildMasteryQueue(loadedSession.session_cards, loadedSession.id));
+    setCurrentIndex(getInitialRoundCardIndex(loadedSession.active_round?.round_cards ?? []));
     setIsFlipped(false);
   }, []);
 
   const loadSession = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    setNotFound(false);
-    try {
-      applyLoadedSession(await getStudySession(sessionId));
-    } catch (caughtError) {
+    setIsLoading(true); setError(null); setNotFound(false);
+    try { applyLoadedSession(await getStudySession(sessionId)); }
+    catch (caughtError) {
       if (caughtError instanceof ApiRequestError && caughtError.status === 404) setNotFound(true);
       else setError(caughtError instanceof Error ? caughtError.message : "Could not load this study session.");
-    } finally {
-      setIsLoading(false);
-    }
+    } finally { setIsLoading(false); }
   }, [applyLoadedSession, sessionId]);
 
-  useEffect(() => {
-    let isCurrent = true;
-    void getStudySession(sessionId).then((loadedSession) => {
-      if (isCurrent) applyLoadedSession(loadedSession);
-    }).catch((caughtError: unknown) => {
-      if (!isCurrent) return;
-      if (caughtError instanceof ApiRequestError && caughtError.status === 404) {
-        setNotFound(true);
-        return;
-      }
-      setError(caughtError instanceof Error ? caughtError.message : "Could not load this study session.");
-    }).finally(() => {
-      if (isCurrent) setIsLoading(false);
-    });
-    return () => { isCurrent = false; };
+  useEffect(() => { void loadSession(); }, [loadSession]);
+
+  const activeRound = session?.active_round ?? null;
+  const latestRound = session?.round_summaries.at(-1) ?? null;
+  const roundCards = activeRound?.round_cards ?? [];
+  const currentRoundCard = roundCards[currentIndex] ?? null;
+  const currentCard = currentRoundCard?.session_card ?? null;
+  const currentDirection = currentCard && session ? getCardStudyDirection(session.direction, currentCard, currentIndex) : null;
+  const roundCounts = useMemo(() => countRoundAnswers(roundCards), [roundCards]);
+  const isInteractionLocked = isAnswerSubmitting || isFinishing || isStartingRound;
+  const canAnswer = Boolean(activeRound && currentCard && currentDirection && !isInteractionLocked);
+
+  const navigate = useCallback((nextIndex: number) => {
+    if (isInteractionLocked || nextIndex < 0 || nextIndex >= roundCards.length) return;
+    setCurrentIndex(nextIndex); setIsFlipped(false);
+  }, [isInteractionLocked, roundCards.length]);
+
+  const refreshAfterFailure = useCallback(async (message: string) => {
+    try { applyLoadedSession(await getStudySession(sessionId)); setError(`${message} Progress was reloaded.`); }
+    catch { setError(`${message} Refresh this page before trying again.`); }
   }, [applyLoadedSession, sessionId]);
 
-  const currentCardId = queueCardIds[0] ?? null;
-  const currentCardIndex = useMemo(() => session?.session_cards.findIndex((card) => card.id === currentCardId) ?? -1, [currentCardId, session]);
-  const currentCard = currentCardIndex >= 0 && session ? session.session_cards[currentCardIndex] : null;
-  const currentDirection = currentCard && session ? getCardStudyDirection(session.direction, currentCard, currentCardIndex) : null;
-  const rememberedCards = countRememberedCards(session?.session_cards ?? []);
-  const remainingCards = (session?.session_cards.length ?? 0) - rememberedCards;
-  const isInteractionLocked = isAnswerSubmitting || isCompleting;
-  const canAnswer = Boolean(session?.status === "active" && currentCard && currentDirection && !isInteractionLocked);
-  const canNavigateQueue = queueCardIds.length > 1 && !isInteractionLocked;
-
-  const navigateQueue = useCallback((direction: "previous" | "next") => {
-    if (!canNavigateQueue) return;
-    setQueueCardIds((currentQueue) => {
-      if (currentQueue.length < 2) return currentQueue;
-      if (direction === "next") return [...currentQueue.slice(1), currentQueue[0]];
-      return [currentQueue[currentQueue.length - 1], ...currentQueue.slice(0, -1)];
-    });
-    setIsFlipped(false);
-  }, [canNavigateQueue]);
-
-  const finishSession = useCallback(async () => {
-    if (isCompleting) return;
-    setIsCompleting(true);
-    setError(null);
+  const finishLegacyPerfectSession = useCallback(async () => {
+    if (isFinishing) return;
+    setIsFinishing(true); setError(null);
     try {
       const completedSession = await completeStudySession(sessionId);
       setSession(completedSession);
       router.replace(`/study-sessions/${completedSession.id}/result`);
     } catch (caughtError) {
-      const message = caughtError instanceof Error ? caughtError.message : "Could not save the session result.";
-      try {
-        const refreshedSession = await getStudySession(sessionId);
-        applyLoadedSession(refreshedSession);
-        if (refreshedSession.status === "completed") {
-          router.replace(`/study-sessions/${refreshedSession.id}/result`);
-          return;
-        }
-        setError(`${message} Session progress was reloaded before retrying completion.`);
-      } catch {
-        setError(`${message} Refresh this page before trying again.`);
-      }
-    } finally {
-      setIsCompleting(false);
+      await refreshAfterFailure(caughtError instanceof Error ? caughtError.message : "Could not finish this session.");
+    } finally { setIsFinishing(false); }
+  }, [isFinishing, refreshAfterFailure, router, sessionId]);
+
+  useEffect(() => {
+    // Sessions already left at a perfect round before this change are completed
+    // automatically too. New sessions complete in the final answer request.
+    if (session?.status === "active" && !activeRound && latestRound?.recall_percentage === 100 && !isFinishing) {
+      void finishLegacyPerfectSession();
     }
-  }, [applyLoadedSession, isCompleting, router, sessionId]);
+  }, [activeRound, finishLegacyPerfectSession, isFinishing, latestRound?.id, latestRound?.recall_percentage, session?.status]);
 
   const submitAnswer = useCallback(async (result: StudyAnswerResult) => {
-    if (!session || !currentCard || !currentDirection || isInteractionLocked) return;
-    setIsAnswerSubmitting(true);
-    setError(null);
+    if (!session || !activeRound || !currentRoundCard || !currentCard || !currentDirection || isInteractionLocked) return;
+    setIsAnswerSubmitting(true); setError(null);
     try {
-      const response = await answerStudySessionCard(sessionId, currentCard.flashcard_id, { direction: currentDirection, result });
-      const updatedCards = session.session_cards.map((card) => card.flashcard_id === response.card_id
-        ? { ...card, direction: response.direction, attempt_count: response.attempt_count, again_count: response.again_count, remembered: response.remembered, first_try_correct: response.first_try_correct }
-        : card);
-      setSession({ ...session, total_attempts: response.total_attempts, again_count: response.session_again_count, first_try_correct: response.session_first_try_correct, session_cards: updatedCards });
-      const retryGap = result === "again" ? getRetryGap(session.id, currentCard.id, response.again_count) : undefined;
-      const nextQueue = advanceMasteryQueue(queueCardIds, result, retryGap);
-      setQueueCardIds(nextQueue);
-      setIsFlipped(false);
-      if (result === "remembered" && nextQueue.length === 0) await finishSession();
-    } catch (caughtError) {
-      const message = caughtError instanceof Error ? caughtError.message : "Could not save this answer.";
-      try {
-        applyLoadedSession(await getStudySession(sessionId));
-        setError(`${message} Session progress was reloaded before another answer.`);
-      } catch {
-        setError(`${message} Refresh this page before trying again.`);
+      const updatedSession = await answerStudySessionRoundCard(
+        sessionId, activeRound.id, currentCard.flashcard_id, { direction: currentDirection, result },
+      );
+      setSession(updatedSession);
+      // Results are markers, not a retry queue. Both buttons move to the next
+      // physical card exactly once, never search backward and never wrap.
+      if (updatedSession.status === "completed") {
+        router.replace(`/study-sessions/${updatedSession.id}/result`);
+      } else if (updatedSession.active_round && currentIndex < updatedSession.active_round.round_cards.length - 1) {
+        setCurrentIndex(currentIndex + 1);
       }
-    } finally {
-      setIsAnswerSubmitting(false);
-    }
-  }, [applyLoadedSession, currentCard, currentDirection, finishSession, isInteractionLocked, queueCardIds, session, sessionId]);
+      setIsFlipped(false);
+    } catch (caughtError) {
+      await refreshAfterFailure(caughtError instanceof Error ? caughtError.message : "Could not save this answer.");
+    } finally { setIsAnswerSubmitting(false); }
+  }, [activeRound, currentCard, currentDirection, currentIndex, currentRoundCard, isInteractionLocked, refreshAfterFailure, router, session, sessionId]);
+
+  const startRound = useCallback(async (scope: StudyRoundScope) => {
+    if (isStartingRound) return;
+    setIsStartingRound(true); setError(null);
+    try { applyLoadedSession(await createStudySessionRound(sessionId, scope)); }
+    catch (caughtError) { await refreshAfterFailure(caughtError instanceof Error ? caughtError.message : "Could not start another round."); }
+    finally { setIsStartingRound(false); }
+  }, [applyLoadedSession, isStartingRound, refreshAfterFailure, sessionId]);
 
   useEffect(() => {
     function isTypingTarget(target: EventTarget | null) {
       return target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || (target instanceof HTMLElement && target.isContentEditable);
     }
-
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.repeat || event.altKey || event.ctrlKey || event.metaKey || isTypingTarget(event.target) || session?.status !== "active" || isInteractionLocked) return;
-      if (event.key === "1" && canAnswer) {
-        event.preventDefault();
-        void submitAnswer("again");
-      } else if (event.key === "2" && canAnswer) {
-        event.preventDefault();
-        void submitAnswer("remembered");
-      }
+      if (event.repeat || event.altKey || event.ctrlKey || event.metaKey || isTypingTarget(event.target) || !canAnswer) return;
+      if (event.key === "1") { event.preventDefault(); void submitAnswer("again"); }
+      if (event.key === "2") { event.preventDefault(); void submitAnswer("remembered"); }
     }
-
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [canAnswer, isInteractionLocked, session?.status, submitAnswer]);
+  }, [canAnswer, submitAnswer]);
 
   if (isLoading) return <SessionState>Loading study session...</SessionState>;
   if (notFound) return <NotFound />;
@@ -162,25 +140,26 @@ export function FlashcardStudyView({ sessionId }: FlashcardStudyViewProps) {
   if (session.status !== "active") return <InactiveSession status={session.status} sheetId={session.sheet_id} />;
 
   return <section className="study-session-content">
-    <header className="study-session-header"><Link href={`/sheets/${session.sheet_id}`} className="study-session-back"><Icon name="back" size={18} /> Back to sheet</Link><div className="study-session-context"><div><p className="study-session-kicker">{formatSessionType(session.session_type)} - {formatDirection(session.direction)}</p><h1>Flashcard Study</h1><p>Recall the answer first, then reveal it and self-assess.</p></div><span className="study-session-id">Session #{session.id}</span></div></header>
-    <StudyProgress totalCards={session.total_cards} rememberedCards={rememberedCards} remainingCards={remainingCards} queueLength={queueCardIds.length} totalAttempts={session.total_attempts} />
+    <header className="study-session-header"><Link href={`/sheets/${session.sheet_id}`} className="study-session-back"><Icon name="back" size={18} /> Back to sheet</Link><div className="study-session-context"><div><p className="study-session-kicker">{formatSessionType(session.session_type)} · {formatDirection(session.direction)}</p><h1>Flashcard Study</h1><p>Recall the answer, reveal it, then record what you remember.</p></div><span className="study-session-id">Session #{session.id}</span></div></header>
     {error && <p role="alert" className="study-session-inline-error">{error}</p>}
-    {isCompleting ? <SessionState>Saving session result...</SessionState> : currentCard && currentDirection ? <div className="study-session-practice">
-      <div className="study-session-practice-meta"><span>{queueCardIds.length} card{queueCardIds.length === 1 ? "" : "s"} remaining</span><span className="study-keyboard-hint">Click the card to flip, then choose Again or Remembered.</span></div>
-      <Flashcard sessionCard={currentCard} direction={currentDirection} isFlipped={isFlipped} isDisabled={isInteractionLocked} onFlip={() => setIsFlipped((flipped) => !flipped)} />
-      <div className="study-card-navigation" aria-label="Card navigation">
-        <button type="button" className="study-card-navigation-button" disabled={!canNavigateQueue} onClick={() => navigateQueue("previous")}><Icon name="back" size={18} /> Previous card</button>
-        <span>Browse queue</span>
-        <button type="button" className="study-card-navigation-button" disabled={!canNavigateQueue} onClick={() => navigateQueue("next")}>Next card <Icon name="arrow" size={18} /></button>
-      </div>
-      <div className="study-answer-actions"><button type="button" className="study-answer-button again" disabled={!canAnswer} onClick={() => void submitAnswer("again")}><Icon name="refresh" size={21} /> Again <span>(1)</span></button><button type="button" className="study-answer-button remembered" disabled={!canAnswer} onClick={() => void submitAnswer("remembered")}><Icon name="check" size={21} /> Remembered <span>(2)</span></button></div>
-    </div> : <FinishSessionPanel isCompleting={isCompleting} onFinish={finishSession} />}
+    {activeRound ? <>
+      <StudyProgress roundNumber={activeRound.round_number} totalCards={activeRound.total_cards} answeredCards={roundCounts.answered} rememberedCards={roundCounts.remembered} againCards={roundCounts.again} />
+      {currentCard && currentDirection ? <div className="study-session-practice">
+        <div className="study-session-practice-meta"><span>Card {currentIndex + 1} of {roundCards.length}</span><span className="study-keyboard-hint">Use 1 for Again or 2 for Remembered.</span></div>
+        <Flashcard sessionCard={currentCard} direction={currentDirection} isFlipped={isFlipped} isDisabled={isInteractionLocked} answerResult={currentRoundCard.result} onFlip={() => setIsFlipped((flipped) => !flipped)} />
+        <div className="study-card-navigation" aria-label="Card navigation"><button type="button" className="study-card-navigation-button" disabled={currentIndex === 0 || isInteractionLocked} onClick={() => navigate(currentIndex - 1)}><Icon name="back" size={18} /> Previous</button><span>{currentIndex + 1} / {roundCards.length}</span><button type="button" className="study-card-navigation-button" disabled={currentIndex === roundCards.length - 1 || isInteractionLocked} onClick={() => navigate(currentIndex + 1)}>Next <Icon name="arrow" size={18} /></button></div>
+        <div className="study-answer-actions"><button type="button" aria-pressed={currentRoundCard.result === "again"} className={`study-answer-button again${currentRoundCard.result === "again" ? " is-selected" : ""}`} disabled={!canAnswer} onClick={() => void submitAnswer("again")}><Icon name="refresh" size={21} /> Again <span>(1)</span></button><button type="button" aria-pressed={currentRoundCard.result === "remembered"} className={`study-answer-button remembered${currentRoundCard.result === "remembered" ? " is-selected" : ""}`} disabled={!canAnswer} onClick={() => void submitAnswer("remembered")}><Icon name="check" size={21} /> Remembered <span>(2)</span></button></div>
+      </div> : <SessionState>This round has no cards.</SessionState>}
+    </> : latestRound ? latestRound.recall_percentage === 100 ? <SessionState>Completing session…</SessionState> : <RoundSummary round={latestRound} isBusy={isInteractionLocked} onStartRound={startRound} /> : <SessionState>There is no active study round.</SessionState>}
   </section>;
+}
+
+function RoundSummary({ round, isBusy, onStartRound }: { round: StudySession["round_summaries"][number]; isBusy: boolean; onStartRound: (scope: StudyRoundScope) => Promise<void> }) {
+  return <section className="study-round-summary"><p className="eyebrow">Round {round.round_number} complete</p><h2>{round.recall_percentage}% remembered</h2><dl><div><dt>Remembered</dt><dd>{round.remembered_count}</dd></div><div><dt>Again</dt><dd>{round.again_count}</dd></div><div><dt>Cards</dt><dd>{round.total_cards}</dd></div></dl><p>Choose a focused retry, or repeat the full set before finishing.</p><div className="study-round-summary-actions"><button type="button" disabled={isBusy} onClick={() => void onStartRound("forgotten")}>Study only forgotten cards <Icon name="arrow" size={18} /></button><button type="button" className="secondary" disabled={isBusy} onClick={() => void onStartRound("all")}>Study all cards again <Icon name="refresh" size={18} /></button></div></section>;
 }
 
 function formatDirection(direction: StudySession["direction"]) { if (direction === "en_to_vi") return "English to Vietnamese"; if (direction === "vi_to_en") return "Vietnamese to English"; return "Mixed direction"; }
 function formatSessionType(sessionType: StudySession["session_type"]) { if (sessionType === "weak_cards") return "Weak cards"; if (sessionType === "srs_review") return "Scheduled review"; return "All cards"; }
-function FinishSessionPanel({ isCompleting, onFinish }: { isCompleting: boolean; onFinish: () => Promise<void> }) { return <section className="study-session-finish"><p className="eyebrow">Queue complete</p><h2>All cards are marked Remembered</h2><p>Finish to save the result for this study session.</p><button type="button" disabled={isCompleting} onClick={() => void onFinish()}>Finish session <Icon name="arrow" size={19} /></button></section>; }
 function CompletedSession({ sessionId }: { sessionId: number }) { return <section className="study-session-state success"><Icon name="check" size={34} /><h1>This session is complete</h1><Link href={`/study-sessions/${sessionId}/result`}>View session result <Icon name="arrow" size={18} /></Link></section>; }
 function InactiveSession({ status, sheetId }: { status: StudySession["status"]; sheetId: number }) { return <section className="study-session-state"><h1>This session is {status}</h1><p>It is read-only and cannot accept more answers.</p><Link href={`/sheets/${sheetId}`}>Back to sheet</Link></section>; }
 function SessionState({ children }: { children: ReactNode }) { return <section className="study-session-state">{children}</section>; }

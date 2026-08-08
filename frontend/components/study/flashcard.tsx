@@ -1,17 +1,18 @@
 import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 
 import { Icon } from "@/components/layout/app-shell";
-import type { StudyAnswerDirection, StudySessionCard } from "@/services/api";
+import type { StudyAnswerDirection, StudyAnswerResult, StudySessionCard } from "@/services/api";
 
 type FlashcardProps = {
   sessionCard: StudySessionCard;
   direction: StudyAnswerDirection;
   isFlipped: boolean;
   isDisabled: boolean;
+  answerResult: StudyAnswerResult | null;
   onFlip: () => void;
 };
 
-export function Flashcard({ sessionCard, direction, isFlipped, isDisabled, onFlip }: FlashcardProps) {
+export function Flashcard({ sessionCard, direction, isFlipped, isDisabled, answerResult, onFlip }: FlashcardProps) {
   const { flashcard } = sessionCard;
   const isEnglishPrompt = direction === "en_to_vi";
   const question = isEnglishPrompt ? flashcard.phrase : flashcard.meaning;
@@ -38,7 +39,7 @@ export function Flashcard({ sessionCard, direction, isFlipped, isDisabled, onFli
     >
       <div className="study-flashcard-inner">
         <div className="study-flashcard-face study-flashcard-front" aria-hidden={isFlipped}>
-          <div className="study-flashcard-topline"><span>{directionLabel}</span><span>Current card</span></div>
+          <div className="study-flashcard-topline"><span>{directionLabel}</span><AnswerStatus result={answerResult} /></div>
           <div className="study-flashcard-body">
             <div className="study-flashcard-face-content">
               <p className="study-flashcard-label">{promptLabel}</p>
@@ -49,7 +50,7 @@ export function Flashcard({ sessionCard, direction, isFlipped, isDisabled, onFli
         </div>
 
         <div className="study-flashcard-face study-flashcard-back" aria-hidden={!isFlipped}>
-          <div className="study-flashcard-topline"><span>{directionLabel}</span><span>Answer</span></div>
+          <div className="study-flashcard-topline"><span>{directionLabel}</span><AnswerStatus result={answerResult} /></div>
           <div className="study-flashcard-body">
             <div className="study-flashcard-face-content">
               <p className="study-flashcard-label">Answer</p>
@@ -61,4 +62,9 @@ export function Flashcard({ sessionCard, direction, isFlipped, isDisabled, onFli
       </div>
     </article>
   );
+}
+
+function AnswerStatus({ result }: { result: StudyAnswerResult | null }) {
+  if (!result) return <strong className="study-flashcard-answer-status unanswered">Not answered</strong>;
+  return <strong className={`study-flashcard-answer-status ${result}`}>{result === "again" ? "Marked Again" : "Remembered"}</strong>;
 }
