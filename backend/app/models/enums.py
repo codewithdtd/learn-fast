@@ -38,6 +38,21 @@ class StudySessionStatus(str, Enum):
     ABANDONED = "abandoned"
 
 
+class StudyRoundScope(str, Enum):
+    ALL = "all"
+    FORGOTTEN = "forgotten"
+
+
+class StudyRoundStatus(str, Enum):
+    ACTIVE = "active"
+    COMPLETED = "completed"
+
+
+class StudyRoundCardResult(str, Enum):
+    AGAIN = "again"
+    REMEMBERED = "remembered"
+
+
 class SrsRating(str, Enum):
     FORGOT = "forgot"
     HARD = "hard"

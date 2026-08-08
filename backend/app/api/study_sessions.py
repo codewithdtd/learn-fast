@@ -7,6 +7,7 @@ from app.schemas.study_session import (
     StudySessionAnswerResponse,
     StudySessionCreate,
     StudySessionDetail,
+    StudySessionRoundCreate,
 )
 from app.schemas.srs import StudySessionRatingRequest, StudySessionRatingResponse
 from app.schemas.sheet import SheetDetail
@@ -14,8 +15,11 @@ from app.services.study_session import (
     StudySessionConflictError,
     StudySessionPayloadError,
     complete_study_session,
+    complete_study_round,
+    create_next_study_round,
     create_study_session,
     get_study_session_or_404,
+    answer_round_card,
     record_study_answer,
 )
 from app.services.srs import (
@@ -43,6 +47,11 @@ def create_session(
     except StudySessionPayloadError as error:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail=str(error),
+        ) from error
+    except StudySessionConflictError as error:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
             detail=str(error),
         ) from error
 
@@ -76,6 +85,54 @@ def answer_session_card(
         ) from error
 
 
+@router.put(
+    "/study-sessions/{session_id}/rounds/{round_id}/cards/{card_id}/answer",
+    response_model=StudySessionDetail,
+)
+def answer_round_session_card(
+    session_id: int,
+    round_id: int,
+    card_id: int,
+    payload: StudySessionAnswer,
+    db: Session = Depends(get_db),
+) -> StudySessionDetail:
+    try:
+        return answer_round_card(db, session_id, round_id, card_id, payload)
+    except StudySessionPayloadError as error:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(error)) from error
+    except StudySessionConflictError as error:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(error)) from error
+
+
+@router.post(
+    "/study-sessions/{session_id}/rounds/{round_id}/complete",
+    response_model=StudySessionDetail,
+)
+def complete_round(
+    session_id: int,
+    round_id: int,
+    db: Session = Depends(get_db),
+) -> StudySessionDetail:
+    try:
+        return complete_study_round(db, session_id, round_id)
+    except StudySessionPayloadError as error:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(error)) from error
+    except StudySessionConflictError as error:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(error)) from error
+
+
+@router.post("/study-sessions/{session_id}/rounds", response_model=StudySessionDetail)
+def create_round(
+    session_id: int,
+    payload: StudySessionRoundCreate,
+    db: Session = Depends(get_db),
+) -> StudySessionDetail:
+    try:
+        return create_next_study_round(db, session_id, payload.scope)
+    except StudySessionPayloadError as error:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(error)) from error
+    except StudySessionConflictError as error:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(error)) from error
 @router.post(
     "/study-sessions/{session_id}/complete",
     response_model=StudySessionDetail,

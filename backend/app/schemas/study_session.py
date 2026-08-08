@@ -3,7 +3,14 @@ from enum import StrEnum
 
 from pydantic import BaseModel, ConfigDict
 
-from app.models.enums import StudyDirection, StudySessionStatus, StudySessionType
+from app.models.enums import (
+    StudyDirection,
+    StudyRoundCardResult,
+    StudyRoundScope,
+    StudyRoundStatus,
+    StudySessionStatus,
+    StudySessionType,
+)
 
 
 class StudyAnswerDirection(StrEnum):
@@ -51,6 +58,37 @@ class StudySessionCardDetail(BaseModel):
     flashcard: StudySessionCardFlashcard
 
 
+class StudySessionRoundCardDetail(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    session_card_id: int
+    position: int
+    result: StudyRoundCardResult | None
+    answered_at: datetime | None
+    session_card: StudySessionCardDetail
+
+
+class StudySessionRoundSummary(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    round_number: int
+    scope: StudyRoundScope
+    status: StudyRoundStatus
+    total_cards: int
+    remembered_count: int
+    again_count: int
+    recall_percentage: float | None
+    completed_at: datetime | None
+
+
+class StudySessionRoundDetail(StudySessionRoundSummary):
+    started_at: datetime
+    source_round_id: int | None
+    round_cards: list[StudySessionRoundCardDetail]
+
+
 class StudySessionDetail(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -68,6 +106,8 @@ class StudySessionDetail(BaseModel):
     mastery_score: float | None
     sheet_rating: str | None
     session_cards: list[StudySessionCardDetail]
+    active_round: StudySessionRoundDetail | None
+    round_summaries: list[StudySessionRoundSummary]
 
 
 class StudySessionAnswer(BaseModel):
@@ -90,3 +130,9 @@ class StudySessionAnswerResponse(BaseModel):
     session_again_count: int
     session_first_try_correct: int
     remaining_cards: int
+
+
+class StudySessionRoundCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    scope: StudyRoundScope

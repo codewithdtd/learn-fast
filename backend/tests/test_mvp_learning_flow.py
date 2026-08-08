@@ -13,15 +13,18 @@ XLSX_MIME_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sh
 
 
 def answer_all_cards_and_complete(api_client: TestClient, session_id: int, cards: list[dict]) -> dict:
+    session = api_client.get(f"/api/v1/study-sessions/{session_id}").json()
+    round_id = session["active_round"]["id"]
     for card in cards:
-        answer = api_client.post(
-            f"/api/v1/study-sessions/{session_id}/cards/{card['flashcard_id']}/answer",
+        answer = api_client.put(
+            f"/api/v1/study-sessions/{session_id}/rounds/{round_id}/cards/{card['flashcard_id']}/answer",
             json={"direction": "en_to_vi", "result": "remembered"},
         )
         assert answer.status_code == 200
 
-    completed = api_client.post(f"/api/v1/study-sessions/{session_id}/complete")
+    completed = api_client.get(f"/api/v1/study-sessions/{session_id}")
     assert completed.status_code == 200
+    assert completed.json()["status"] == "completed"
     return completed.json()
 
 
