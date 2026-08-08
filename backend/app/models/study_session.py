@@ -7,6 +7,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
 from app.models.enums import (
     StudyDirection,
+    StudyRoundStatus,
     StudySessionStatus,
     StudySessionType,
     enum_values,
@@ -14,6 +15,7 @@ from app.models.enums import (
 from app.models.mixins import TimestampMixin, utc_now
 
 if TYPE_CHECKING:
+    from app.models.study_session_round import StudySessionRound
     from app.models.study_session_card import StudySessionCard
     from app.models.study_sheet import StudySheet
 
@@ -81,3 +83,17 @@ class StudySession(TimestampMixin, Base):
         passive_deletes=True,
         order_by="StudySessionCard.id",
     )
+    rounds: Mapped[list["StudySessionRound"]] = relationship(
+        back_populates="session",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+        order_by="StudySessionRound.round_number",
+    )
+
+    @property
+    def active_round(self) -> "StudySessionRound | None":
+        return next((item for item in self.rounds if item.status is StudyRoundStatus.ACTIVE), None)
+
+    @property
+    def round_summaries(self) -> list["StudySessionRound"]:
+        return [item for item in self.rounds if item.status is StudyRoundStatus.COMPLETED]

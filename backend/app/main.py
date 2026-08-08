@@ -19,7 +19,9 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[settings.frontend_origin],
     allow_credentials=False,
-    allow_methods=["GET", "POST", "DELETE", "PATCH"],
+    # Round answers use PUT because the learner may replace an existing
+    # Again/Remembered choice idempotently before the round is locked.
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH"],
     allow_headers=["Content-Type"],
 )
 

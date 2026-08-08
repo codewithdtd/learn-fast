@@ -39,14 +39,16 @@ def complete_session_with_remembered_cards(
     session_id: int,
     cards: list[Flashcard],
 ) -> None:
+    session = api_client.get(f"/api/v1/study-sessions/{session_id}").json()
+    round_id = session["active_round"]["id"]
     for card in cards:
-        answer = api_client.post(
-            f"/api/v1/study-sessions/{session_id}/cards/{card.id}/answer",
+        answer = api_client.put(
+            f"/api/v1/study-sessions/{session_id}/rounds/{round_id}/cards/{card.id}/answer",
             json={"direction": "en_to_vi", "result": "remembered"},
         )
         assert answer.status_code == 200
-    completion = api_client.post(f"/api/v1/study-sessions/{session_id}/complete")
-    assert completion.status_code == 200
+    completed = api_client.get(f"/api/v1/study-sessions/{session_id}").json()
+    assert completed["status"] == "completed"
 
 
 def test_create_and_get_session_snapshots_cards_in_import_order(
@@ -128,29 +130,28 @@ def test_answers_track_again_remembered_and_first_try_stats(
     sheet, cards = create_session_source(db_session)
     session = create_session(api_client, sheet.id)
     first_card_id = cards[0].id
+    round_id = session["active_round"]["id"]
 
-    again = api_client.post(
-        f"/api/v1/study-sessions/{session['id']}/cards/{first_card_id}/answer",
+    again = api_client.put(
+        f"/api/v1/study-sessions/{session['id']}/rounds/{round_id}/cards/{first_card_id}/answer",
         json={"direction": "en_to_vi", "result": "again"},
     )
-    remembered = api_client.post(
-        f"/api/v1/study-sessions/{session['id']}/cards/{first_card_id}/answer",
+    remembered = api_client.put(
+        f"/api/v1/study-sessions/{session['id']}/rounds/{round_id}/cards/{first_card_id}/answer",
         json={"direction": "en_to_vi", "result": "remembered"},
     )
     persisted = api_client.get(f"/api/v1/study-sessions/{session['id']}").json()
     original_card = db_session.get(Flashcard, first_card_id)
 
     assert again.status_code == 200
-    assert again.json()["attempt_count"] == 1
-    assert again.json()["again_count"] == 1
-    assert again.json()["remembered"] is False
+    assert next(
+        item for item in again.json()["active_round"]["round_cards"]
+        if item["session_card"]["flashcard_id"] == first_card_id
+    )["result"] == "again"
     assert remembered.status_code == 200
-    assert remembered.json()["attempt_count"] == 2
-    assert remembered.json()["remembered"] is True
-    assert remembered.json()["first_try_correct"] is False
-    assert remembered.json()["session_again_count"] == 1
-    assert persisted["total_attempts"] == 2
+    assert persisted["total_attempts"] == 0
     assert persisted["first_try_correct"] == 0
+    assert persisted["again_count"] == 0
     # Session answers are not card-level analytics; Quick Recall owns those
     # fields until Mastery policy is implemented in a later day.
     assert original_card.correct_count == 0
@@ -162,69 +163,145 @@ def test_first_attempt_remembered_and_mixed_direction_rules(
 ) -> None:
     sheet, cards = create_session_source(db_session)
     fixed_session = create_session(api_client, sheet.id)
-    mismatch = api_client.post(
-        f"/api/v1/study-sessions/{fixed_session['id']}/cards/{cards[0].id}/answer",
+    fixed_round_id = fixed_session["active_round"]["id"]
+    mismatch = api_client.put(
+        f"/api/v1/study-sessions/{fixed_session['id']}/rounds/{fixed_round_id}/cards/{cards[0].id}/answer",
         json={"direction": "vi_to_en", "result": "remembered"},
     )
-    first_try = api_client.post(
-        f"/api/v1/study-sessions/{fixed_session['id']}/cards/{cards[0].id}/answer",
+    first_try = api_client.put(
+        f"/api/v1/study-sessions/{fixed_session['id']}/rounds/{fixed_round_id}/cards/{cards[0].id}/answer",
         json={"direction": "en_to_vi", "result": "remembered"},
     )
     mixed_session = create_session(api_client, sheet.id, direction="mixed")
-    mixed_again = api_client.post(
-        f"/api/v1/study-sessions/{mixed_session['id']}/cards/{cards[1].id}/answer",
+    mixed_round_id = mixed_session["active_round"]["id"]
+    mixed_again = api_client.put(
+        f"/api/v1/study-sessions/{mixed_session['id']}/rounds/{mixed_round_id}/cards/{cards[1].id}/answer",
         json={"direction": "vi_to_en", "result": "again"},
     )
-    mixed_mismatch = api_client.post(
-        f"/api/v1/study-sessions/{mixed_session['id']}/cards/{cards[1].id}/answer",
+    mixed_mismatch = api_client.put(
+        f"/api/v1/study-sessions/{mixed_session['id']}/rounds/{mixed_round_id}/cards/{cards[1].id}/answer",
         json={"direction": "en_to_vi", "result": "again"},
     )
 
     assert mismatch.status_code == 422
     assert first_try.status_code == 200
-    assert first_try.json()["first_try_correct"] is True
-    assert first_try.json()["session_first_try_correct"] == 1
+    assert first_try.json()["total_attempts"] == 0
     assert mixed_again.status_code == 200
-    assert mixed_again.json()["direction"] == "vi_to_en"
+    assert next(
+        item for item in mixed_again.json()["active_round"]["round_cards"]
+        if item["session_card"]["flashcard_id"] == cards[1].id
+    )["session_card"]["direction"] == "vi_to_en"
     assert mixed_mismatch.status_code == 422
 
 
-def test_answer_rejects_unknown_remembered_inactive_and_invalid_resources(
+def test_round_queue_is_persisted_editable_and_only_counts_when_locked(
+    api_client: TestClient, db_session: Session
+) -> None:
+    sheet, cards = create_session_source(db_session)
+    session = create_session(api_client, sheet.id)
+    active_round = session["active_round"]
+    round_id = active_round["id"]
+    queue = [item["session_card"]["flashcard_id"] for item in active_round["round_cards"]]
+
+    refreshed = api_client.get(f"/api/v1/study-sessions/{session['id']}").json()
+    assert [item["session_card"]["flashcard_id"] for item in refreshed["active_round"]["round_cards"]] == queue
+
+    corrected = api_client.put(
+        f"/api/v1/study-sessions/{session['id']}/rounds/{round_id}/cards/{cards[0].id}/answer",
+        json={"direction": "en_to_vi", "result": "again"},
+    )
+    changed = api_client.put(
+        f"/api/v1/study-sessions/{session['id']}/rounds/{round_id}/cards/{cards[0].id}/answer",
+        json={"direction": "en_to_vi", "result": "remembered"},
+    )
+    response = api_client.put(
+        f"/api/v1/study-sessions/{session['id']}/rounds/{round_id}/cards/{cards[1].id}/answer",
+        json={"direction": "en_to_vi", "result": "again"},
+    )
+    assert corrected.status_code == 200
+    assert changed.status_code == 200
+    assert changed.json()["total_attempts"] == 0
+    assert response.status_code == 200
+    locked = api_client.get(f"/api/v1/study-sessions/{session['id']}").json()
+    assert locked["round_summaries"][0]["again_count"] == 1
+    assert locked["total_attempts"] == 2
+    read_only = api_client.put(
+        f"/api/v1/study-sessions/{session['id']}/rounds/{round_id}/cards/{cards[0].id}/answer",
+        json={"direction": "en_to_vi", "result": "again"},
+    )
+    assert read_only.status_code == 409
+
+
+def test_retry_rounds_are_deduplicated_and_mastery_is_round_average(
+    api_client: TestClient, db_session: Session
+) -> None:
+    sheet, cards = create_session_source(db_session)
+    session = create_session(api_client, sheet.id)
+    first_round_id = session["active_round"]["id"]
+    api_client.put(
+        f"/api/v1/study-sessions/{session['id']}/rounds/{first_round_id}/cards/{cards[0].id}/answer",
+        json={"direction": "en_to_vi", "result": "remembered"},
+    )
+    api_client.put(
+        f"/api/v1/study-sessions/{session['id']}/rounds/{first_round_id}/cards/{cards[1].id}/answer",
+        json={"direction": "en_to_vi", "result": "again"},
+    )
+    not_finished = api_client.post(f"/api/v1/study-sessions/{session['id']}/complete")
+    assert not_finished.status_code == 422
+
+    retry = api_client.post(
+        f"/api/v1/study-sessions/{session['id']}/rounds", json={"scope": "forgotten"}
+    )
+    retry_again = api_client.post(
+        f"/api/v1/study-sessions/{session['id']}/rounds", json={"scope": "forgotten"}
+    )
+    assert retry.status_code == 200
+    assert retry_again.status_code == 200
+    assert retry.json()["active_round"]["id"] == retry_again.json()["active_round"]["id"]
+    assert len(retry.json()["active_round"]["round_cards"]) == 1
+    second_round_id = retry.json()["active_round"]["id"]
+    assert api_client.put(
+        f"/api/v1/study-sessions/{session['id']}/rounds/{second_round_id}/cards/{cards[1].id}/answer",
+        json={"direction": "en_to_vi", "result": "remembered"},
+    ).status_code == 200
+    completed = api_client.post(f"/api/v1/study-sessions/{session['id']}/complete")
+    assert completed.status_code == 200
+    assert completed.json()["mastery_score"] == 75.0
+    assert completed.json()["again_count"] == 1
+
+
+def test_answer_can_be_corrected_and_rejects_unknown_or_inactive_resources(
     api_client: TestClient, db_session: Session
 ) -> None:
     sheet, cards = create_session_source(db_session)
     session = create_session(api_client, sheet.id)
     card_id = cards[0].id
-    remembered = api_client.post(
-        f"/api/v1/study-sessions/{session['id']}/cards/{card_id}/answer",
+    round_id = session["active_round"]["id"]
+    remembered = api_client.put(
+        f"/api/v1/study-sessions/{session['id']}/rounds/{round_id}/cards/{card_id}/answer",
         json={"direction": "en_to_vi", "result": "remembered"},
     )
-    duplicate = api_client.post(
-        f"/api/v1/study-sessions/{session['id']}/cards/{card_id}/answer",
+    corrected = api_client.put(
+        f"/api/v1/study-sessions/{session['id']}/rounds/{round_id}/cards/{card_id}/answer",
         json={"direction": "en_to_vi", "result": "again"},
     )
-    unknown_card = api_client.post(
-        f"/api/v1/study-sessions/{session['id']}/cards/999/answer",
+    unknown_card = api_client.put(
+        f"/api/v1/study-sessions/{session['id']}/rounds/{round_id}/cards/999/answer",
         json={"direction": "en_to_vi", "result": "again"},
     )
     session_model = db_session.get(StudySession, session["id"])
     session_model.status = StudySessionStatus.ABANDONED
     db_session.commit()
-    inactive = api_client.post(
-        f"/api/v1/study-sessions/{session['id']}/cards/{cards[1].id}/answer",
+    inactive = api_client.put(
+        f"/api/v1/study-sessions/{session['id']}/rounds/{round_id}/cards/{cards[1].id}/answer",
         json={"direction": "en_to_vi", "result": "again"},
-    )
-    invalid = api_client.post(
-        f"/api/v1/study-sessions/{session['id']}/cards/{cards[1].id}/answer",
-        json={"direction": "mixed", "result": "again"},
     )
     missing_session = api_client.get("/api/v1/study-sessions/999")
 
     assert remembered.status_code == 200
-    assert duplicate.status_code == 409
+    assert corrected.status_code == 200
     assert unknown_card.status_code == 404
     assert inactive.status_code == 409
-    assert invalid.status_code == 422
     assert missing_session.status_code == 404
 
 
@@ -233,16 +310,22 @@ def test_complete_session_requires_every_card_to_be_remembered(
 ) -> None:
     sheet, cards = create_session_source(db_session)
     session = create_session(api_client, sheet.id)
-    api_client.post(
-        f"/api/v1/study-sessions/{session['id']}/cards/{cards[0].id}/answer",
+    round_id = session["active_round"]["id"]
+    api_client.put(
+        f"/api/v1/study-sessions/{session['id']}/rounds/{round_id}/cards/{cards[0].id}/answer",
         json={"direction": "en_to_vi", "result": "remembered"},
     )
 
+    round_completion = api_client.post(
+        f"/api/v1/study-sessions/{session['id']}/rounds/{round_id}/complete"
+    )
     completion = api_client.post(f"/api/v1/study-sessions/{session['id']}/complete")
     stored = api_client.get(f"/api/v1/study-sessions/{session['id']}").json()
 
     assert completion.status_code == 422
-    assert "1 card" in completion.json()["detail"]
+    assert round_completion.status_code == 422
+    assert "1 unanswered" in round_completion.json()["detail"]
+    assert "active round" in completion.json()["detail"]
     assert stored["status"] == "active"
     assert stored["completed_at"] is None
     assert stored["mastery_score"] is None
@@ -254,13 +337,7 @@ def test_complete_session_persists_score_and_is_idempotent(
     sheet, cards = create_session_source(db_session)
     session = create_session(api_client, sheet.id)
 
-    for card in cards:
-        response = api_client.post(
-            f"/api/v1/study-sessions/{session['id']}/cards/{card.id}/answer",
-            json={"direction": "en_to_vi", "result": "remembered"},
-        )
-        assert response.status_code == 200
-
+    complete_session_with_remembered_cards(api_client, session["id"], cards)
     completed = api_client.post(f"/api/v1/study-sessions/{session['id']}/complete")
     repeated = api_client.post(f"/api/v1/study-sessions/{session['id']}/complete")
 
@@ -288,25 +365,22 @@ def test_complete_session_preserves_again_counters_and_weak_source(
         session_type="weak_cards",
         direction="en_to_vi",
     )
+    round_id = session["active_round"]["id"]
 
-    again = api_client.post(
-        f"/api/v1/study-sessions/{session['id']}/cards/{cards[1].id}/answer",
-        json={"direction": "en_to_vi", "result": "again"},
-    )
-    remembered = api_client.post(
-        f"/api/v1/study-sessions/{session['id']}/cards/{cards[1].id}/answer",
+    remembered = api_client.put(
+        f"/api/v1/study-sessions/{session['id']}/rounds/{round_id}/cards/{cards[1].id}/answer",
         json={"direction": "en_to_vi", "result": "remembered"},
     )
-    completed = api_client.post(f"/api/v1/study-sessions/{session['id']}/complete")
 
-    assert again.status_code == 200
     assert remembered.status_code == 200
+    completed = api_client.get(f"/api/v1/study-sessions/{session['id']}")
     assert completed.status_code == 200
+    assert completed.json()["status"] == "completed"
     assert completed.json()["total_cards"] == 1
-    assert completed.json()["total_attempts"] == 2
-    assert completed.json()["again_count"] == 1
-    assert completed.json()["first_try_correct"] == 0
-    assert completed.json()["mastery_score"] == 0.0
+    assert completed.json()["total_attempts"] == 1
+    assert completed.json()["again_count"] == 0
+    assert completed.json()["first_try_correct"] == 1
+    assert completed.json()["mastery_score"] == 100.0
     assert [item["flashcard_id"] for item in completed.json()["session_cards"]] == [cards[1].id]
     assert completed.json()["session_cards"][0]["flashcard"]["is_weak"] is True
 
@@ -512,3 +586,18 @@ def test_study_session_complete_post_cors_preflight(api_client: TestClient) -> N
     assert response.status_code == 200
     assert response.headers["access-control-allow-origin"] == "http://localhost:3000"
     assert "POST" in response.headers["access-control-allow-methods"]
+
+
+def test_study_round_answer_put_cors_preflight(api_client: TestClient) -> None:
+    response = api_client.options(
+        "/api/v1/study-sessions/1/rounds/1/cards/1/answer",
+        headers={
+            "Origin": "http://localhost:3000",
+            "Access-Control-Request-Method": "PUT",
+            "Access-Control-Request-Headers": "content-type",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.headers["access-control-allow-origin"] == "http://localhost:3000"
+    assert "PUT" in response.headers["access-control-allow-methods"]

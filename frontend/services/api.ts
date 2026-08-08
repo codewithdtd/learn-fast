@@ -82,6 +82,8 @@ export type StudyDirection = "en_to_vi" | "vi_to_en" | "mixed";
 export type StudyAnswerDirection = Exclude<StudyDirection, "mixed">;
 export type StudySessionStatus = "active" | "completed" | "abandoned";
 export type StudyAnswerResult = "again" | "remembered";
+export type StudyRoundScope = "all" | "forgotten";
+export type StudyRoundStatus = "active" | "completed";
 export type SrsRating = "forgot" | "hard" | "good" | "easy";
 
 export type StudySessionCard = {
@@ -94,6 +96,33 @@ export type StudySessionCard = {
   first_try_correct: boolean;
   last_answered_at: string | null;
   flashcard: FlashcardListItem;
+};
+
+export type StudySessionRoundCard = {
+  id: number;
+  session_card_id: number;
+  position: number;
+  result: StudyAnswerResult | null;
+  answered_at: string | null;
+  session_card: StudySessionCard;
+};
+
+export type StudySessionRoundSummary = {
+  id: number;
+  round_number: number;
+  scope: StudyRoundScope;
+  status: StudyRoundStatus;
+  total_cards: number;
+  remembered_count: number;
+  again_count: number;
+  recall_percentage: number | null;
+  completed_at: string | null;
+};
+
+export type StudySessionRound = StudySessionRoundSummary & {
+  started_at: string;
+  source_round_id: number | null;
+  round_cards: StudySessionRoundCard[];
 };
 
 export type StudySession = {
@@ -111,6 +140,8 @@ export type StudySession = {
   mastery_score: number | null;
   sheet_rating: SrsRating | null;
   session_cards: StudySessionCard[];
+  active_round: StudySessionRound | null;
+  round_summaries: StudySessionRoundSummary[];
 };
 
 export type StudySessionRatingResponse = {
@@ -402,6 +433,46 @@ export async function answerStudySessionCard(
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(input),
+    },
+  );
+}
+
+export async function answerStudySessionRoundCard(
+  sessionId: string,
+  roundId: number,
+  cardId: number,
+  input: StudySessionAnswerInput,
+): Promise<StudySession> {
+  return requestJson<StudySession>(
+    `/api/v1/study-sessions/${encodeURIComponent(sessionId)}/rounds/${roundId}/cards/${cardId}/answer`,
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    },
+  );
+}
+
+export async function completeStudySessionRound(
+  sessionId: string,
+  roundId: number,
+): Promise<StudySession> {
+  return requestJson<StudySession>(
+    `/api/v1/study-sessions/${encodeURIComponent(sessionId)}/rounds/${roundId}/complete`,
+    { method: "POST" },
+  );
+}
+
+export async function createStudySessionRound(
+  sessionId: string,
+  scope: StudyRoundScope,
+): Promise<StudySession> {
+  return requestJson<StudySession>(
+    `/api/v1/study-sessions/${encodeURIComponent(sessionId)}/rounds`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ scope }),
     },
   );
 }
