@@ -1,6 +1,7 @@
 """Database model registration for ORM and Alembic metadata discovery."""
 
 from app.models.enums import (
+    NotificationType,
     SheetPriority,
     SheetStatus,
     SrsRating,
@@ -12,6 +13,7 @@ from app.models.enums import (
     StudySessionType,
 )
 from app.models.flashcard import Flashcard
+from app.models.notification import Notification
 from app.models.study_sheet import StudySheet
 from app.models.study_session import StudySession
 from app.models.study_session_card import StudySessionCard
@@ -21,6 +23,8 @@ from app.models.workbook import Workbook
 
 __all__ = [
     "Flashcard",
+    "Notification",
+    "NotificationType",
     "SheetPriority",
     "SheetStatus",
     "SrsRating",
