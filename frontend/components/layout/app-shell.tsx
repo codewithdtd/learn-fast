@@ -61,13 +61,16 @@ export function AppShell({
       </aside>
 
       <header className="mobile-header">
-        <Link href="/" className="mobile-brand">DtdFLow</Link>
-        <span className="mobile-header-label">Today</span>
+        <Link href="/" className="mobile-brand" aria-label="DtdFLow Home">
+          <span className="brand-mark mobile-brand-mark"><Icon name="books" size={18} /></span>
+          <span>DtdFLow</span>
+        </Link>
         <div className="mobile-header-actions">
           <ThemeToggle compact />
           <NotificationBell />
         </div>
       </header>
+
 
       <div className="app-content">
         <div className="desktop-top-bar">
