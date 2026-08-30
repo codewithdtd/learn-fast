@@ -58,3 +58,10 @@ class SrsRating(str, Enum):
     HARD = "hard"
     GOOD = "good"
     EASY = "easy"
+
+
+class NotificationType(str, Enum):
+    SRS_DUE = "srs_due"
+    DAILY_CHECKIN = "daily_checkin"
+    STREAK_MILESTONE = "streak_milestone"
+    SYSTEM = "system"

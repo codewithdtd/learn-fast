@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 import { ThemeToggle } from "./theme-toggle";
 
-type IconName = "home" | "books" | "import" | "study" | "calendar" | "review" | "arrow" | "clock" | "check" | "weak" | "refresh" | "search" | "flame" | "bookmark" | "eye" | "chevronDown" | "back" | "play";
+
+type IconName = "home" | "books" | "import" | "study" | "calendar" | "review" | "arrow" | "clock" | "check" | "weak" | "refresh" | "search" | "flame" | "bookmark" | "eye" | "chevronDown" | "back" | "play" | "bell";
 
 export function Icon({ name, size = 24 }: { name: IconName; size?: number }) {
   const paths: Record<IconName, React.ReactNode> = {
@@ -23,6 +25,7 @@ export function Icon({ name, size = 24 }: { name: IconName; size?: number }) {
     chevronDown: <path d="m6 9 6 6 6-6" />,
     back: <><path d="M19 12H5" /><path d="m11 6-6 6 6 6" /></>,
     play: <path d="m8 5 11 7-11 7z" />,
+    bell: <><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></>,
   };
 
   return <svg aria-hidden="true" className="icon" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">{paths[name]}</svg>;
@@ -30,9 +33,11 @@ export function Icon({ name, size = 24 }: { name: IconName; size?: number }) {
 
 const navItems = [
   { href: "/", label: "Dashboard", mobileLabel: "Home", icon: "home" as const },
+  { href: "/calendar", label: "Calendar & Check-in", mobileLabel: "Calendar", icon: "calendar" as const },
   { href: "/workbooks", label: "Workbooks", mobileLabel: "Books", icon: "books" as const },
   { href: "/import", label: "Import", mobileLabel: "Import", icon: "import" as const },
 ];
+
 
 export function AppShell({
   children,
@@ -58,10 +63,18 @@ export function AppShell({
       <header className="mobile-header">
         <Link href="/" className="mobile-brand">DtdFLow</Link>
         <span className="mobile-header-label">Today</span>
-        <ThemeToggle compact />
+        <div className="mobile-header-actions">
+          <ThemeToggle compact />
+          <NotificationBell />
+        </div>
       </header>
 
-      <div className="app-content">{children}</div>
+      <div className="app-content">
+        <div className="desktop-top-bar">
+          <NotificationBell />
+        </div>
+        {children}
+      </div>
 
       <nav className="mobile-bottom-nav" aria-label="Mobile navigation">
         {navItems.map((item) => <Link key={item.href} href={item.href} className={item.href === activeHref ? "mobile-nav-link active" : "mobile-nav-link"}><Icon name={item.icon} size={22} /><span>{item.mobileLabel}</span></Link>)}
@@ -69,3 +82,5 @@ export function AppShell({
     </div>
   );
 }
+
+
