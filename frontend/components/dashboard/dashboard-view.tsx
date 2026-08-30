@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+import { DashboardCheckinBanner } from "@/components/dashboard/dashboard-checkin-banner";
 import { Icon } from "@/components/layout/app-shell";
 import { formatDate, formatLabel } from "@/lib/format";
 import { getDashboard, type DashboardActiveSessionItem, type DashboardRecentSessionItem, type DashboardSheetItem, type DashboardSummary } from "@/services/api";
@@ -38,7 +39,10 @@ export function DashboardView() {
         <div className="heading-actions"><Link href="/import" className="button secondary">Import workbook</Link><Link href="/workbooks" className="button secondary">Workbooks</Link></div>
       </header>
 
+      <DashboardCheckinBanner />
+
       <div className="dashboard-grid">
+
         <div className="dashboard-main-column">
           <DashboardOverview dashboard={dashboard} />
           <DashboardSectionHeading title="Continue Learning" />

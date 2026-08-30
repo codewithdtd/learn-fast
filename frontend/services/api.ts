@@ -498,6 +498,108 @@ export async function rateStudySession(
   );
 }
 
+export type CalendarDaySessionItem = {
+  id: number;
+  sheet_id: number;
+  sheet_name: string;
+  workbook_name: string;
+  session_type: StudySessionType;
+  completed_at: string;
+  total_cards: number;
+  total_attempts: number;
+  mastery_score: number | null;
+};
+
+export type CalendarDayDueSheetItem = {
+  id: number;
+  name: string;
+  workbook_id: number;
+  workbook_name: string;
+  card_count: number;
+  priority: SheetPriority;
+  status: SheetStatus;
+  next_review_at: string | null;
+};
+
+export type CalendarDaySummary = {
+  date: string;
+  is_today: boolean;
+  is_future: boolean;
+  has_studied: boolean;
+  sessions_count: number;
+  cards_reviewed: number;
+  due_sheets_count: number;
+};
+
+export type CalendarMonthSummary = {
+  year: number;
+  month: number;
+  current_streak: number;
+  longest_streak: number;
+  total_study_days_this_month: number;
+  total_cards_this_month: number;
+  today_has_studied: boolean;
+  today_due_count: number;
+  days: CalendarDaySummary[];
+};
+
+export type CalendarDayDetail = {
+  date: string;
+  is_today: boolean;
+  has_studied: boolean;
+  total_cards_reviewed: number;
+  completed_sessions: CalendarDaySessionItem[];
+  due_sheets: CalendarDayDueSheetItem[];
+};
+
+export type NotificationType = "srs_due" | "daily_checkin" | "streak_milestone" | "system";
+
+export type NotificationItem = {
+  id: number;
+  notification_type: NotificationType;
+  title: string;
+  message: string;
+  link_url: string | null;
+  is_read: boolean;
+  scheduled_for: string;
+  created_at: string;
+};
+
+export type NotificationListResponse = {
+  items: NotificationItem[];
+  unread_count: number;
+  total_count: number;
+};
+
+export type MarkReadResponse = {
+  success: boolean;
+  updated_count: number;
+};
+
+export async function getCalendarMonth(year: number, month: number): Promise<CalendarMonthSummary> {
+  return requestJson<CalendarMonthSummary>(`/api/v1/calendar/month?year=${year}&month=${month}`);
+}
+
+export async function getCalendarDayDetail(dateStr: string): Promise<CalendarDayDetail> {
+  return requestJson<CalendarDayDetail>(`/api/v1/calendar/day?date=${encodeURIComponent(dateStr)}`);
+}
+
+export async function getNotifications(unreadOnly = false, limit = 30): Promise<NotificationListResponse> {
+  return requestJson<NotificationListResponse>(`/api/v1/notifications?unread_only=${unreadOnly}&limit=${limit}`);
+}
+
+export async function markNotificationAsRead(id: number): Promise<{ success: boolean }> {
+  return requestJson<{ success: boolean }>(`/api/v1/notifications/${id}/read`, {
+    method: "PATCH",
+  });
+}
+
+export async function markAllNotificationsAsRead(): Promise<MarkReadResponse> {
+  return requestJson<MarkReadResponse>("/api/v1/notifications/read-all", {
+    method: "POST",
+  });
+}
+
 async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${apiBaseUrl}${path}`, init);
   if (!response.ok) {
