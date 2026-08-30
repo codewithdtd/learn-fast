@@ -43,8 +43,8 @@ def generate_daily_learning_notifications(
             )
             if not existing_due_notif:
                 count = len(due_sheets)
-                title = f"Hôm nay bạn có {count} bài cần ôn tập!"
-                message = f"Bạn có {count} bài học đã đến lịch ôn tập SRS. Hãy hoàn thành ngay để duy trì trí nhớ tốt nhất!"
+                title = f"You have {count} sheet{'s' if count > 1 else ''} due for review today!"
+                message = f"You have {count} learning sheet{'s' if count > 1 else ''} scheduled for SRS review. Practice now to retain long-term memory!"
                 link_url = f"/sheets/{due_sheets[0].id}/study?mode=review"
                 notif = Notification(
                     notification_type=NotificationType.SRS_DUE,
@@ -74,14 +74,15 @@ def generate_daily_learning_notifications(
             if not existing_checkin_notif:
                 notif = Notification(
                     notification_type=NotificationType.DAILY_CHECKIN,
-                    title="Đừng quên điểm danh học hôm nay! 🔥",
-                    message="Hãy hoàn thành ít nhất 1 bài học để duy trì thói quen và giữ chuỗi ngày học liên tục (Streak).",
+                    title="Don't forget your daily study check-in! 🔥",
+                    message="Complete at least one session today to maintain your learning habit and keep your streak alive.",
                     link_url="/calendar",
                     is_read=False,
                     scheduled_for=current_dt,
                 )
                 db.add(notif)
                 db.commit()
+
 
     except SQLAlchemyError as error:
         db.rollback()

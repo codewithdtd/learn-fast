@@ -16,19 +16,19 @@ router = APIRouter(tags=["notifications"])
 
 @router.get("/notifications", response_model=NotificationListResponse)
 def list_notifications(
-    unread_only: bool = Query(False, description="Chỉ lấy thông báo chưa đọc"),
-    limit: int = Query(30, ge=1, le=100, description="Giới hạn số lượng thông báo"),
+    unread_only: bool = Query(False, description="Filter for unread notifications only"),
+    limit: int = Query(30, ge=1, le=100, description="Max notifications to retrieve"),
     db: Session = Depends(get_db),
 ) -> NotificationListResponse:
     """
-    Lấy danh sách thông báo và số lượng chưa đọc.
+    List notifications and unread count.
     """
     try:
         return get_user_notifications(db, unread_only=unread_only, limit=limit)
     except NotificationPersistenceError as error:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Không thể tải danh sách thông báo.",
+            detail="Could not load notifications.",
         ) from error
 
 
@@ -38,20 +38,20 @@ def mark_read(
     db: Session = Depends(get_db),
 ) -> dict[str, bool]:
     """
-    Đánh dấu 1 thông báo cụ thể là đã đọc.
+    Mark a specific notification as read.
     """
     try:
         success = mark_notification_as_read(db, notification_id)
         if not success:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Không tìm thấy thông báo.",
+                detail="Notification not found.",
             )
         return {"success": True}
     except NotificationPersistenceError as error:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Không thể cập nhật trạng thái thông báo.",
+            detail="Could not update notification state.",
         ) from error
 
 
@@ -60,12 +60,13 @@ def mark_all_read(
     db: Session = Depends(get_db),
 ) -> MarkReadResponse:
     """
-    Đánh dấu tất cả thông báo là đã đọc.
+    Mark all notifications as read.
     """
     try:
         return mark_all_notifications_as_read(db)
     except NotificationPersistenceError as error:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Không thể đánh dấu đã đọc tất cả thông báo.",
+            detail="Could not mark all notifications as read.",
         ) from error
+
