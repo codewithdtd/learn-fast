@@ -8,3 +8,7 @@ openpyxl
 psycopg[binary]
 pytest
 httpx
+pyjwt[crypto]
+passlib[bcrypt]
+bcrypt
+email-validator
