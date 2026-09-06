@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.auth import router as auth_router
 from app.api.calendar import router as calendar_router
 from app.api.dashboard import router as dashboard_router
 from app.api.flashcards import router as flashcards_router
@@ -11,23 +12,29 @@ from app.api.sheets import router as sheets_router
 from app.api.study_sessions import router as study_sessions_router
 from app.api.workbooks import router as workbooks_router
 from app.core.config import settings
+from app.core.demo_guard import DemoReadOnlyMiddleware
 
 
 app = FastAPI(title="English SRS & Mastery Learning API")
+
+# Demo Read-Only Guard
+app.add_middleware(DemoReadOnlyMiddleware)
 
 # The browser treats the frontend and backend as separate origins in local
 # development, so this explicit allow-list is required for the health request.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[settings.frontend_origin],
-    allow_credentials=False,
+    allow_credentials=True,
     # Round answers use PUT because the learner may replace an existing
     # Again/Remembered choice idempotently before the round is locked.
     allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH"],
-    allow_headers=["Content-Type"],
+    allow_headers=["Content-Type", "Authorization"],
 )
 
+
 app.include_router(health_router, prefix="/api/v1")
+app.include_router(auth_router, prefix="/api/v1")
 app.include_router(dashboard_router, prefix="/api/v1")
 app.include_router(calendar_router, prefix="/api/v1")
 app.include_router(notifications_router, prefix="/api/v1")

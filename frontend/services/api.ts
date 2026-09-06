@@ -1,6 +1,12 @@
 export type HealthResponse = {
   status: "ok";
+  demo_mode?: boolean;
 };
+
+export async function getSystemHealth(): Promise<HealthResponse> {
+  return requestJson<HealthResponse>("/api/v1/health");
+}
+
 
 export type ImportedSheet = {
   id: number;
@@ -584,6 +590,93 @@ export async function getCalendarDayDetail(dateStr: string): Promise<CalendarDay
   return requestJson<CalendarDayDetail>(`/api/v1/calendar/day?date=${encodeURIComponent(dateStr)}`);
 }
 
+export type UserRead = {
+  id: number;
+  email: string;
+  username: string;
+  full_name: string | null;
+  is_active: boolean;
+  is_superuser: boolean;
+  created_at: string;
+  last_login_at: string | null;
+};
+
+export type TokenResponse = {
+  access_token: string;
+  token_type: string;
+  expires_in_seconds: number;
+  user: UserRead;
+};
+
+export type RegisterRequest = {
+  email: string;
+  username: string;
+  password: string;
+  full_name?: string;
+};
+
+export type LoginRequest = {
+  username_or_email: string;
+  password: string;
+};
+
+export type PasswordChangeRequest = {
+  old_password: string;
+  new_password: string;
+};
+
+export const AUTH_TOKEN_KEY = "learn_fast_token";
+
+export function getStoredAuthToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem(AUTH_TOKEN_KEY);
+}
+
+export function setStoredAuthToken(token: string | null): void {
+  if (typeof window === "undefined") return;
+  if (token) {
+    localStorage.setItem(AUTH_TOKEN_KEY, token);
+  } else {
+    localStorage.removeItem(AUTH_TOKEN_KEY);
+  }
+}
+
+export async function registerAccount(data: RegisterRequest): Promise<UserRead> {
+  return requestJson<UserRead>("/api/v1/auth/register", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function loginAccount(data: LoginRequest): Promise<TokenResponse> {
+  const res = await requestJson<TokenResponse>("/api/v1/auth/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (res.access_token) {
+    setStoredAuthToken(res.access_token);
+  }
+  return res;
+}
+
+export async function getCurrentUser(): Promise<UserRead> {
+  return requestJson<UserRead>("/api/v1/auth/me");
+}
+
+export async function changeUserPassword(data: PasswordChangeRequest): Promise<{ message: string }> {
+  return requestJson<{ message: string }>("/api/v1/auth/change-password", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+export function logoutAccount(): void {
+  setStoredAuthToken(null);
+}
+
 export async function getNotifications(unreadOnly = false, limit = 30): Promise<NotificationListResponse> {
   return requestJson<NotificationListResponse>(`/api/v1/notifications?unread_only=${unreadOnly}&limit=${limit}`);
 }
@@ -601,12 +694,22 @@ export async function markAllNotificationsAsRead(): Promise<MarkReadResponse> {
 }
 
 async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${apiBaseUrl}${path}`, init);
+  const token = getStoredAuthToken();
+  const headers = new Headers(init?.headers || {});
+  if (token && !headers.has("Authorization")) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
+
+  const response = await fetch(`${apiBaseUrl}${path}`, {
+    ...init,
+    headers,
+  });
   if (!response.ok) {
     throw await toApiRequestError(response);
   }
   return (await response.json()) as T;
 }
+
 
 async function toApiRequestError(response: Response): Promise<ApiRequestError> {
   const body: unknown = await response.json().catch(() => null);

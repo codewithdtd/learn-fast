@@ -1,10 +1,14 @@
 from datetime import datetime
-from sqlalchemy import Boolean, DateTime, Enum as SqlEnum, Integer, String, Text
-from sqlalchemy.orm import Mapped, mapped_column
+from typing import TYPE_CHECKING, Optional
+from sqlalchemy import Boolean, DateTime, Enum as SqlEnum, ForeignKey, Integer, String, Text
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
 from app.models.enums import NotificationType, enum_values
 from app.models.mixins import TimestampMixin, utc_now
+
+if TYPE_CHECKING:
+    from app.models.user import User
 
 
 class Notification(TimestampMixin, Base):
@@ -15,6 +19,9 @@ class Notification(TimestampMixin, Base):
     __tablename__ = "notifications"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True
+    )
     notification_type: Mapped[NotificationType] = mapped_column(
         SqlEnum(
             NotificationType,
@@ -34,3 +41,5 @@ class Notification(TimestampMixin, Base):
     scheduled_for: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utc_now, nullable=False, index=True
     )
+
+    user: Mapped[Optional["User"]] = relationship(back_populates="notifications")

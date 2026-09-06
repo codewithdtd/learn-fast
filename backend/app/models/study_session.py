@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from sqlalchemy import DateTime, Enum as SqlEnum, Float, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -18,15 +18,20 @@ if TYPE_CHECKING:
     from app.models.study_session_round import StudySessionRound
     from app.models.study_session_card import StudySessionCard
     from app.models.study_sheet import StudySheet
+    from app.models.user import User
 
 
 class StudySession(TimestampMixin, Base):
     __tablename__ = "study_sessions"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True
+    )
     sheet_id: Mapped[int] = mapped_column(
         ForeignKey("study_sheets.id", ondelete="CASCADE"), nullable=False, index=True
     )
+
     session_type: Mapped[StudySessionType] = mapped_column(
         SqlEnum(
             StudySessionType,
@@ -76,6 +81,7 @@ class StudySession(TimestampMixin, Base):
     mastery_score: Mapped[float | None] = mapped_column(Float, nullable=True)
     sheet_rating: Mapped[str | None] = mapped_column(String(32), nullable=True)
 
+    user: Mapped[Optional["User"]] = relationship(back_populates="study_sessions")
     sheet: Mapped["StudySheet"] = relationship(back_populates="study_sessions")
     session_cards: Mapped[list["StudySessionCard"]] = relationship(
         back_populates="session",
