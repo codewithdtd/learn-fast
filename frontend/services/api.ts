@@ -1,6 +1,12 @@
 export type HealthResponse = {
   status: "ok";
+  demo_mode?: boolean;
 };
+
+export async function getSystemHealth(): Promise<HealthResponse> {
+  return requestJson<HealthResponse>("/api/v1/health");
+}
+
 
 export type ImportedSheet = {
   id: number;

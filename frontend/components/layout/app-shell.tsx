@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { UserProfileMenu } from "@/components/auth/user-profile-menu";
+import { DemoBadge } from "@/components/layout/demo-badge";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { ThemeToggle } from "./theme-toggle";
+
 
 
 type IconName = "home" | "books" | "import" | "study" | "calendar" | "review" | "arrow" | "clock" | "check" | "weak" | "refresh" | "search" | "flame" | "bookmark" | "eye" | "chevronDown" | "back" | "play" | "bell";
@@ -67,6 +69,7 @@ export function AppShell({
           <span>DtdFLow</span>
         </Link>
         <div className="mobile-header-actions flex items-center gap-2">
+          <DemoBadge />
           <ThemeToggle compact />
           <NotificationBell />
           <UserProfileMenu />
@@ -75,11 +78,13 @@ export function AppShell({
 
       <div className="app-content">
         <div className="desktop-top-bar flex items-center justify-end gap-3">
+          <DemoBadge />
           <NotificationBell />
           <UserProfileMenu />
         </div>
         {children}
       </div>
+
 
       <nav className="mobile-bottom-nav" aria-label="Mobile navigation">
         {navItems.map((item) => <Link key={item.href} href={item.href} className={item.href === activeHref ? "mobile-nav-link active" : "mobile-nav-link"}><Icon name={item.icon} size={22} /><span>{item.mobileLabel}</span></Link>)}
