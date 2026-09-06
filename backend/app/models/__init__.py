@@ -19,6 +19,7 @@ from app.models.study_session import StudySession
 from app.models.study_session_card import StudySessionCard
 from app.models.study_session_round import StudySessionRound
 from app.models.study_session_round_card import StudySessionRoundCard
+from app.models.user import User
 from app.models.workbook import Workbook
 
 __all__ = [
@@ -39,5 +40,6 @@ __all__ = [
     "StudySessionStatus",
     "StudySessionType",
     "StudySheet",
+    "User",
     "Workbook",
 ]
