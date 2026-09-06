@@ -12,9 +12,13 @@ from app.api.sheets import router as sheets_router
 from app.api.study_sessions import router as study_sessions_router
 from app.api.workbooks import router as workbooks_router
 from app.core.config import settings
+from app.core.demo_guard import DemoReadOnlyMiddleware
 
 
 app = FastAPI(title="English SRS & Mastery Learning API")
+
+# Demo Read-Only Guard
+app.add_middleware(DemoReadOnlyMiddleware)
 
 # The browser treats the frontend and backend as separate origins in local
 # development, so this explicit allow-list is required for the health request.
@@ -27,6 +31,7 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH"],
     allow_headers=["Content-Type", "Authorization"],
 )
+
 
 app.include_router(health_router, prefix="/api/v1")
 app.include_router(auth_router, prefix="/api/v1")

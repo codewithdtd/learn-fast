@@ -15,7 +15,12 @@ class Settings(BaseSettings):
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 60 * 24 * 7  # 7 days for development ease
 
+    # Demo Showcase Read-Only Mode
+    # When enabled, database mutations (workbook import, delete, rename, register) are blocked.
+    demo_mode: bool = False
+
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 
 settings = Settings()
+
