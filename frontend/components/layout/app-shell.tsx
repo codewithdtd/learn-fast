@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { UserProfileMenu } from "@/components/auth/user-profile-menu";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { ThemeToggle } from "./theme-toggle";
 
@@ -21,7 +22,7 @@ export function Icon({ name, size = 24 }: { name: IconName; size?: number }) {
     search: <><circle cx="10.8" cy="10.8" r="6.8" /><path d="m16 16 5 5" /></>,
     flame: <path d="M12 21c4.2 0 7-2.8 7-6.8 0-3.2-1.7-5.5-4.8-8.2.1 2.2-.8 3.4-2 4.2.2-3.3-1.4-6-4-8.2.1 3.2-2.2 5.5-2.2 8.8C6 18 8.7 21 12 21Z" />,
     bookmark: <path d="M6 4.5A1.5 1.5 0 0 1 7.5 3h9A1.5 1.5 0 0 1 18 4.5V21l-6-3-6 3z" />,
-    eye: <><path d="M2.5 12s3.3-5 9.5-5 9.5 5 9.5 5-3.3 5-9.5 5-9.5-5-9.5-5Z" /><circle cx="12" cy="12" r="2.5" /></>,
+    eye: <><path d="M2.5 12s3.3-5 9.5-5 9.5 5 9.5 5-3.3 5-9.5 5-9.5-5Z" /><circle cx="12" cy="12" r="2.5" /></>,
     chevronDown: <path d="m6 9 6 6 6-6" />,
     back: <><path d="M19 12H5" /><path d="m11 6-6 6 6 6" /></>,
     play: <path d="m8 5 11 7-11 7z" />,
@@ -65,16 +66,17 @@ export function AppShell({
           <span className="brand-mark mobile-brand-mark"><Icon name="books" size={18} /></span>
           <span>DtdFLow</span>
         </Link>
-        <div className="mobile-header-actions">
+        <div className="mobile-header-actions flex items-center gap-2">
           <ThemeToggle compact />
           <NotificationBell />
+          <UserProfileMenu />
         </div>
       </header>
 
-
       <div className="app-content">
-        <div className="desktop-top-bar">
+        <div className="desktop-top-bar flex items-center justify-end gap-3">
           <NotificationBell />
+          <UserProfileMenu />
         </div>
         {children}
       </div>
@@ -85,5 +87,3 @@ export function AppShell({
     </div>
   );
 }
-
-
