@@ -31,13 +31,14 @@ export function UserProfileMenu() {
   if (!isAuthenticated || !user) {
     return (
       <>
-        <div className="flex items-center gap-2">
+        <div className="auth-header-cta-group">
           <button
             onClick={() => {
               setAuthMode("login");
               setIsAuthModalOpen(true);
             }}
-            className="rounded-xl px-3.5 py-1.5 text-xs font-semibold text-foreground transition-colors hover:bg-muted"
+            className="auth-btn-signin"
+            type="button"
           >
             Sign In
           </button>
@@ -46,7 +47,8 @@ export function UserProfileMenu() {
               setAuthMode("register");
               setIsAuthModalOpen(true);
             }}
-            className="rounded-xl bg-primary px-3.5 py-1.5 text-xs font-semibold text-primary-foreground shadow-sm transition-all hover:bg-primary/90"
+            className="auth-btn-signup"
+            type="button"
           >
             Sign Up
           </button>
@@ -66,57 +68,62 @@ export function UserProfileMenu() {
     .toUpperCase();
 
   return (
-    <div className="relative" ref={menuRef}>
+    <div className="auth-user-dropdown-wrap" ref={menuRef}>
       <button
         onClick={() => setIsMenuOpen(!isMenuOpen)}
-        className="flex items-center gap-2 rounded-full border border-border/60 bg-muted/30 p-1 pr-3 transition-all hover:border-primary/40 hover:bg-muted/60"
+        className="auth-user-avatar-btn"
         aria-label="User profile menu"
+        type="button"
       >
-        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary font-mono text-xs font-bold text-primary-foreground shadow-sm">
+        <div className="auth-user-initials">
           {initials}
         </div>
-        <span className="max-w-[100px] truncate text-xs font-medium text-foreground">
+        <span className="auth-user-name">
           {user.username}
         </span>
         <svg
-          className={`h-3.5 w-3.5 text-muted-foreground transition-transform ${
-            isMenuOpen ? "rotate-180" : ""
-          }`}
+          className={`auth-chevron ${isMenuOpen ? "open" : ""}`}
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
-          viewBox="0 0 24 24"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          <path d="m6 9 6 6 6-6" />
         </svg>
       </button>
 
       {/* Dropdown Menu */}
       {isMenuOpen && (
-        <div className="absolute right-0 mt-2 w-56 origin-top-right rounded-2xl border border-border bg-card p-2 shadow-xl animate-in fade-in zoom-in-95 duration-150">
-          <div className="border-b border-border/60 px-3 py-2.5">
-            <p className="truncate text-xs font-semibold text-foreground">
-              {user.full_name || user.username}
-            </p>
-            <p className="truncate text-[11px] text-muted-foreground">{user.email}</p>
+        <div className="auth-user-popover-menu" role="menu">
+          <div className="auth-user-popover-header">
+            <div className="auth-popover-avatar">
+              {initials}
+            </div>
+            <div className="auth-popover-info">
+              <strong>{user.full_name || user.username}</strong>
+              <small>{user.email}</small>
+            </div>
           </div>
 
-          <div className="py-1">
+          <div className="auth-user-popover-actions">
             <button
               onClick={() => {
                 setIsMenuOpen(false);
                 logout();
               }}
-              className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-xs font-medium text-destructive transition-colors hover:bg-destructive/10"
+              className="auth-popover-signout-btn"
+              type="button"
             >
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                />
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
               </svg>
-              Sign Out
+              <span>Sign Out</span>
             </button>
           </div>
         </div>
@@ -124,3 +131,4 @@ export function UserProfileMenu() {
     </div>
   );
 }
+
