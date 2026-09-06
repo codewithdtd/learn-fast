@@ -1,13 +1,15 @@
 from dataclasses import asdict
 import logging
+from typing import Optional
 
 from fastapi import APIRouter, Depends, File, HTTPException, Response, UploadFile, status
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, selectinload
 
+from app.api.deps import get_current_user_optional
 from app.core.database import get_db
-from app.models import Workbook
+from app.models import User, Workbook
 from app.schemas.workbook import (
     WorkbookDetail,
     WorkbookImportResponse,
@@ -29,11 +31,20 @@ logger = logging.getLogger(__name__)
 router = APIRouter(tags=["workbooks"])
 
 
-def get_workbook_or_404(db: Session, workbook_id: int, *, include_sheets: bool = False) -> Workbook:
+def get_workbook_or_404(
+    db: Session,
+    workbook_id: int,
+    *,
+    include_sheets: bool = False,
+    current_user: Optional[User] = None,
+) -> Workbook:
     statement = select(Workbook).where(Workbook.id == workbook_id)
+    if current_user is not None:
+        # User can view their own workbooks, or unassigned legacy workbooks
+        statement = statement.where(
+            or_(Workbook.user_id == current_user.id, Workbook.user_id.is_(None))
+        )
     if include_sheets:
-        # Detail serialization needs every sheet; load the collection in one
-        # additional query instead of triggering a lazy query per sheet in UI/API.
         statement = statement.options(selectinload(Workbook.sheets))
 
     workbook = db.scalar(statement)
@@ -43,16 +54,28 @@ def get_workbook_or_404(db: Session, workbook_id: int, *, include_sheets: bool =
 
 
 @router.get("/workbooks", response_model=list[WorkbookListItem])
-def list_workbooks(db: Session = Depends(get_db)) -> list[WorkbookListItem]:
+def list_workbooks(
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional),
+) -> list[WorkbookListItem]:
+    statement = select(Workbook)
+    if current_user is not None:
+        statement = statement.where(
+            or_(Workbook.user_id == current_user.id, Workbook.user_id.is_(None))
+        )
     workbooks = db.scalars(
-        select(Workbook).order_by(Workbook.imported_at.desc(), Workbook.id.desc())
+        statement.order_by(Workbook.imported_at.desc(), Workbook.id.desc())
     ).all()
     return [WorkbookListItem.model_validate(workbook) for workbook in workbooks]
 
 
 @router.get("/workbooks/{workbook_id}", response_model=WorkbookDetail)
-def get_workbook(workbook_id: int, db: Session = Depends(get_db)) -> WorkbookDetail:
-    workbook = get_workbook_or_404(db, workbook_id, include_sheets=True)
+def get_workbook(
+    workbook_id: int,
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional),
+) -> WorkbookDetail:
+    workbook = get_workbook_or_404(db, workbook_id, include_sheets=True, current_user=current_user)
     return WorkbookDetail.model_validate(workbook)
 
 
@@ -105,26 +128,31 @@ def delete_workbook(workbook_id: int, db: Session = Depends(get_db)) -> Response
 def import_workbook(
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional),
 ) -> WorkbookImportResponse:
     try:
         validate_xlsx_filename(file.filename)
         parsed_workbook = parse_excel_workbook(file.file)
-        workbook = import_parsed_workbook(db, parsed_workbook, file.filename or "")
+        workbook = import_parsed_workbook(
+            db=db,
+            parsed_workbook=parsed_workbook,
+            original_filename=file.filename or "",
+            user_id=current_user.id if current_user else None,
+        )
     except UnsupportedWorkbookFileError as error:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error)) from error
     except InvalidWorkbookFilenameError as error:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(error)
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(error)
         ) from error
     except ExcelParseError as error:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error)) from error
     except ExcelValidationError as error:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=[asdict(item) for item in error.errors],
         ) from error
     except WorkbookImportPersistenceError as error:
-        logger.exception("Workbook import failed after database rollback.")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Workbook import could not be saved. Please try again.",

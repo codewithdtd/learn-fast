@@ -43,12 +43,14 @@ def import_parsed_workbook(
     db: Session,
     parsed_workbook: ParsedWorkbook,
     original_filename: str,
+    user_id: int | None = None,
 ) -> Workbook:
     """Persist one fully validated workbook as a single database transaction."""
     safe_filename, workbook_name = validate_xlsx_filename(original_filename)
     sheet_count = len(parsed_workbook.sheets)
     total_cards = sum(len(sheet.cards) for sheet in parsed_workbook.sheets)
     workbook = Workbook(
+        user_id=user_id,
         name=workbook_name,
         original_filename=safe_filename,
         sheet_count=sheet_count,
@@ -58,6 +60,7 @@ def import_parsed_workbook(
     for parsed_sheet in parsed_workbook.sheets:
         sheet = StudySheet(
             name=parsed_sheet.sheet_name,
+
             position=parsed_sheet.position,
             card_count=len(parsed_sheet.cards),
         )
