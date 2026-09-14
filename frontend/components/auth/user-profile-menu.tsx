@@ -81,6 +81,11 @@ export function UserProfileMenu() {
         <span className="auth-user-name">
           {user.username}
         </span>
+        {user.is_superuser && (
+          <span className="auth-admin-badge" title="System Administrator">
+            Admin
+          </span>
+        )}
         <svg
           className={`auth-chevron ${isMenuOpen ? "open" : ""}`}
           width="14"
@@ -104,7 +109,14 @@ export function UserProfileMenu() {
               {initials}
             </div>
             <div className="auth-popover-info">
-              <strong>{user.full_name || user.username}</strong>
+              <div className="flex items-center gap-1.5">
+                <strong>{user.full_name || user.username}</strong>
+                {user.is_superuser && (
+                  <span className="auth-admin-badge" title="Administrator">
+                    Admin
+                  </span>
+                )}
+              </div>
               <small>{user.email}</small>
             </div>
           </div>

@@ -4,17 +4,25 @@ import { FormEvent, useRef, useState } from "react";
 
 import { Icon } from "@/components/layout/app-shell";
 import { ImportResult } from "@/components/import/import-result";
+import { useAuth } from "@/context/auth-context";
 import { importWorkbook, WorkbookImportError, type WorkbookImportResponse } from "@/services/api";
 
 export function ImportWorkbookForm() {
+  const { user, isAuthenticated } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [isImporting, setIsImporting] = useState(false);
   const [result, setResult] = useState<WorkbookImportResponse | null>(null);
   const [error, setError] = useState<WorkbookImportError | null>(null);
 
+  const isAdmin = isAuthenticated && user?.is_superuser === true;
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!isAdmin) {
+      setError(new WorkbookImportError("Chức năng Import chỉ dành cho Quản trị viên (Admin). Vui lòng đăng nhập tài khoản Admin để tiếp tục."));
+      return;
+    }
     if (!file || isImporting) return;
     setIsImporting(true); setError(null); setResult(null);
     try { setResult(await importWorkbook(file)); }
@@ -26,6 +34,21 @@ export function ImportWorkbookForm() {
   function resetForm() { selectFile(null); if (fileInputRef.current) fileInputRef.current.value = ""; }
 
   return <>
+    {!isAdmin && (
+      <div className="admin-restriction-banner" role="alert">
+        <div className="admin-restriction-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+          </svg>
+        </div>
+        <div className="admin-restriction-text">
+          <strong>Quyền Quản trị viên (Admin Required)</strong>
+          <p>Chỉ Quản trị viên mới có quyền tải lên và cập nhật danh sách bài học Excel mới vào hệ thống.</p>
+        </div>
+      </div>
+    )}
+
     <form className="import-card" onSubmit={handleSubmit}>
       <div className="import-file-surface">
         <input ref={fileInputRef} id="workbook-file" name="file" type="file" accept=".xlsx" disabled={isImporting} onChange={(event) => selectFile(event.target.files?.[0] ?? null)} />

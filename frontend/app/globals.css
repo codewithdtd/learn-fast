@@ -5324,10 +5324,9 @@ a {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
 
-/* Error Alert */
 .auth-error-alert {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
   border-radius: 10px;
   border: 1px solid rgba(239, 68, 68, 0.25);
@@ -5335,9 +5334,16 @@ a {
   color: var(--error);
   padding: 10px 12px;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
+  line-height: 1.5;
   margin-bottom: 14px;
+  white-space: pre-line;
   animation: auth-shake 300ms ease;
+}
+
+.auth-error-alert svg {
+  flex-shrink: 0;
+  margin-top: 1px;
 }
 
 @keyframes auth-shake {
@@ -5725,4 +5731,130 @@ a {
   background: var(--error-soft);
 }
 
+/* ==========================================================================
+   Demo Showcase Badge
+   ========================================================================== */
 
+.demo-showcase-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  background: var(--gold-soft);
+  color: #b45309;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.12);
+  user-select: none;
+  animation: demo-badge-pop 200ms ease-out;
+}
+
+@keyframes demo-badge-pop {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.demo-badge-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--gold);
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.25);
+  animation: demo-dot-pulse 2s infinite ease-in-out;
+}
+
+@keyframes demo-dot-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.3); opacity: 0.7; }
+}
+
+.demo-badge-text {
+  white-space: nowrap;
+}
+
+/* ==========================================================================
+   Admin Badge & Restriction Alert Styles
+   ========================================================================== */
+.auth-admin-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #fff;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  border-radius: 999px;
+  box-shadow: 0 2px 5px rgba(217, 119, 6, 0.25);
+}
+
+.admin-restriction-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  margin-bottom: 20px;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: var(--radius-md);
+  color: var(--foreground);
+}
+
+.admin-restriction-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(245, 158, 11, 0.15);
+  color: #d97706;
+  flex-shrink: 0;
+}
+
+.admin-restriction-text strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: #b45309;
+  margin-bottom: 2px;
+}
+
+.admin-restriction-text p {
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.inline-name-trigger-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-inline-alert {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #b45309;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  padding: 4px 8px;
+  border-radius: 6px;
+  animation: admin-fade-in 200ms ease;
+}
+
+@keyframes admin-fade-in {
+  from { opacity: 0; transform: translateY(-2px); }
+  to { opacity: 1; transform: translateY(0); }
+}

@@ -234,8 +234,12 @@ export function AuthModal({ isOpen, onClose, initialMode = "login" }: AuthModalP
                       id="auth-reg-username"
                       type="text"
                       required
+                      minLength={3}
+                      maxLength={50}
+                      pattern="^[a-zA-Z0-9_-]+$"
+                      title="Username only allows letters, numbers, hyphens (-) and underscores (_), minimum 3 characters."
                       value={username}
-                      onChange={(e) => setUsername(e.target.value)}
+                      onChange={(e) => setUsername(e.target.value.trim())}
                       placeholder="alex123"
                       autoComplete="username"
                     />

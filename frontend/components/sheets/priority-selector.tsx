@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { useAuth } from "@/context/auth-context";
 import { updateSheetPriority, type SheetPriority } from "@/services/api";
 
 type PrioritySelectorProps = {
@@ -11,11 +12,18 @@ type PrioritySelectorProps = {
 };
 
 export function PrioritySelector({ sheetId, priority, onSaved }: PrioritySelectorProps) {
+  const { user, isAuthenticated } = useAuth();
   const [selectedPriority, setSelectedPriority] = useState(priority);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const isAdmin = isAuthenticated && user?.is_superuser === true;
+
   async function handleChange(nextPriority: SheetPriority) {
+    if (!isAdmin) {
+      setError("Chỉ Quản trị viên (Admin) mới có quyền đổi độ ưu tiên của bài học.");
+      return;
+    }
     if (nextPriority === selectedPriority || isSaving) {
       return;
     }
