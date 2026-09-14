@@ -545,12 +545,12 @@ def test_study_session_rating_post_cors_preflight(api_client: TestClient) -> Non
 
 
 def test_deleting_a_workbook_cascades_its_study_sessions(
-    api_client: TestClient, db_session: Session
+    api_client: TestClient, db_session: Session, admin_headers: dict[str, str]
 ) -> None:
     sheet, _ = create_session_source(db_session)
     session = create_session(api_client, sheet.id)
 
-    deleted = api_client.delete(f"/api/v1/workbooks/{sheet.workbook_id}")
+    deleted = api_client.delete(f"/api/v1/workbooks/{sheet.workbook_id}", headers=admin_headers)
 
     assert deleted.status_code == 204
     assert db_session.get(StudySession, session["id"]) is None

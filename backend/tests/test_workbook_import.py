@@ -91,7 +91,9 @@ def test_import_service_rolls_back_after_database_error() -> None:
     db.rollback.assert_called_once()
 
 
-def test_import_endpoint_creates_workbook_from_xlsx(api_client: TestClient, db_session: Session) -> None:
+def test_import_endpoint_creates_workbook_from_xlsx(
+    api_client: TestClient, db_session: Session, admin_headers: dict[str, str]
+) -> None:
     source = workbook_bytes(
         (
             "Part 1",
@@ -110,9 +112,18 @@ def test_import_endpoint_creates_workbook_from_xlsx(api_client: TestClient, db_s
         ),
     )
 
+    # Unauthorized request without admin headers returns 401
+    unauth = api_client.post(
+        "/api/v1/workbooks/import",
+        files={"file": ("Interview.XLSX", source, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")},
+    )
+    assert unauth.status_code == 401
+    source.seek(0)
+
     response = api_client.post(
         "/api/v1/workbooks/import",
         files={"file": ("Interview.XLSX", source, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")},
+        headers=admin_headers,
     )
 
     assert response.status_code == 201
@@ -134,11 +145,12 @@ def test_import_endpoint_creates_workbook_from_xlsx(api_client: TestClient, db_s
 
 
 def test_import_endpoint_rejects_wrong_extension_without_database_write(
-    api_client: TestClient, db_session: Session
+    api_client: TestClient, db_session: Session, admin_headers: dict[str, str]
 ) -> None:
     response = api_client.post(
         "/api/v1/workbooks/import",
         files={"file": ("Vocabulary.csv", BytesIO(b"phrase,meaning"), "text/csv")},
+        headers=admin_headers,
     )
 
     assert response.status_code == 400
@@ -146,10 +158,13 @@ def test_import_endpoint_rejects_wrong_extension_without_database_write(
     assert db_session.scalar(select(func.count(Workbook.id))) == 0
 
 
-def test_import_endpoint_rejects_overlong_workbook_name(api_client: TestClient) -> None:
+def test_import_endpoint_rejects_overlong_workbook_name(
+    api_client: TestClient, admin_headers: dict[str, str]
+) -> None:
     response = api_client.post(
         "/api/v1/workbooks/import",
         files={"file": (f"{'a' * 256}.xlsx", BytesIO(b"unused"), "application/octet-stream")},
+        headers=admin_headers,
     )
 
     assert response.status_code == 422
@@ -157,7 +172,7 @@ def test_import_endpoint_rejects_overlong_workbook_name(api_client: TestClient) 
 
 
 def test_import_endpoint_returns_validation_errors_without_partial_write(
-    api_client: TestClient, db_session: Session
+    api_client: TestClient, db_session: Session, admin_headers: dict[str, str]
 ) -> None:
     source = workbook_bytes(
         (
@@ -173,6 +188,7 @@ def test_import_endpoint_returns_validation_errors_without_partial_write(
     response = api_client.post(
         "/api/v1/workbooks/import",
         files={"file": ("Invalid.xlsx", source, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")},
+        headers=admin_headers,
     )
 
     assert response.status_code == 422
@@ -188,11 +204,12 @@ def test_import_endpoint_returns_validation_errors_without_partial_write(
 
 
 def test_import_endpoint_rejects_unreadable_xlsx_without_database_write(
-    api_client: TestClient, db_session: Session
+    api_client: TestClient, db_session: Session, admin_headers: dict[str, str]
 ) -> None:
     response = api_client.post(
         "/api/v1/workbooks/import",
         files={"file": ("Broken.xlsx", BytesIO(b"not a workbook"), "application/octet-stream")},
+        headers=admin_headers,
     )
 
     assert response.status_code == 400

@@ -7,7 +7,7 @@ from sqlalchemy import or_, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, selectinload
 
-from app.api.deps import get_current_user_optional
+from app.api.deps import get_current_admin, get_current_user_optional
 from app.core.database import get_db
 from app.models import User, Workbook
 from app.schemas.workbook import (
@@ -38,12 +38,11 @@ def get_workbook_or_404(
     include_sheets: bool = False,
     current_user: Optional[User] = None,
 ) -> Workbook:
+    """
+    Retrieve workbook by ID.
+    All users (logged-in or guest) can access system/admin workbooks or workbooks assigned to them.
+    """
     statement = select(Workbook).where(Workbook.id == workbook_id)
-    if current_user is not None:
-        # User can view their own workbooks, or unassigned legacy workbooks
-        statement = statement.where(
-            or_(Workbook.user_id == current_user.id, Workbook.user_id.is_(None))
-        )
     if include_sheets:
         statement = statement.options(selectinload(Workbook.sheets))
 
@@ -58,14 +57,12 @@ def list_workbooks(
     db: Session = Depends(get_db),
     current_user: Optional[User] = Depends(get_current_user_optional),
 ) -> list[WorkbookListItem]:
-    statement = select(Workbook)
-    if current_user is not None:
-        statement = statement.where(
-            or_(Workbook.user_id == current_user.id, Workbook.user_id.is_(None))
-        )
-    workbooks = db.scalars(
-        statement.order_by(Workbook.imported_at.desc(), Workbook.id.desc())
-    ).all()
+    """
+    List all available workbooks for learning.
+    Both guest learners and registered users can view the curated study library.
+    """
+    statement = select(Workbook).order_by(Workbook.imported_at.desc(), Workbook.id.desc())
+    workbooks = db.scalars(statement).all()
     return [WorkbookListItem.model_validate(workbook) for workbook in workbooks]
 
 
@@ -84,7 +81,11 @@ def update_workbook(
     workbook_id: int,
     update: WorkbookUpdate,
     db: Session = Depends(get_db),
+    admin_user: User = Depends(get_current_admin),
 ) -> WorkbookDetail:
+    """
+    Update workbook name. Only accessible by Administrators.
+    """
     workbook = get_workbook_or_404(db, workbook_id)
     workbook.name = update.name
     try:
@@ -104,7 +105,14 @@ def update_workbook(
 
 
 @router.delete("/workbooks/{workbook_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_workbook(workbook_id: int, db: Session = Depends(get_db)) -> Response:
+def delete_workbook(
+    workbook_id: int,
+    db: Session = Depends(get_db),
+    admin_user: User = Depends(get_current_admin),
+) -> Response:
+    """
+    Delete workbook. Only accessible by Administrators.
+    """
     workbook = get_workbook_or_404(db, workbook_id)
     try:
         db.delete(workbook)
@@ -128,8 +136,11 @@ def delete_workbook(workbook_id: int, db: Session = Depends(get_db)) -> Response
 def import_workbook(
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
-    current_user: Optional[User] = Depends(get_current_user_optional),
+    admin_user: User = Depends(get_current_admin),
 ) -> WorkbookImportResponse:
+    """
+    Import a new Excel vocabulary workbook. Only accessible by Administrators.
+    """
     try:
         validate_xlsx_filename(file.filename)
         parsed_workbook = parse_excel_workbook(file.file)
@@ -137,7 +148,7 @@ def import_workbook(
             db=db,
             parsed_workbook=parsed_workbook,
             original_filename=file.filename or "",
-            user_id=current_user.id if current_user else None,
+            user_id=admin_user.id,
         )
     except UnsupportedWorkbookFileError as error:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error)) from error
@@ -159,3 +170,4 @@ def import_workbook(
         ) from error
 
     return WorkbookImportResponse.model_validate(workbook)
+

@@ -55,13 +55,18 @@ def test_list_and_detail_order_workbook_content(api_client: TestClient, db_sessi
 
 
 def test_patch_workbook_name_persists_without_changing_sheets(
-    api_client: TestClient, db_session: Session
+    api_client: TestClient, db_session: Session, admin_headers: dict[str, str]
 ) -> None:
     workbook = create_workbook(db_session, "Vocabulary", datetime.now(timezone.utc))
+
+    # Unauthorized request without admin headers returns 401 or 403
+    unauth = api_client.patch(f"/api/v1/workbooks/{workbook.id}", json={"name": "Hacker Name"})
+    assert unauth.status_code == 401
 
     response = api_client.patch(
         f"/api/v1/workbooks/{workbook.id}",
         json={"name": "  Daily vocabulary  "},
+        headers=admin_headers,
     )
 
     assert response.status_code == 200
@@ -71,14 +76,14 @@ def test_patch_workbook_name_persists_without_changing_sheets(
 
 
 def test_patch_workbook_name_rejects_invalid_payloads(
-    api_client: TestClient, db_session: Session
+    api_client: TestClient, db_session: Session, admin_headers: dict[str, str]
 ) -> None:
     workbook = create_workbook(db_session, "Vocabulary", datetime.now(timezone.utc))
 
-    empty_name = api_client.patch(f"/api/v1/workbooks/{workbook.id}", json={"name": "   "})
-    too_long = api_client.patch(f"/api/v1/workbooks/{workbook.id}", json={"name": "x" * 256})
+    empty_name = api_client.patch(f"/api/v1/workbooks/{workbook.id}", json={"name": "   "}, headers=admin_headers)
+    too_long = api_client.patch(f"/api/v1/workbooks/{workbook.id}", json={"name": "x" * 256}, headers=admin_headers)
     unknown_field = api_client.patch(
-        f"/api/v1/workbooks/{workbook.id}", json={"name": "New name", "total_cards": 99}
+        f"/api/v1/workbooks/{workbook.id}", json={"name": "New name", "total_cards": 99}, headers=admin_headers
     )
 
     assert empty_name.status_code == 422
@@ -102,15 +107,15 @@ def test_sheet_detail_and_cards_keep_position_order(
 
 
 def test_patch_sheet_priority_persists_and_rejects_invalid_payloads(
-    api_client: TestClient, db_session: Session
+    api_client: TestClient, db_session: Session, admin_headers: dict[str, str]
 ) -> None:
     workbook = create_workbook(db_session, "Vocabulary", datetime.now(timezone.utc))
     sheet_id = workbook.sheets[0].id
 
-    success = api_client.patch(f"/api/v1/sheets/{sheet_id}", json={"priority": "high"})
-    empty_body = api_client.patch(f"/api/v1/sheets/{sheet_id}", json={})
+    success = api_client.patch(f"/api/v1/sheets/{sheet_id}", json={"priority": "high"}, headers=admin_headers)
+    empty_body = api_client.patch(f"/api/v1/sheets/{sheet_id}", json={}, headers=admin_headers)
     unknown_field = api_client.patch(
-        f"/api/v1/sheets/{sheet_id}", json={"priority": "low", "status": "learned"}
+        f"/api/v1/sheets/{sheet_id}", json={"priority": "low", "status": "learned"}, headers=admin_headers
     )
 
     assert success.status_code == 200
@@ -121,7 +126,7 @@ def test_patch_sheet_priority_persists_and_rejects_invalid_payloads(
 
 
 def test_patch_sheet_name_and_priority_persist_together(
-    api_client: TestClient, db_session: Session
+    api_client: TestClient, db_session: Session, admin_headers: dict[str, str]
 ) -> None:
     workbook = create_workbook(db_session, "Vocabulary", datetime.now(timezone.utc))
     sheet_id = workbook.sheets[0].id
@@ -129,6 +134,7 @@ def test_patch_sheet_name_and_priority_persist_together(
     response = api_client.patch(
         f"/api/v1/sheets/{sheet_id}",
         json={"name": "  Travel phrases  ", "priority": "high"},
+        headers=admin_headers,
     )
 
     assert response.status_code == 200
@@ -140,13 +146,13 @@ def test_patch_sheet_name_and_priority_persist_together(
 
 
 def test_patch_sheet_name_rejects_invalid_payloads(
-    api_client: TestClient, db_session: Session
+    api_client: TestClient, db_session: Session, admin_headers: dict[str, str]
 ) -> None:
     workbook = create_workbook(db_session, "Vocabulary", datetime.now(timezone.utc))
     sheet_id = workbook.sheets[0].id
 
-    empty_name = api_client.patch(f"/api/v1/sheets/{sheet_id}", json={"name": "\t"})
-    too_long = api_client.patch(f"/api/v1/sheets/{sheet_id}", json={"name": "x" * 256})
+    empty_name = api_client.patch(f"/api/v1/sheets/{sheet_id}", json={"name": "\t"}, headers=admin_headers)
+    too_long = api_client.patch(f"/api/v1/sheets/{sheet_id}", json={"name": "x" * 256}, headers=admin_headers)
 
     assert empty_name.status_code == 422
     assert too_long.status_code == 422
@@ -166,9 +172,11 @@ def test_not_found_resources_return_consistent_messages(api_client: TestClient) 
     assert cards_response.json() == {"detail": "Study sheet not found."}
 
 
-def test_patch_rename_resources_return_not_found(api_client: TestClient) -> None:
-    workbook_response = api_client.patch("/api/v1/workbooks/999", json={"name": "Missing"})
-    sheet_response = api_client.patch("/api/v1/sheets/999", json={"name": "Missing"})
+def test_patch_rename_resources_return_not_found(
+    api_client: TestClient, admin_headers: dict[str, str]
+) -> None:
+    workbook_response = api_client.patch("/api/v1/workbooks/999", json={"name": "Missing"}, headers=admin_headers)
+    sheet_response = api_client.patch("/api/v1/sheets/999", json={"name": "Missing"}, headers=admin_headers)
 
     assert workbook_response.status_code == 404
     assert workbook_response.json() == {"detail": "Workbook not found."}
@@ -177,17 +185,22 @@ def test_patch_rename_resources_return_not_found(api_client: TestClient) -> None
 
 
 def test_delete_workbook_removes_child_sheets_and_cards(
-    api_client: TestClient, db_session: Session
+    api_client: TestClient, db_session: Session, admin_headers: dict[str, str]
 ) -> None:
     workbook = create_workbook(db_session, "Delete me", datetime.now(timezone.utc))
 
-    response = api_client.delete(f"/api/v1/workbooks/{workbook.id}")
+    # Unauthenticated delete blocked
+    unauth = api_client.delete(f"/api/v1/workbooks/{workbook.id}")
+    assert unauth.status_code == 401
+
+    response = api_client.delete(f"/api/v1/workbooks/{workbook.id}", headers=admin_headers)
 
     assert response.status_code == 204
     assert db_session.scalar(select(func.count(Workbook.id))) == 0
     assert db_session.scalar(select(func.count(StudySheet.id))) == 0
     assert db_session.scalar(select(func.count(Flashcard.id))) == 0
     assert api_client.get(f"/api/v1/workbooks/{workbook.id}").status_code == 404
+
 
 
 def test_patch_cors_preflight_allows_content_type(api_client: TestClient) -> None:
