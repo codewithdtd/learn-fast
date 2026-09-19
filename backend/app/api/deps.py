@@ -85,3 +85,21 @@ def get_current_user(
         )
 
     return user
+
+
+def get_current_admin(
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> User:
+    """
+    Dependency requiring the authenticated user to be an Administrator (is_superuser == True).
+    
+    Raises:
+    - HTTP 403 Forbidden if user is authenticated but not an admin.
+    """
+    if not current_user.is_superuser:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Permission denied: Administrator privileges required.",
+        )
+    return current_user
+

@@ -64,3 +64,25 @@ def api_client(db_session: Session) -> Generator[TestClient, None, None]:
     with TestClient(app) as client:
         yield client
     app.dependency_overrides.clear()
+
+
+@pytest.fixture()
+def admin_headers(db_session: Session) -> dict[str, str]:
+    """Provides authorization headers for an active admin (is_superuser=True) user."""
+    from app.core.security import create_access_token, get_password_hash
+    from app.models.user import User
+
+    admin = User(
+        email="admin_fixture@example.com",
+        username="admin_fixture",
+        hashed_password=get_password_hash("AdminPass123"),
+        is_active=True,
+        is_superuser=True,
+    )
+    db_session.add(admin)
+    db_session.commit()
+    db_session.refresh(admin)
+
+    token = create_access_token(subject=admin.id)
+    return {"Authorization": f"Bearer {token}"}
+

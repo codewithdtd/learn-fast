@@ -269,6 +269,23 @@ a {
   font-weight: 800;
   white-space: nowrap;
   cursor: pointer;
+  text-decoration: none;
+  transition: background-color 0.16s ease, border-color 0.16s ease, transform 0.12s ease, box-shadow 0.16s ease;
+}
+
+.button:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
+}
+
+.button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  box-shadow: none;
 }
 
 .button.primary {
@@ -290,11 +307,17 @@ a {
 
 .button.secondary:hover {
   background: var(--surface-low);
+  border-color: var(--primary);
 }
 
 .button.light {
   background: white;
   color: var(--primary);
+  box-shadow: 0 2px 6px rgb(0 0 0 / 12%);
+}
+
+.button.light:hover {
+  background: #f5f4ff;
 }
 
 .dashboard-grid {
@@ -353,9 +376,28 @@ a {
   display: inline-flex;
   align-items: center;
   gap: 5px;
+  min-height: 44px;
+  padding: 0 6px;
+  border-radius: 8px;
   color: var(--primary);
   font-size: 14px;
   font-weight: 800;
+  text-decoration: none;
+  transition: color 0.16s ease, transform 0.12s ease;
+}
+
+.text-link:hover {
+  color: #291bb8;
+  transform: translateX(2px);
+}
+
+.text-link:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.text-link:active {
+  transform: scale(0.98);
 }
 
 .review-card,
@@ -489,13 +531,29 @@ a {
 
 .empty-state {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   gap: 12px;
   color: var(--muted);
   font-size: 14px;
   line-height: 1.5;
+  text-align: center;
+}
+
+.empty-state p {
+  margin: 0;
+  max-width: 440px;
+}
+
+.empty-state-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--surface-high);
+  color: var(--muted);
 }
 
 .review-card > .empty-state,
@@ -522,12 +580,24 @@ a {
   background: var(--surface);
   padding: 16px;
   box-shadow: var(--shadow-soft);
+  text-decoration: none;
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
 }
 
 .learn-new-card:hover {
   border-color: var(--primary);
   transform: translateY(-2px);
-  transition: transform 0.18s ease, border-color 0.18s ease;
+  box-shadow: 0 8px 20px rgb(53 37 205 / 12%);
+}
+
+.learn-new-card:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
+  border-color: var(--primary);
+}
+
+.learn-new-card:active {
+  transform: scale(0.985);
 }
 
 .card-icon {
@@ -682,8 +752,11 @@ a {
   grid-template-columns: 36px minmax(0, 1fr) auto;
   align-items: center;
   gap: 12px;
-  padding: 18px 20px;
+  min-height: 56px;
+  padding: 16px 20px;
   border-bottom: 1px solid var(--outline);
+  text-decoration: none;
+  transition: background-color 0.15s ease, transform 0.12s ease;
 }
 
 .activity-item:last-child {
@@ -692,6 +765,16 @@ a {
 
 .activity-item:hover {
   background: var(--surface-low);
+}
+
+.activity-item:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: -2px;
+  background: var(--surface-low);
+}
+
+.activity-item:active {
+  transform: scale(0.99);
 }
 
 .activity-icon {
@@ -3795,6 +3878,345 @@ a {
   background: linear-gradient(90deg, var(--surface-low), var(--surface-high), var(--surface-low));
 }
 
+
+/* Retro Farm & Vintage (Warm Parchment / HayDay Rustic Theme) */
+:root[data-theme="retro"] {
+  color-scheme: light;
+
+  /* Base & Canvas - Màu giấy cũ Kraft / Parchment trầm ấm, không bị chói mắt */
+  --background: #ebdcc9;
+  --foreground: #382417;
+
+  /* Surface - Giấy ngà mộc, bảng gỗ nhạt, các tầng vintage */
+  --surface: #dfceb8;
+  --surface-low: #d4c1a9;
+  --surface-high: #c7b399;
+
+  /* Primary - Nâu đất nung / Gỗ mộc mật ong cổ điển */
+  --primary: #9e4b21;
+  --primary-container: #823d19;
+  --primary-soft: #f2decb;
+
+  /* Green - Xanh đồng quê cổ điển, xanh rêu ô liu mộc mạc dịu mắt */
+  --green: #4f7435;
+  --green-soft: #dce7d0;
+
+  /* Gold - Lúa mạch khô / rơm vàng hoài cổ */
+  --gold: #b3781d;
+  --gold-soft: #f5e7c9;
+
+  /* Error - Đỏ gạch nung sẫm */
+  --error: #a33838;
+  --error-soft: #ebd0d0;
+
+  /* Text & Border */
+  --muted: #6b5544;
+  --outline: #bc9f80;
+
+  /* Radius */
+  --radius-md: 14px;
+  --radius-lg: 20px;
+
+  /* Shadow - Đổ bóng hạt dẻ ấm áp, dịu êm */
+  --shadow-soft: 0 6px 18px rgb(56 36 23 / 12%);
+
+  /* Vintage & Retro Typography Tokens (Full Vietnamese Support) */
+  --font-retro-serif-stack: var(--font-retro-display), "Playfair Display", "Times New Roman", Georgia, serif;
+  --font-retro-body-stack: var(--font-retro-body), Lora, "Palatino Linotype", "Book Antiqua", Georgia, serif;
+}
+
+:root[data-theme="retro"] body {
+  background: var(--background);
+  font-family: var(--font-retro-body-stack);
+  letter-spacing: 0.01em;
+}
+
+:root[data-theme="retro"] h1,
+:root[data-theme="retro"] h2,
+:root[data-theme="retro"] h3,
+:root[data-theme="retro"] h4,
+:root[data-theme="retro"] .dashboard-heading h1,
+:root[data-theme="retro"] .brand strong,
+:root[data-theme="retro"] .stat-value,
+:root[data-theme="retro"] .active-session-title,
+:root[data-theme="retro"] .section-head h2 {
+  font-family: var(--font-retro-serif-stack);
+  letter-spacing: -0.01em;
+}
+
+:root[data-theme="retro"] button,
+:root[data-theme="retro"] input,
+:root[data-theme="retro"] select,
+:root[data-theme="retro"] textarea,
+:root[data-theme="retro"] .nav-link,
+:root[data-theme="retro"] .mobile-nav-link,
+:root[data-theme="retro"] .theme-toggle,
+:root[data-theme="retro"] .user-name {
+  font-family: var(--font-retro-body-stack);
+}
+
+:root[data-theme="retro"] .desktop-sidebar {
+  background: var(--surface);
+  border-right-color: var(--outline);
+}
+
+:root[data-theme="retro"] .mobile-header {
+  background: rgb(223 206 184 / 94%);
+  border-bottom-color: var(--outline);
+}
+
+:root[data-theme="retro"] .mobile-bottom-nav {
+  background: rgb(223 206 184 / 96%);
+  border-top-color: var(--outline);
+  box-shadow: 0 -4px 14px rgb(56 36 23 / 10%);
+}
+
+:root[data-theme="retro"] .brand-mark {
+  background: linear-gradient(135deg, #4f7435 0%, #9e4b21 100%);
+  color: #faf5ed;
+  box-shadow: 0 4px 12px rgb(79 116 53 / 25%);
+}
+
+:root[data-theme="retro"] .brand strong {
+  color: #382417;
+}
+
+:root[data-theme="retro"] .nav-link:hover {
+  background: var(--surface-low);
+  color: var(--primary);
+}
+
+:root[data-theme="retro"] .nav-link.active,
+:root[data-theme="retro"] .mobile-nav-link.active {
+  color: #faf5ed;
+  background: #4f7435;
+}
+
+:root[data-theme="retro"] .sidebar-action {
+  background: var(--surface-low);
+  border-color: var(--outline);
+  color: var(--foreground);
+}
+
+:root[data-theme="retro"] .sidebar-action:hover {
+  border-color: var(--primary);
+  background: var(--surface-high);
+}
+
+:root[data-theme="retro"] .button.secondary {
+  background: var(--surface-low);
+  border-color: var(--outline);
+  color: var(--foreground);
+}
+
+:root[data-theme="retro"] .button.secondary:hover {
+  background: var(--surface-high);
+  border-color: var(--primary);
+}
+
+:root[data-theme="retro"] .button.primary {
+  background: #4f7435;
+  color: #faf5ed;
+  box-shadow: 0 2px 8px rgb(79 116 53 / 25%);
+}
+
+:root[data-theme="retro"] .button.primary:hover {
+  background: #42632b;
+}
+
+:root[data-theme="retro"] .button.light {
+  background: #ebdcc9;
+  color: #382417;
+  border: 1px solid var(--outline);
+  font-weight: 700;
+}
+
+:root[data-theme="retro"] .button.light:hover {
+  background: #dfceb8;
+  border-color: var(--primary);
+}
+
+:root[data-theme="retro"] .stat-primary {
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+:root[data-theme="retro"] .stat-green {
+  background: var(--green-soft);
+  color: var(--green);
+}
+
+:root[data-theme="retro"] .stat-gold {
+  background: var(--gold-soft);
+  color: var(--gold);
+}
+
+/* Banner Check-in Retro Vintage Farm */
+:root[data-theme="retro"] .dashboard-checkin-banner {
+  background: var(--surface);
+  border-color: var(--outline);
+}
+
+:root[data-theme="retro"] .dashboard-checkin-banner.completed {
+  border-color: #6b8f52;
+  background: linear-gradient(90deg, #dfceb8 0%, #dce7d0 100%);
+}
+
+:root[data-theme="retro"] .dashboard-checkin-banner.pending {
+  border-color: #c9933f;
+  background: linear-gradient(90deg, #dfceb8 0%, #f5e7c9 100%);
+}
+
+:root[data-theme="retro"] .checkin-flame-icon {
+  background: var(--gold-soft);
+  color: var(--gold);
+}
+
+:root[data-theme="retro"] .dashboard-checkin-banner.completed .checkin-flame-icon {
+  background: var(--green-soft);
+  color: var(--green);
+}
+
+/* Continue Learning (Active Session Card) - Tone xanh rêu vintage mộc mạc phong cách nông trại, không bị trắng */
+:root[data-theme="retro"] .active-session-card {
+  background: linear-gradient(135deg, #435b31 0%, #314424 100%);
+  color: #faf5ed;
+  border: 1px solid #5a7544;
+  box-shadow: 0 8px 20px rgb(49 68 36 / 25%);
+}
+
+:root[data-theme="retro"] .active-session-card::after {
+  border-color: rgb(250 245 237 / 10%);
+}
+
+:root[data-theme="retro"] .active-session-card .session-badge {
+  background: #628448;
+  color: #faf5ed;
+}
+
+:root[data-theme="retro"] .active-session-card h3 {
+  color: #faf5ed;
+}
+
+:root[data-theme="retro"] .active-session-card p,
+:root[data-theme="retro"] .active-session-card small {
+  color: #d8e6cb;
+}
+
+:root[data-theme="retro"] .active-session-card .button.light {
+  background: #faf5ed;
+  color: #314424;
+  border: none;
+}
+
+:root[data-theme="retro"] .active-session-card .button.light:hover {
+  background: #e6dfd1;
+}
+
+/* Learn new cards */
+:root[data-theme="retro"] .learn-new-card {
+  background: var(--surface);
+  border-color: var(--outline);
+}
+
+:root[data-theme="retro"] .learn-new-card:hover {
+  border-color: #4f7435;
+  box-shadow: 0 8px 20px rgb(67 91 49 / 15%);
+}
+
+:root[data-theme="retro"] .learn-new-card:focus-visible {
+  outline-color: #4f7435;
+  border-color: #4f7435;
+}
+
+:root[data-theme="retro"] .learn-new-card .card-icon {
+  background: #dce7d0;
+  color: #4f7435;
+}
+
+/* Review row */
+:root[data-theme="retro"] .review-row {
+  background: var(--surface);
+  border-color: var(--outline);
+}
+
+:root[data-theme="retro"] .review-row:hover {
+  border-color: #4f7435;
+}
+
+:root[data-theme="retro"] .review-icon {
+  background: #dce7d0;
+  color: #4f7435;
+}
+
+/* Recent activity */
+:root[data-theme="retro"] .activity-item {
+  background: var(--surface);
+  border-color: var(--outline);
+}
+
+:root[data-theme="retro"] .activity-item:hover {
+  border-color: #4f7435;
+}
+
+:root[data-theme="retro"] .activity-icon {
+  background: #dce7d0;
+  color: #4f7435;
+}
+
+:root[data-theme="retro"] .side-card {
+  background: var(--surface);
+  border-color: var(--outline);
+}
+
+:root[data-theme="retro"] .count-badge {
+  background: #dce7d0;
+  color: #4f7435;
+}
+
+:root[data-theme="retro"] .weak-icon {
+  background: #ebd0d0;
+  color: #a33838;
+}
+
+:root[data-theme="retro"] .empty-state {
+  background: var(--surface);
+  border-color: var(--outline);
+  color: var(--muted);
+}
+
+:root[data-theme="retro"] .theme-toggle {
+  background: var(--surface-low);
+  border-color: var(--outline);
+  color: var(--muted);
+}
+
+:root[data-theme="retro"] .theme-toggle:hover {
+
+/* Retro Farm Decorative Header Leaf */
+:root[data-theme="retro"] .dashboard-heading h1::after {
+  content: " 🌾";
+  font-size: 0.85em;
+  opacity: 0.85;
+}
+
+
+/* Retro Paper Texture / Subtle Vignette & Grain Effect */
+:root[data-theme="retro"] .dashboard-page::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.04;
+  background-image: radial-gradient(#382417 1px, transparent 1px);
+  background-size: 16px 16px;
+}
+
+  border-color: #4f7435;
+  color: #4f7435;
+}
+
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme]) {
     color-scheme: dark;
@@ -5324,10 +5746,9 @@ a {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
 
-/* Error Alert */
 .auth-error-alert {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
   border-radius: 10px;
   border: 1px solid rgba(239, 68, 68, 0.25);
@@ -5335,9 +5756,16 @@ a {
   color: var(--error);
   padding: 10px 12px;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
+  line-height: 1.5;
   margin-bottom: 14px;
+  white-space: pre-line;
   animation: auth-shake 300ms ease;
+}
+
+.auth-error-alert svg {
+  flex-shrink: 0;
+  margin-top: 1px;
 }
 
 @keyframes auth-shake {
@@ -5725,4 +6153,130 @@ a {
   background: var(--error-soft);
 }
 
+/* ==========================================================================
+   Demo Showcase Badge
+   ========================================================================== */
 
+.demo-showcase-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  background: var(--gold-soft);
+  color: #b45309;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.12);
+  user-select: none;
+  animation: demo-badge-pop 200ms ease-out;
+}
+
+@keyframes demo-badge-pop {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.demo-badge-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--gold);
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.25);
+  animation: demo-dot-pulse 2s infinite ease-in-out;
+}
+
+@keyframes demo-dot-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.3); opacity: 0.7; }
+}
+
+.demo-badge-text {
+  white-space: nowrap;
+}
+
+/* ==========================================================================
+   Admin Badge & Restriction Alert Styles
+   ========================================================================== */
+.auth-admin-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #fff;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  border-radius: 999px;
+  box-shadow: 0 2px 5px rgba(217, 119, 6, 0.25);
+}
+
+.admin-restriction-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  margin-bottom: 20px;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: var(--radius-md);
+  color: var(--foreground);
+}
+
+.admin-restriction-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(245, 158, 11, 0.15);
+  color: #d97706;
+  flex-shrink: 0;
+}
+
+.admin-restriction-text strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: #b45309;
+  margin-bottom: 2px;
+}
+
+.admin-restriction-text p {
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.inline-name-trigger-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-inline-alert {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #b45309;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  padding: 4px 8px;
+  border-radius: 6px;
+  animation: admin-fade-in 200ms ease;
+}
+
+@keyframes admin-fade-in {
+  from { opacity: 0; transform: translateY(-2px); }
+  to { opacity: 1; transform: translateY(0); }
+}

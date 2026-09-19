@@ -29,12 +29,13 @@ def answer_all_cards_and_complete(api_client: TestClient, session_id: int, cards
 
 
 def test_sample_workbook_can_complete_the_core_learning_loop(
-    api_client: TestClient, db_session: Session
+    api_client: TestClient, db_session: Session, admin_headers: dict[str, str]
 ) -> None:
     with SAMPLE_WORKBOOK.open("rb") as source:
         imported = api_client.post(
             "/api/v1/workbooks/import",
             files={"file": (SAMPLE_WORKBOOK.name, source, XLSX_MIME_TYPE)},
+            headers=admin_headers,
         )
 
     assert imported.status_code == 201

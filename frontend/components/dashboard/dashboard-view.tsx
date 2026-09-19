@@ -71,19 +71,120 @@ function OverviewSideCard({ dashboard }: { dashboard: DashboardSummary }) {
 function Stat({ value, label, tone }: { value: number; label: string; tone: "primary" | "green" | "gold" }) { return <div className={`stat stat-${tone}`}><strong>{value}</strong><span>{label}</span></div>; }
 
 function ReviewSection({ sheets }: { sheets: DashboardSheetItem[] }) {
-  return <section className="dashboard-section review-section"><DashboardSectionHeading title="Today&apos;s Review" count={sheets.length} /><div className="review-card">{sheets.length === 0 ? <EmptyState><span>No sheets are due right now. You are up to date.</span><Link href="/workbooks" className="text-link">Browse learning sheets <Icon name="arrow" size={17} /></Link></EmptyState> : <div className="review-list">{sheets.map((sheet) => <DueSheetRow key={sheet.id} sheet={sheet} />)}</div>}</div></section>;
+  return (
+    <section className="dashboard-section review-section">
+      <DashboardSectionHeading title="Today's Review" count={sheets.length} />
+      <div className="review-card">
+        {sheets.length === 0 ? (
+          <EmptyState>
+            <span className="empty-state-icon" aria-hidden="true">
+              <Icon name="check" size={24} />
+            </span>
+            <p>No sheets are due right now. You are completely up to date.</p>
+            <Link href="/workbooks" className="text-link" aria-label="Browse learning sheets">
+              Browse learning sheets <Icon name="arrow" size={17} />
+            </Link>
+          </EmptyState>
+        ) : (
+          <div className="review-list">
+            {sheets.map((sheet) => (
+              <DueSheetRow key={sheet.id} sheet={sheet} />
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  );
 }
 
 function DueSheetRow({ sheet }: { sheet: DashboardSheetItem }) {
-  return <div className="review-row"><div className="review-icon"><Icon name="review" size={25} /></div><div className="row-copy"><strong>{sheet.name}</strong><span>{sheet.workbook_name} · Due {formatDate(sheet.next_review_at)} · {formatLabel(sheet.priority)} priority</span></div><Link href={`/sheets/${sheet.id}/study?mode=review`} className="button primary">Review now</Link></div>;
+  return (
+    <div className="review-row">
+      <div className="review-icon" aria-hidden="true">
+        <Icon name="review" size={25} />
+      </div>
+      <div className="row-copy">
+        <strong>{sheet.name}</strong>
+        <span>
+          {sheet.workbook_name} · Due {formatDate(sheet.next_review_at)} · {formatLabel(sheet.priority)} priority
+        </span>
+      </div>
+      <Link
+        href={`/sheets/${sheet.id}/study?mode=review`}
+        className="button primary"
+        aria-label={`Review now: ${sheet.name} from ${sheet.workbook_name}`}
+      >
+        Review now
+      </Link>
+    </div>
+  );
 }
 
 function ActiveSessionCard({ session }: { session: DashboardActiveSessionItem }) {
-  return <article className="active-session-card"><div className="session-badge">Current session</div><h3>{session.sheet.name}</h3><p>{session.sheet.workbook_name} · {sessionLabel(session.session_type)}</p><small>Started {formatDate(session.started_at)} · {session.total_cards} cards</small><Link href={`/study-sessions/${session.id}`} className="button light">Continue learning <Icon name="arrow" size={18} /></Link></article>;
+  return (
+    <article className="active-session-card">
+      <div className="session-badge">Current session</div>
+      <h3>{session.sheet.name}</h3>
+      <p>
+        {session.sheet.workbook_name} · {sessionLabel(session.session_type)}
+      </p>
+      <small>
+        Started {formatDate(session.started_at)} · {session.total_cards} cards
+      </small>
+      <Link
+        href={`/study-sessions/${session.id}`}
+        className="button light"
+        aria-label={`Continue learning session for ${session.sheet.name}`}
+      >
+        Continue learning <Icon name="arrow" size={18} />
+      </Link>
+    </article>
+  );
 }
 
 function LearnNewSection({ sheets }: { sheets: DashboardSheetItem[] }) {
-  return <section className="dashboard-section"><DashboardSectionHeading title="Learn New" count={sheets.length} action={<Link href="/workbooks" className="text-link">See all <Icon name="arrow" size={17} /></Link>} />{sheets.length === 0 ? <EmptyState>All available sheets have been started. Import a workbook to add more learning content.</EmptyState> : <div className="learn-new-grid">{sheets.map((sheet) => <Link key={sheet.id} href={`/sheets/${sheet.id}/study`} className="learn-new-card"><span className="card-icon"><Icon name="books" size={23} /></span><span className="card-title">{sheet.name}</span><span className="card-meta">{sheet.workbook_name}</span><span className="card-count">{sheet.card_count} cards</span></Link>)}</div>}</section>;
+  return (
+    <section className="dashboard-section">
+      <DashboardSectionHeading
+        title="Learn New"
+        count={sheets.length}
+        action={
+          <Link href="/workbooks" className="text-link" aria-label="See all workbooks">
+            See all <Icon name="arrow" size={17} />
+          </Link>
+        }
+      />
+      {sheets.length === 0 ? (
+        <EmptyState>
+          <span className="empty-state-icon" aria-hidden="true">
+            <Icon name="books" size={24} />
+          </span>
+          <p>All available sheets have been started. Import a workbook to add more learning content.</p>
+          <Link href="/import" className="text-link" aria-label="Import a new workbook">
+            Import workbook <Icon name="arrow" size={17} />
+          </Link>
+        </EmptyState>
+      ) : (
+        <div className="learn-new-grid">
+          {sheets.map((sheet) => (
+            <Link
+              key={sheet.id}
+              href={`/sheets/${sheet.id}/study`}
+              className="learn-new-card"
+              aria-label={`Learn new sheet: ${sheet.name} from ${sheet.workbook_name}, ${sheet.card_count} cards`}
+            >
+              <span className="card-icon" aria-hidden="true">
+                <Icon name="books" size={23} />
+              </span>
+              <span className="card-title">{sheet.name}</span>
+              <span className="card-meta">{sheet.workbook_name}</span>
+              <span className="card-count">{sheet.card_count} cards</span>
+            </Link>
+          ))}
+        </div>
+      )}
+    </section>
+  );
 }
 
 function WeakCardsSummary({ count }: { count: number }) {
@@ -91,11 +192,46 @@ function WeakCardsSummary({ count }: { count: number }) {
 }
 
 function RecentActivity({ sessions }: { sessions: DashboardRecentSessionItem[] }) {
-  return <section className="dashboard-section recent-section"><DashboardSectionHeading title="Recent Activity" />{sessions.length === 0 ? <EmptyState>Completed sessions will appear here.</EmptyState> : <div className="activity-list">{sessions.map((session) => <RecentActivityItem key={session.id} session={session} />)}</div>}</section>;
+  return (
+    <section className="dashboard-section recent-section">
+      <DashboardSectionHeading title="Recent Activity" />
+      {sessions.length === 0 ? (
+        <EmptyState>
+          <span className="empty-state-icon" aria-hidden="true">
+            <Icon name="clock" size={24} />
+          </span>
+          <p>Completed study sessions and review rounds will appear here.</p>
+        </EmptyState>
+      ) : (
+        <div className="activity-list">
+          {sessions.map((session) => (
+            <RecentActivityItem key={session.id} session={session} />
+          ))}
+        </div>
+      )}
+    </section>
+  );
 }
 
 function RecentActivityItem({ session }: { session: DashboardRecentSessionItem }) {
-  return <Link href={`/study-sessions/${session.id}/result`} className="activity-item"><span className="activity-icon"><Icon name="check" size={20} /></span><span className="row-copy"><strong>{session.sheet_name}</strong><span>{session.workbook_name} · {sessionLabel(session.session_type)} · {formatDate(session.completed_at)}</span></span><span className="activity-score">{session.mastery_score === null ? "View" : `${session.mastery_score}%`}</span></Link>;
+  return (
+    <Link
+      href={`/study-sessions/${session.id}/result`}
+      className="activity-item"
+      aria-label={`View result for ${session.sheet_name} session, scored ${session.mastery_score === null ? "unscored" : `${session.mastery_score}%`}`}
+    >
+      <span className="activity-icon" aria-hidden="true">
+        <Icon name="check" size={20} />
+      </span>
+      <span className="row-copy">
+        <strong>{session.sheet_name}</strong>
+        <span>
+          {session.workbook_name} · {sessionLabel(session.session_type)} · {formatDate(session.completed_at)}
+        </span>
+      </span>
+      <span className="activity-score">{session.mastery_score === null ? "View" : `${session.mastery_score}%`}</span>
+    </Link>
+  );
 }
 
 function DashboardSectionHeading({ title, count, action }: { title: string; count?: number; action?: React.ReactNode }) { return <div className="dashboard-section-heading"><h2>{title}{count !== undefined && <span className="heading-count">{count}</span>}</h2>{action}</div>; }

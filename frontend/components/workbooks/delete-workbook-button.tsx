@@ -3,14 +3,21 @@
 import { useEffect, useRef, useState } from "react";
 
 import { Icon } from "@/components/layout/app-shell";
+import { useAuth } from "@/context/auth-context";
 import { deleteWorkbook } from "@/services/api";
 
 type DeleteWorkbookButtonProps = { workbookId: number; workbookName: string; onDeleted: () => Promise<void> };
 
 export function DeleteWorkbookButton({ workbookId, workbookName, onDeleted }: DeleteWorkbookButtonProps) {
+  const { user, isAuthenticated } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const isAdmin = isAuthenticated && user?.is_superuser === true;
+  if (!isAdmin) {
+    return null;
+  }
   const triggerRef = useRef<HTMLButtonElement>(null);
   const cancelRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);

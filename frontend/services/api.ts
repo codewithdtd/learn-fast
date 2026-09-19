@@ -711,12 +711,56 @@ async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 
+function formatValidationError(loc: string, msg: string): string {
+  const fieldNames: Record<string, string> = {
+    username: "Username",
+    email: "Email address",
+    password: "Password",
+    full_name: "Full name",
+    username_or_email: "Username or Email",
+  };
+
+  const fieldLabel = fieldNames[loc] || loc || "Field";
+
+  if (msg.includes("String should match pattern") || msg.includes("pattern")) {
+    return `${fieldLabel} may only contain letters, numbers, underscores (_), and hyphens (-). No spaces allowed.`;
+  }
+  if (msg.includes("value is not a valid email address") || msg.includes("valid email")) {
+    return `${fieldLabel} must be a valid email address.`;
+  }
+  if (msg.includes("at least") || msg.includes("min_length")) {
+    return `${fieldLabel} is too short.`;
+  }
+  if (msg.includes("at most") || msg.includes("max_length")) {
+    return `${fieldLabel} is too long.`;
+  }
+  return `${fieldLabel}: ${msg}`;
+}
+
 async function toApiRequestError(response: Response): Promise<ApiRequestError> {
   const body: unknown = await response.json().catch(() => null);
-  const message =
-    typeof body === "object" && body !== null && "detail" in body && typeof body.detail === "string"
-      ? body.detail
-      : `Request failed with status ${response.status}. Please try again.`;
+  let message = `Request failed with status ${response.status}. Please try again.`;
+
+  if (typeof body === "object" && body !== null && "detail" in body) {
+    const detail = (body as { detail: unknown }).detail;
+    if (typeof detail === "string") {
+      message = detail;
+    } else if (Array.isArray(detail) && detail.length > 0) {
+      // Handle FastAPI / Pydantic validation errors: [{ loc: ['body', 'username'], msg: '...', type: '...' }]
+      message = detail
+        .map((item) => {
+          if (typeof item === "object" && item !== null && "msg" in item) {
+            const loc = Array.isArray(item.loc)
+              ? item.loc.filter((l: unknown) => l !== "body").join(".")
+              : "";
+            return formatValidationError(loc, String(item.msg));
+          }
+          return typeof item === "string" ? item : JSON.stringify(item);
+        })
+        .join("\n");
+    }
+  }
+
   return new ApiRequestError(message, response.status);
 }
 
