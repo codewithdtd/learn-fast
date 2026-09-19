@@ -3836,10 +3836,40 @@ a {
 
   /* Shadow - Đổ bóng hạt dẻ ấm áp, dịu êm */
   --shadow-soft: 0 6px 18px rgb(56 36 23 / 12%);
+
+  /* Vintage & Retro Typography Tokens (Full Vietnamese Support) */
+  --font-retro-serif-stack: var(--font-retro-display), "Playfair Display", "Times New Roman", Georgia, serif;
+  --font-retro-body-stack: var(--font-retro-body), Lora, "Palatino Linotype", "Book Antiqua", Georgia, serif;
 }
 
 :root[data-theme="retro"] body {
   background: var(--background);
+  font-family: var(--font-retro-body-stack);
+  letter-spacing: 0.01em;
+}
+
+:root[data-theme="retro"] h1,
+:root[data-theme="retro"] h2,
+:root[data-theme="retro"] h3,
+:root[data-theme="retro"] h4,
+:root[data-theme="retro"] .dashboard-heading h1,
+:root[data-theme="retro"] .brand strong,
+:root[data-theme="retro"] .stat-value,
+:root[data-theme="retro"] .active-session-title,
+:root[data-theme="retro"] .section-head h2 {
+  font-family: var(--font-retro-serif-stack);
+  letter-spacing: -0.01em;
+}
+
+:root[data-theme="retro"] button,
+:root[data-theme="retro"] input,
+:root[data-theme="retro"] select,
+:root[data-theme="retro"] textarea,
+:root[data-theme="retro"] .nav-link,
+:root[data-theme="retro"] .mobile-nav-link,
+:root[data-theme="retro"] .theme-toggle,
+:root[data-theme="retro"] .user-name {
+  font-family: var(--font-retro-body-stack);
 }
 
 :root[data-theme="retro"] .desktop-sidebar {
