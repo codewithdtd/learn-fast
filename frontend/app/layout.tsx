@@ -21,7 +21,7 @@ const inter = Inter({
 const themeScript = `(() => {
   try {
     const storedTheme = localStorage.getItem("learn-fast-theme");
-    const theme = storedTheme === "light" || storedTheme === "dark"
+    const theme = storedTheme === "light" || storedTheme === "dark" || storedTheme === "retro"
       ? storedTheme
       : (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
     document.documentElement.dataset.theme = theme;
