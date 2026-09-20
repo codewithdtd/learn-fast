@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { DashboardCheckinBanner } from "@/components/dashboard/dashboard-checkin-banner";
+import { DashboardLearningChart } from "@/components/dashboard/dashboard-learning-chart";
 import { Icon } from "@/components/layout/app-shell";
 import { formatDate, formatLabel } from "@/lib/format";
 import { getDashboard, type DashboardActiveSessionItem, type DashboardRecentSessionItem, type DashboardSheetItem, type DashboardSummary } from "@/services/api";
@@ -40,6 +41,8 @@ export function DashboardView() {
       </header>
 
       <DashboardCheckinBanner />
+
+      <DashboardLearningChart dashboard={dashboard} />
 
       <div className="dashboard-grid">
 

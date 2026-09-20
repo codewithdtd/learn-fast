@@ -29,11 +29,11 @@ export function StudySessionResult({ sessionId }: StudySessionResultProps) {
   }, [sessionId]);
 
   useEffect(() => {
-    if (!session?.sheet_rating) return;
+    if (!session?.sheet_id) return;
     let isCurrent = true;
     void getSheet(String(session.sheet_id)).then((sheet) => { if (isCurrent) setScheduledSheet(sheet); }).catch((caughtError: unknown) => {
       if (!isCurrent) return;
-      setRatingError(caughtError instanceof Error ? `The rating was saved, but its updated schedule could not be loaded: ${caughtError.message}` : "The rating was saved, but its updated schedule could not be loaded.");
+      setRatingError(caughtError instanceof Error ? `Review schedule could not be loaded: ${caughtError.message}` : "Review schedule could not be loaded.");
     });
     return () => { isCurrent = false; };
   }, [session?.id, session?.sheet_id, session?.sheet_rating]);
@@ -99,8 +99,55 @@ function WeakCardPanel({ weakCards, sheetId }: { weakCards: StudySession["sessio
 
 function SrsRatingPanel({ session, scheduledSheet, isRating, error, supportsSrsRating, onRate }: { session: StudySession; scheduledSheet: SheetDetail | null; isRating: boolean; error: string | null; supportsSrsRating: boolean; onRate: (rating: SrsRating) => Promise<void> }) {
   if (!supportsSrsRating) return <section className="study-result-panel study-srs-panel"><p className="eyebrow">Review schedule</p><h2>Practice session</h2><p className="study-result-muted">This practice session does not change the sheet review schedule.</p></section>;
-  if (session.sheet_rating) return <section aria-live="polite" className="study-result-panel study-srs-panel saved"><p className="eyebrow">Review schedule saved</p><h2>{formatLabel(session.sheet_rating)} rating saved</h2><p className="study-result-muted">The server updated the next review schedule for this sheet.</p>{scheduledSheet ? <dl className="study-schedule-stats"><Stat label="Next review" value={formatDate(scheduledSheet.next_review_at)} tone="neutral" /><Stat label="SRS level" value={`Level ${scheduledSheet.srs_level}`} tone="neutral" /><Stat label="Interval" value={`${scheduledSheet.interval_days} day${scheduledSheet.interval_days === 1 ? "" : "s"}`} tone="neutral" /></dl> : <p className="study-result-muted">Loading the saved schedule…</p>}{error && <p role="alert" className="study-result-inline-error">{error}</p>}</section>;
-  return <section className="study-result-panel study-srs-panel"><p className="eyebrow">Spaced repetition</p><h2>How well did you remember?</h2><p className="study-result-muted">Choose a rating to save the next review date. The server calculates the schedule.</p>{error && <p role="alert" className="study-result-inline-error">{error}</p>}<div className="study-rating-grid"><RatingButton rating="forgot" label="Forgot" description="Review in 1 day" isRating={isRating} onRate={onRate} /><RatingButton rating="hard" label="Hard" description="Keep current interval" isRating={isRating} onRate={onRate} /><RatingButton rating="good" label="Good" description="Advance one SRS level" isRating={isRating} onRate={onRate} /><RatingButton rating="easy" label="Easy" description="Advance two SRS levels" isRating={isRating} onRate={onRate} /></div></section>;
+  
+  return (
+    <section aria-live="polite" className="study-result-panel study-srs-panel saved">
+      <p className="eyebrow">Spaced repetition (SRS)</p>
+      <h2>Automated review schedule</h2>
+      <p className="study-result-muted">
+        The review schedule was automatically calculated based on your performance (Recall accuracy: {session.mastery_score ?? 100}%).
+      </p>
+      {scheduledSheet ? (
+        <div className="study-schedule-details">
+          <dl className="study-schedule-stats">
+            <Stat label="Next review" value={formatDate(scheduledSheet.next_review_at)} tone="neutral" />
+            <Stat label="SRS level" value={`Level ${scheduledSheet.srs_level}`} tone="neutral" />
+            <Stat label="Interval" value={`${scheduledSheet.interval_days} day${scheduledSheet.interval_days === 1 ? "" : "s"}`} tone="neutral" />
+          </dl>
+          {scheduledSheet.next_review_at && (
+            <div className="study-schedule-calendar-link-wrap" style={{ marginTop: "12px" }}>
+              <Link
+                href={`/calendar?date=${scheduledSheet.next_review_at.slice(0, 10)}`}
+                className="button-subtle-pill"
+                style={{ display: "inline-flex", alignItems: "center", gap: "6px", textDecoration: "none", width: "100%", justifyContent: "center", padding: "8px 12px" }}
+              >
+                <Icon name="calendar" size={16} /> View this date on Review Calendar
+              </Link>
+            </div>
+          )}
+        </div>
+      ) : (
+        <p className="study-result-muted">Loading saved schedule…</p>
+      )}
+      {error && <p role="alert" className="study-result-inline-error">{error}</p>}
+      
+      <div style={{ marginTop: "1rem", paddingTop: "0.75rem", borderTop: "1px dashed var(--border-subtle, rgba(0,0,0,0.1))" }}>
+        <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginBottom: "0.5rem" }}>
+          Feel unconfident and want to review sooner?
+        </p>
+        <button
+          type="button"
+          disabled={isRating}
+          onClick={() => void onRate("forgot")}
+          className="study-rating-button forgot"
+          style={{ width: "100%", padding: "0.5rem", fontSize: "0.85rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}
+        >
+          <span>{isRating ? "Saving…" : "Review tomorrow"}</span>
+          <small>(Reset to 1 day)</small>
+        </button>
+      </div>
+    </section>
+  );
 }
 
 function RatingButton({ rating, label, description, isRating, onRate }: { rating: SrsRating; label: string; description: string; isRating: boolean; onRate: (rating: SrsRating) => Promise<void> }) { return <button type="button" disabled={isRating} onClick={() => void onRate(rating)} className={`study-rating-button ${rating}`}><strong>{isRating ? "Saving…" : label}</strong><small>{description}</small></button>; }

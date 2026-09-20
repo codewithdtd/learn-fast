@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
 
 import { Icon } from "@/components/layout/app-shell";
-import { formatDate } from "@/lib/format";
+import { formatDate, formatLabel } from "@/lib/format";
 import {
   getCalendarDayDetail,
   getCalendarMonth,
@@ -21,17 +22,44 @@ const MONTH_NAMES = [
 ];
 
 export function CalendarView() {
-  const today = new Date();
-  const [currentYear, setCurrentYear] = useState(today.getFullYear());
-  const [currentMonth, setCurrentMonth] = useState(today.getMonth() + 1);
-  const [calendarData, setCalendarData] = useState<CalendarMonthSummary | null>(null);
-  const [selectedDate, setSelectedDate] = useState<string>(
-    today.toISOString().split("T")[0]
+  return (
+    <Suspense fallback={<div className="calendar-skeleton" />}>
+      <CalendarViewContent />
+    </Suspense>
   );
+}
+
+function CalendarViewContent() {
+  const searchParams = useSearchParams();
+  const dateParam = searchParams.get("date");
+
+  const today = new Date();
+  const initialDateStr = dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam)
+    ? dateParam
+    : today.toISOString().split("T")[0];
+
+  const initialYear = Number(initialDateStr.slice(0, 4));
+  const initialMonth = Number(initialDateStr.slice(5, 7));
+
+  const [currentYear, setCurrentYear] = useState(initialYear);
+  const [currentMonth, setCurrentMonth] = useState(initialMonth);
+  const [calendarData, setCalendarData] = useState<CalendarMonthSummary | null>(null);
+  const [selectedDate, setSelectedDate] = useState<string>(initialDateStr);
   const [dayDetail, setDayDetail] = useState<CalendarDayDetail | null>(null);
   const [isLoadingMonth, setIsLoadingMonth] = useState(true);
   const [isLoadingDay, setIsLoadingDay] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Sync date when url param changes
+  useEffect(() => {
+    if (dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam)) {
+      setSelectedDate(dateParam);
+      const y = Number(dateParam.slice(0, 4));
+      const m = Number(dateParam.slice(5, 7));
+      setCurrentYear(y);
+      setCurrentMonth(m);
+    }
+  }, [dateParam]);
 
   async function loadMonth(year: number, month: number) {
     setIsLoadingMonth(true);
@@ -101,14 +129,17 @@ export function CalendarView() {
   const firstDayOfMonth = new Date(currentYear, currentMonth - 1, 1).getDay();
   const startOffset = (firstDayOfMonth + 6) % 7;
 
+  // Days in month that have scheduled reviews
+  const daysWithDue = (calendarData?.days || []).filter((d) => d.due_sheets_count > 0);
+
   return (
     <div className="calendar-page-layout">
       <header className="calendar-header-banner">
         <div className="banner-title-block">
-          <p className="eyebrow">Progress & Schedule</p>
-          <h1>Check-in Calendar & SRS Schedule</h1>
+          <p className="eyebrow">Progress & Spaced Repetition</p>
+          <h1>Check-in Calendar & Review Schedule</h1>
           <p className="banner-subtext">
-            Check in every day to build a habit and ensure long-term vocabulary retention.
+            Track daily study streaks and see exact dates for upcoming spaced repetition reviews.
           </p>
         </div>
 
@@ -136,16 +167,49 @@ export function CalendarView() {
             </div>
             <div className="streak-card">
               <span className="streak-icon">
-                <Icon name="books" size={26} />
+                <Icon name="review" size={26} />
               </span>
               <div className="streak-info">
-                <strong>{calendarData.total_cards_this_month} Card{calendarData.total_cards_this_month === 1 ? "" : "s"}</strong>
-                <span>Total Reviewed</span>
+                <strong>{daysWithDue.length} Day{daysWithDue.length === 1 ? "" : "s"}</strong>
+                <span>Scheduled Reviews</span>
               </div>
             </div>
           </div>
         )}
       </header>
+
+      {/* Month Schedule Quick Forecast Ribbon */}
+      {daysWithDue.length > 0 && (
+        <section className="month-due-forecast-ribbon">
+          <div className="forecast-header">
+            <div className="forecast-title">
+              <Icon name="clock" size={18} />
+              <strong>Upcoming Reviews in {MONTH_NAMES[currentMonth - 1]}:</strong>
+            </div>
+            <span className="forecast-count">{daysWithDue.length} scheduled dates</span>
+          </div>
+          <div className="forecast-pills-row">
+            {daysWithDue.map((d) => {
+              const isSelected = d.date === selectedDate;
+              return (
+                <button
+                  key={d.date}
+                  type="button"
+                  onClick={() => setSelectedDate(d.date)}
+                  className={`forecast-pill ${isSelected ? "active" : ""} ${d.is_today ? "today" : ""}`}
+                >
+                  <span className="forecast-pill-date">
+                    {formatDate(d.date)} {d.is_today ? "(Today)" : ""}
+                  </span>
+                  <span className="forecast-pill-badge">
+                    {d.due_sheets_count} sheet{d.due_sheets_count === 1 ? "" : "s"} due
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       {error && (
         <div className="error-card" role="alert">
@@ -218,6 +282,7 @@ export function CalendarView() {
 
               {calendarData?.days.map((day) => {
                 const isSelected = day.date === selectedDate;
+                const hasDue = day.due_sheets_count > 0;
                 return (
                   <button
                     key={day.date}
@@ -226,16 +291,18 @@ export function CalendarView() {
                       day.is_today ? "today" : ""
                     } ${day.has_studied ? "studied" : ""} ${
                       isSelected ? "selected" : ""
-                    } ${day.is_future ? "future" : ""}`}
+                    } ${day.is_future ? "future" : ""} ${
+                      hasDue ? "has-due" : ""
+                    }`}
                     onClick={() => setSelectedDate(day.date)}
-                    aria-label={`Date ${day.date}`}
+                    aria-label={`Date ${day.date}: ${day.due_sheets_count} sheets due, ${day.cards_reviewed} cards reviewed`}
                   >
                     <div className="cell-top">
                       <span className="day-number">
                         {new Date(day.date).getDate()}
                       </span>
                       {day.has_studied && (
-                        <span className="study-badge" title="Checked in (Studied)">
+                        <span className="study-badge" title="Checked in (Completed Study)">
                           <Icon name="check" size={12} />
                         </span>
                       )}
@@ -245,9 +312,9 @@ export function CalendarView() {
                       {day.due_sheets_count > 0 && (
                         <span
                           className="due-indicator-pill"
-                          title={`${day.due_sheets_count} sheet(s) due for review`}
+                          title={`${day.due_sheets_count} sheet(s) scheduled for review on this day`}
                         >
-                          <Icon name="review" size={11} /> {day.due_sheets_count}
+                          <Icon name="review" size={11} /> {day.due_sheets_count} due
                         </span>
                       )}
                       {day.cards_reviewed > 0 && (
@@ -283,7 +350,7 @@ export function CalendarView() {
           <div className="inspector-card">
             <header className="inspector-header">
               <div>
-                <p className="eyebrow">Day Details</p>
+                <p className="eyebrow">Day Schedule & Activity</p>
                 <h3>
                   {selectedDate
                     ? formatDate(selectedDate)
@@ -299,64 +366,58 @@ export function CalendarView() {
               <div className="inspector-loading">Loading details...</div>
             ) : dayDetail ? (
               <div className="inspector-content">
-                {/* Check-in Status Banner */}
-                <div
-                  className={`checkin-status-banner ${
-                    dayDetail.has_studied ? "completed" : "pending"
-                  }`}
-                >
-                  <span className="status-icon">
-                    <Icon
-                      name={dayDetail.has_studied ? "check" : "clock"}
-                      size={22}
-                    />
-                  </span>
-                  <div>
-                    <strong>
-                      {dayDetail.has_studied
-                        ? "Study Check-in Complete!"
-                        : "No Study Activity Recorded"}
-                    </strong>
-                    <p>
-                      {dayDetail.has_studied
-                        ? `Completed ${dayDetail.completed_sessions.length} session${dayDetail.completed_sessions.length === 1 ? "" : "s"} (${dayDetail.total_cards_reviewed} cards)`
-                        : dayDetail.is_today
-                        ? "Complete at least 1 study session today to keep your streak!"
-                        : "No completed study sessions recorded on this day."}
-                    </p>
+                {/* Scheduled SRS Reviews Banner / List */}
+                <div className="inspector-section">
+                  <div className="section-title-with-badge">
+                    <h4>Scheduled Reviews on this Day</h4>
+                    <span className={`count-tag ${dayDetail.due_sheets.length > 0 ? "highlight" : ""}`}>
+                      {dayDetail.due_sheets.length}
+                    </span>
                   </div>
-                </div>
 
-                {/* Due Sheets List */}
-                {dayDetail.due_sheets.length > 0 && (
-                  <div className="inspector-section">
-                    <h4>
-                      Scheduled SRS Reviews ({dayDetail.due_sheets.length})
-                    </h4>
+                  {dayDetail.due_sheets.length === 0 ? (
+                    <div className="empty-schedule-box">
+                      <Icon name="check" size={18} />
+                      <p>No spaced repetition reviews scheduled for this date.</p>
+                    </div>
+                  ) : (
                     <div className="due-sheets-mini-list">
                       {dayDetail.due_sheets.map((sheet) => (
-                        <div key={sheet.id} className="due-sheet-item-row">
-                          <div>
-                            <strong>{sheet.name}</strong>
-                            <span>
-                              {sheet.workbook_name} · {sheet.card_count} cards
+                        <div key={sheet.id} className="due-sheet-item-card">
+                          <div className="due-sheet-meta">
+                            <div className="due-sheet-title-row">
+                              <strong>{sheet.name}</strong>
+                              <span className={`priority-badge priority-${sheet.priority}`}>
+                                {formatLabel(sheet.priority)}
+                              </span>
+                            </div>
+                            <span className="due-sheet-subtext">
+                              {sheet.workbook_name} · {sheet.card_count} flashcards
                             </span>
+                            {sheet.next_review_at && (
+                              <span className="due-sheet-time">
+                                <Icon name="clock" size={13} /> Target: {formatDate(sheet.next_review_at)}
+                              </span>
+                            )}
                           </div>
                           <Link
                             href={`/sheets/${sheet.id}/study?mode=review`}
                             className="button primary small"
                           >
-                            Review now
+                            Review now <Icon name="arrow" size={14} />
                           </Link>
                         </div>
                       ))}
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
 
                 {/* Completed Sessions List */}
                 <div className="inspector-section">
-                  <h4>Completed Sessions</h4>
+                  <div className="section-title-with-badge">
+                    <h4>Completed Sessions</h4>
+                    <span className="count-tag">{dayDetail.completed_sessions.length}</span>
+                  </div>
                   {dayDetail.completed_sessions.length === 0 ? (
                     <p className="empty-copy">
                       No study sessions completed on this date.
@@ -372,13 +433,13 @@ export function CalendarView() {
                           <div className="session-row-info">
                             <strong>{session.sheet_name}</strong>
                             <span>
-                              {session.workbook_name} · {session.total_cards} cards
+                              {session.workbook_name} · {session.total_cards} cards · {formatDate(session.completed_at)}
                             </span>
                           </div>
                           <div className="session-row-score">
                             {session.mastery_score !== null
                               ? `${session.mastery_score}%`
-                              : "View result"}
+                              : "View"}
                           </div>
                         </Link>
                       ))}

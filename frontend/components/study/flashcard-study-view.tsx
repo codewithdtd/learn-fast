@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { Icon } from "@/components/layout/app-shell";
 import { Flashcard } from "@/components/study/flashcard";
 import { StudyProgress } from "@/components/study/study-progress";
+import { speakEnglish } from "@/lib/speech";
 import { countRoundAnswers, getCardStudyDirection, getInitialRoundCardIndex } from "@/lib/study-session";
 import {
   answerStudySessionRoundCard,
@@ -124,13 +125,27 @@ export function FlashcardStudyView({ sessionId }: FlashcardStudyViewProps) {
       return target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || (target instanceof HTMLElement && target.isContentEditable);
     }
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.repeat || event.altKey || event.ctrlKey || event.metaKey || isTypingTarget(event.target) || !canAnswer) return;
+      if (event.repeat || event.altKey || event.ctrlKey || event.metaKey || isTypingTarget(event.target)) return;
+      
+      // Keyboard shortcut: Press 'a' or 'p' to pronounce current English phrase/answer
+      if (event.key === "a" || event.key === "A" || event.key === "p" || event.key === "P") {
+        if (currentCard) {
+          event.preventDefault();
+          const englishText = currentDirection === "en_to_vi" ? currentCard.flashcard.phrase : isFlipped ? currentCard.flashcard.phrase : "";
+          if (englishText) {
+            speakEnglish(englishText);
+          }
+        }
+        return;
+      }
+
+      if (!canAnswer) return;
       if (event.key === "1") { event.preventDefault(); void submitAnswer("again"); }
       if (event.key === "2") { event.preventDefault(); void submitAnswer("remembered"); }
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [canAnswer, submitAnswer]);
+  }, [canAnswer, currentCard, currentDirection, isFlipped, submitAnswer]);
 
   if (isLoading) return <SessionState>Loading study session...</SessionState>;
   if (notFound) return <NotFound />;

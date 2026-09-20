@@ -66,6 +66,69 @@ def calculate_srs_schedule(
     return SrsSchedule(level=next_level, interval_days=SRS_INTERVALS[next_level])
 
 
+def derive_rating_from_session_metrics(
+    mastery_score: float | None,
+    again_count: int,
+    total_cards: int,
+) -> SrsRating:
+    """
+    Quyết định rating SRS tự động dựa trên độ chính xác thực tế và số lần bấm Again.
+    - Điểm thành thạo >= 80% và ít lần sai: Good (thăng cấp tiếp theo trên thang 1, 3, 7, 14, 30, 60, 90 ngày)
+    - Điểm thành thạo từ 50% đến dưới 80%: Hard (giữ nguyên khoảng cách hiện tại để củng cố)
+    - Điểm thành thạo dưới 50% (hoặc sai nhiều lần): Forgot (Lapse, reset về 1 ngày)
+    """
+    score = mastery_score if mastery_score is not None else 100.0
+
+    # Nếu người dùng sai nhiều hơn tổng số thẻ hoặc điểm dưới 50%: Đánh dấu cần ôn gấp (Forgot -> 1 ngày)
+    if score < 50.0 or again_count >= total_cards:
+        return SrsRating.FORGOT
+
+    # Nếu điểm từ 50% đến dưới 80%: Giữ nguyên khoảng cách để ôn thêm (Hard)
+    if score < 80.0:
+        return SrsRating.HARD
+
+    # Người dùng làm bài tốt (>= 80%): Thăng cấp theo bậc thang (Good)
+    return SrsRating.GOOD
+
+
+def apply_srs_schedule_to_sheet(
+    sheet: StudySheet,
+    rating: SrsRating,
+    *,
+    now: datetime | None = None,
+    previous_rating: SrsRating | None = None,
+) -> SrsSchedule:
+    """
+    Cập nhật các trường SRS trên StudySheet dựa theo rating đã xác định.
+    Logic nghiệp vụ này đảm bảo tính nhất quán giữa auto-scheduling và manual override.
+    """
+    # Nếu đang override một rating trước đó trong cùng session (ví dụ auto-rated GOOD nhưng user override FORGOT),
+    # ta hoàn tác phần tăng review_count / lapse_count của rating trước đó trước khi apply mới.
+    if previous_rating is not None:
+        sheet.review_count = max(0, sheet.review_count - 1)
+        prev_schedule = calculate_srs_schedule(sheet.srs_level, sheet.interval_days, previous_rating)
+        if prev_schedule.increment_lapse_count:
+            sheet.lapse_count = max(0, sheet.lapse_count - 1)
+
+    schedule = calculate_srs_schedule(
+        sheet.srs_level,
+        sheet.interval_days,
+        rating,
+    )
+    current_time = now or datetime.now(timezone.utc)
+    sheet.status = SheetStatus.LEARNED
+    sheet.first_learned_at = sheet.first_learned_at or current_time
+    sheet.last_reviewed_at = current_time
+    sheet.next_review_at = current_time + timedelta(days=schedule.interval_days)
+    sheet.srs_level = schedule.level
+    sheet.interval_days = schedule.interval_days
+    sheet.review_count += 1
+    if schedule.increment_lapse_count:
+        sheet.lapse_count += 1
+
+    return schedule
+
+
 def get_rated_session_or_404(db: Session, session_id: int) -> StudySession:
     session = db.scalar(
         select(StudySession)
@@ -99,28 +162,16 @@ def rate_completed_session(
     }:
         raise SrsPayloadError("This practice session does not update the sheet review schedule.")
 
-    if session.sheet_rating is not None:
-        if session.sheet_rating == rating.value:
+    previous_rating = SrsRating(session.sheet_rating) if session.sheet_rating is not None else None
+    if previous_rating is not None:
+        if previous_rating == rating:
             return session, session.sheet
         raise SrsConflictError("This study session already has a different SRS rating.")
 
-    schedule = calculate_srs_schedule(
-        session.sheet.srs_level,
-        session.sheet.interval_days,
-        rating,
+    schedule = apply_srs_schedule_to_sheet(
+        session.sheet, rating, now=rated_at, previous_rating=previous_rating
     )
-    now = rated_at or datetime.now(timezone.utc)
-    sheet = session.sheet
     session.sheet_rating = rating.value
-    sheet.status = SheetStatus.LEARNED
-    sheet.first_learned_at = sheet.first_learned_at or now
-    sheet.last_reviewed_at = now
-    sheet.next_review_at = now + timedelta(days=schedule.interval_days)
-    sheet.srs_level = schedule.level
-    sheet.interval_days = schedule.interval_days
-    sheet.review_count += 1
-    if schedule.increment_lapse_count:
-        sheet.lapse_count += 1
 
     try:
         db.commit()
