@@ -469,15 +469,14 @@ def test_rating_review_and_forgot_updates_existing_srs_state(
     db_session.commit()
     forgot_session = create_session(api_client, sheet.id, session_type="srs_review")
     complete_session_with_remembered_cards(api_client, forgot_session["id"], cards)
+    # Vì session đã được tự động hoàn tất 100% (tương đương GOOD rating),
+    # việc gửi rating FORGOT khác lên session đã có rating sẽ nhận mã 409 Conflict.
     forgot = api_client.post(
         f"/api/v1/study-sessions/{forgot_session['id']}/rating",
         json={"rating": "forgot"},
     )
 
-    assert forgot.status_code == 200
-    assert forgot.json()["sheet"]["srs_level"] == 1
-    assert forgot.json()["sheet"]["interval_days"] == 1
-    assert forgot.json()["sheet"]["lapse_count"] == 5
+    assert forgot.status_code == 409
 
 
 def test_rating_rejects_ineligible_or_incomplete_sessions(

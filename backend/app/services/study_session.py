@@ -23,6 +23,7 @@ from app.models import (
     StudySessionType,
     StudySheet,
 )
+from app.services.srs import apply_srs_schedule_to_sheet, derive_rating_from_session_metrics
 from app.schemas.study_session import (
     StudyAnswerDirection,
     StudyAnswerResult,
@@ -46,6 +47,7 @@ class StudySessionConflictError(ValueError):
 
 def _session_load_options():
     return (
+        selectinload(StudySession.sheet),
         selectinload(StudySession.session_cards).selectinload(StudySessionCard.flashcard),
         selectinload(StudySession.rounds)
         .selectinload(StudySessionRound.round_cards)
@@ -268,6 +270,18 @@ def _complete_session_if_mastered(session: StudySession) -> bool:
     session.mastery_score = round(
         sum(item.recall_percentage or 0 for item in completed_rounds) / len(completed_rounds), 2
     )
+
+    # Tự động tính toán lịch SRS cho sheet dựa trên kết quả khách quan nếu phiên học là new_learning hoặc srs_review
+    if session.session_type in {StudySessionType.NEW_LEARNING, StudySessionType.SRS_REVIEW}:
+        if session.sheet_rating is None and session.sheet is not None:
+            auto_rating = derive_rating_from_session_metrics(
+                session.mastery_score,
+                session.again_count,
+                len(session.session_cards),
+            )
+            apply_srs_schedule_to_sheet(session.sheet, auto_rating, now=session.completed_at)
+            session.sheet_rating = auto_rating.value
+
     return True
 
 
