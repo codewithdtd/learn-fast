@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 import { FlashcardFlagButtons } from "@/components/sheets/flashcard-flag-buttons";
+import { AudioPronounceButton } from "@/components/shared/audio-pronounce-button";
 import {
   ApiRequestError,
   getSheet,
@@ -235,11 +236,25 @@ export function SheetTableView({ sheetId }: SheetTableViewProps) {
             <tbody className="divide-y divide-slate-200">
               {filteredCards.map((card) => (
                 <tr key={card.id} className="align-top hover:bg-slate-50">
-                  <td className="px-4 py-3 font-medium text-slate-900">{card.phrase}</td>
+                  <td className="px-4 py-3 font-medium text-slate-900">
+                    <div className="flex items-center gap-1.5">
+                      <span>{card.phrase}</span>
+                      <AudioPronounceButton text={card.phrase} size="sm" title="Listen" />
+                    </div>
+                  </td>
                   <td className="px-4 py-3 text-slate-700">{card.meaning}</td>
                   {areExamplesVisible && (
                     <>
-                      <td className="px-4 py-3 text-slate-600">{card.example_en ?? "—"}</td>
+                      <td className="px-4 py-3 text-slate-600">
+                        {card.example_en ? (
+                          <div className="flex items-center gap-1.5">
+                            <span>{card.example_en}</span>
+                            <AudioPronounceButton text={card.example_en} size="sm" title="Listen example" />
+                          </div>
+                        ) : (
+                          "—"
+                        )}
+                      </td>
                       <td className="px-4 py-3 text-slate-600">{card.example_vi ?? "—"}</td>
                     </>
                   )}
