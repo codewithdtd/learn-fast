@@ -108,11 +108,24 @@ function SrsRatingPanel({ session, scheduledSheet, isRating, error, supportsSrsR
         The review schedule was automatically calculated based on your performance (Recall accuracy: {session.mastery_score ?? 100}%).
       </p>
       {scheduledSheet ? (
-        <dl className="study-schedule-stats">
-          <Stat label="Next review" value={formatDate(scheduledSheet.next_review_at)} tone="neutral" />
-          <Stat label="SRS level" value={`Level ${scheduledSheet.srs_level}`} tone="neutral" />
-          <Stat label="Interval" value={`${scheduledSheet.interval_days} day${scheduledSheet.interval_days === 1 ? "" : "s"}`} tone="neutral" />
-        </dl>
+        <div className="study-schedule-details">
+          <dl className="study-schedule-stats">
+            <Stat label="Next review" value={formatDate(scheduledSheet.next_review_at)} tone="neutral" />
+            <Stat label="SRS level" value={`Level ${scheduledSheet.srs_level}`} tone="neutral" />
+            <Stat label="Interval" value={`${scheduledSheet.interval_days} day${scheduledSheet.interval_days === 1 ? "" : "s"}`} tone="neutral" />
+          </dl>
+          {scheduledSheet.next_review_at && (
+            <div className="study-schedule-calendar-link-wrap" style={{ marginTop: "12px" }}>
+              <Link
+                href={`/calendar?date=${scheduledSheet.next_review_at.slice(0, 10)}`}
+                className="button-subtle-pill"
+                style={{ display: "inline-flex", alignItems: "center", gap: "6px", textDecoration: "none", width: "100%", justifyContent: "center", padding: "8px 12px" }}
+              >
+                <Icon name="calendar" size={16} /> View this date on Review Calendar
+              </Link>
+            </div>
+          )}
+        </div>
       ) : (
         <p className="study-result-muted">Loading saved schedule…</p>
       )}
