@@ -22,6 +22,7 @@ export function DemoBadge() {
     <div className="demo-showcase-badge" title="Demo Mode is active: DB mutations are protected for portfolio showcase.">
       <span className="demo-badge-dot" />
       <span className="demo-badge-text">Demo Showcase (Read-Only)</span>
+      <span className="demo-badge-text-compact">Demo</span>
     </div>
   );
 }

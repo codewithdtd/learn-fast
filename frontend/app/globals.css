@@ -1705,10 +1705,10 @@ a {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    min-height: 56px;
+    min-height: calc(56px + env(safe-area-inset-top, 0px));
     border-bottom: 1px solid var(--outline);
     background: color-mix(in srgb, var(--surface) 90%, transparent);
-    padding: 8px 16px;
+    padding: calc(8px + env(safe-area-inset-top, 0px)) calc(12px + env(safe-area-inset-right, 0px)) 8px calc(12px + env(safe-area-inset-left, 0px));
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
   }
@@ -1776,7 +1776,13 @@ a {
   .mobile-header-actions {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .mobile-brand {
+    flex-shrink: 1;
+    min-width: 0;
   }
 
   .app-content {
@@ -4651,6 +4657,77 @@ a {
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* Mobile Portal Sheet for Notifications */
+.notification-mobile-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.notification-mobile-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 1;
+}
+
+.notification-popover.notification-mobile-sheet {
+  position: relative;
+  top: auto;
+  right: auto;
+  width: 100%;
+  max-width: 100%;
+  max-height: min(520px, 80vh);
+  margin: 0;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+  border-left: none;
+  border-right: none;
+  border-bottom: none;
+  border-top: 1px solid var(--outline);
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.25);
+  z-index: 2;
+  padding-bottom: max(16px, env(safe-area-inset-bottom, 0px));
+  animation: slide-up-mobile-sheet 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slide-up-mobile-sheet {
+  from {
+    transform: translateY(100%);
+    opacity: 0.5;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.notification-close-btn {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--outline);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.notification-close-btn:hover,
+.notification-close-btn:active {
+  background: var(--surface-low);
+  color: var(--foreground);
+}
+
 .notification-popover-header {
   display: flex;
   align-items: center;
@@ -6075,16 +6152,17 @@ a {
 .auth-modal-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 999;
+  z-index: 9999;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 16px;
+  padding: calc(16px + env(safe-area-inset-top, 0px)) calc(16px + env(safe-area-inset-right, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) calc(16px + env(safe-area-inset-left, 0px));
   background: rgba(15, 23, 42, 0.65);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   animation: auth-fade-in 200ms ease-out;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 @keyframes auth-fade-in {
@@ -6096,7 +6174,7 @@ a {
   position: relative;
   width: 100%;
   max-width: 440px;
-  max-height: calc(100vh - 32px);
+  max-height: min(640px, calc(100vh - 32px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)));
   overflow-y: auto;
   border-radius: 20px;
   border: 1px solid var(--outline);
@@ -6804,5 +6882,70 @@ a {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+}
+
+
+/* ==============================================================================
+   Mobile & iOS PWA Responsive Enhancements (Day 39)
+   ============================================================================== */
+
+/* iOS WebKit 16px font-size rule: prevents unwanted viewport auto-zoom when focusing inputs */
+@media screen and (max-width: 768px) {
+  input[type="text"],
+  input[type="password"],
+  input[type="email"],
+  input[type="search"],
+  input[type="number"],
+  textarea,
+  select,
+  .auth-input-wrapper input {
+    font-size: 16px !important;
+  }
+}
+
+/* Compact header actions for mobile viewports */
+@media (max-width: 640px) {
+  .auth-header-cta-group {
+    gap: 4px;
+  }
+
+  .auth-btn-signin {
+    height: 34px;
+    padding: 0 10px;
+    font-size: 12px;
+  }
+
+  .auth-btn-signup {
+    height: 34px;
+    padding: 0 12px;
+    font-size: 12px;
+  }
+
+  .auth-user-name,
+  .auth-chevron {
+    display: none;
+  }
+
+  .auth-user-avatar-btn {
+    height: 36px;
+    padding: 2px;
+  }
+
+  .auth-modal-container {
+    padding: 20px 18px 16px;
+    border-radius: 16px;
+  }
+}
+
+@media (max-width: 380px) {
+  .auth-btn-signin {
+    padding: 0 8px;
+    font-size: 11px;
+  }
+
+  .auth-btn-signup {
+    padding: 0 10px;
+    font-size: 11px;
+  }
 }
 
