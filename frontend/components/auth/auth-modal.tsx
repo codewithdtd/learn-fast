@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useAuth } from "@/context/auth-context";
 
 interface AuthModalProps {
@@ -15,6 +16,7 @@ export function AuthModal({ isOpen, onClose, initialMode = "login" }: AuthModalP
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [mounted, setMounted] = useState(false);
 
   // Form states
   const [usernameOrEmail, setUsernameOrEmail] = useState("");
@@ -23,7 +25,42 @@ export function AuthModal({ isOpen, onClose, initialMode = "login" }: AuthModalP
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
 
-  if (!isOpen) return null;
+  // Client-side portal mounting check
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Đồng bộ mode khi props initialMode hoặc isOpen thay đổi
+  useEffect(() => {
+    if (isOpen) {
+      setMode(initialMode);
+      setError(null);
+    }
+  }, [isOpen, initialMode]);
+
+  // Hỗ trợ đóng modal bằng phím Escape (tiêu chuẩn Accessibility WCAG AA)
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
+
+  // Khóa cuộn trang (body scroll lock) để chống cuộn nền khi kéo form trên iOS
+  useEffect(() => {
+    if (!isOpen) return;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [isOpen]);
+
+  if (!isOpen || !mounted) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,7 +93,7 @@ export function AuthModal({ isOpen, onClose, initialMode = "login" }: AuthModalP
     }
   };
 
-  return (
+  return createPortal(
     <div
       className="auth-modal-backdrop"
       onClick={(e) => {
@@ -365,7 +402,8 @@ export function AuthModal({ isOpen, onClose, initialMode = "login" }: AuthModalP
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

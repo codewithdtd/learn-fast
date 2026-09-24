@@ -6,11 +6,21 @@ import { useEffect, useState } from "react";
 import { DashboardCheckinBanner } from "@/components/dashboard/dashboard-checkin-banner";
 import { DashboardLearningChart } from "@/components/dashboard/dashboard-learning-chart";
 import { Icon } from "@/components/layout/app-shell";
+import { useAuth } from "@/context/auth-context";
 import { formatDate, formatLabel } from "@/lib/format";
-import { getDashboard, type DashboardActiveSessionItem, type DashboardRecentSessionItem, type DashboardSheetItem, type DashboardSummary } from "@/services/api";
+import {
+  getCalendarMonth,
+  getDashboard,
+  type DashboardActiveSessionItem,
+  type DashboardRecentSessionItem,
+  type DashboardSheetItem,
+  type DashboardSummary,
+} from "@/services/api";
 
 export function DashboardView() {
+  const { user } = useAuth();
   const [dashboard, setDashboard] = useState<DashboardSummary | null>(null);
+  const [streak, setStreak] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -26,6 +36,14 @@ export function DashboardView() {
     void getDashboard().then((value) => { if (isCurrent) setDashboard(value); }).catch((caughtError: unknown) => {
       if (isCurrent) setError(caughtError instanceof Error ? caughtError.message : "Could not load your learning dashboard.");
     }).finally(() => { if (isCurrent) setIsLoading(false); });
+
+    const now = new Date();
+    void getCalendarMonth(now.getFullYear(), now.getMonth() + 1)
+      .then((data) => {
+        if (isCurrent) setStreak(data.current_streak);
+      })
+      .catch(() => {});
+
     return () => { isCurrent = false; };
   }, []);
 
@@ -33,8 +51,20 @@ export function DashboardView() {
   if (error && !dashboard) return <DashboardError message={error} onRetry={loadDashboard} />;
   if (!dashboard) return null;
 
+  const displayName = user?.full_name?.trim() ? user.full_name.trim().split(" ")[0] : "Learner";
+  const badgesCount = Math.max(1, Math.floor(streak / 2) + Math.min(5, dashboard.recent_sessions.length));
+  const totalActiveCards =
+    dashboard.active_sessions.reduce((acc, s) => acc + s.total_cards, 0) +
+    dashboard.due_sheets.reduce((acc, s) => acc + s.card_count, 0) +
+    dashboard.new_sheets.reduce((acc, s) => acc + s.card_count, 0);
+
   return (
     <main className="dashboard-page">
+      <DashboardWelcomeHeader userName={displayName} />
+      <DashboardGamifiedStatsBar streak={streak} cardsCount={totalActiveCards} badgesCount={badgesCount} />
+      <FeaturedHeroCard dashboard={dashboard} />
+      <ExplorePastelGrid dashboard={dashboard} />
+
       <header className="dashboard-heading">
         <div><p className="eyebrow">English SRS</p><h1>Today&apos;s learning</h1><p className="heading-date"><Icon name="calendar" size={19} /> {formatDate(dashboard.generated_at)}</p></div>
         <div className="heading-actions"><Link href="/import" className="button secondary">Import workbook</Link><Link href="/workbooks" className="button secondary">Workbooks</Link></div>
@@ -75,7 +105,7 @@ function Stat({ value, label, tone }: { value: number; label: string; tone: "pri
 
 function ReviewSection({ sheets }: { sheets: DashboardSheetItem[] }) {
   return (
-    <section className="dashboard-section review-section">
+    <section id="today-review" className="dashboard-section review-section">
       <DashboardSectionHeading title="Today's Review" count={sheets.length} />
       <div className="review-card">
         {sheets.length === 0 ? (
@@ -242,3 +272,174 @@ function sessionLabel(type: DashboardActiveSessionItem["session_type"]): string 
 function EmptyState({ children }: { children: React.ReactNode }) { return <div className="empty-state">{children}</div>; }
 function DashboardLoading() { return <main className="dashboard-page"><div className="dashboard-skeleton" aria-label="Loading dashboard"><span /><span /><span /><span /><span /></div></main>; }
 function DashboardError({ message, onRetry }: { message: string; onRetry: () => Promise<void> }) { return <main className="dashboard-page"><section role="alert" className="error-card"><p>{message}</p><button type="button" className="button secondary" onClick={() => void onRetry()}>Try again</button></section></main>; }
+
+function DashboardWelcomeHeader({ userName }: { userName: string }) {
+  const initial = userName.trim() ? userName.trim().charAt(0).toUpperCase() : "L";
+  return (
+    <div className="dashboard-welcome-header">
+      <div className="welcome-avatar-wrap">
+        <div className="welcome-avatar" aria-hidden="true">
+          {initial}
+        </div>
+        <div className="welcome-text">
+          <h2>Hello, {userName}! 👋</h2>
+          <p>Ready to learn something new?</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DashboardGamifiedStatsBar({
+  streak,
+  cardsCount,
+  badgesCount,
+}: {
+  streak: number;
+  cardsCount: number;
+  badgesCount: number;
+}) {
+  return (
+    <div className="gamified-stats-bar" aria-label="Learning statistics">
+      <Link href="/calendar" className="gamified-stat-chip" title="View study calendar and streaks">
+        <span className="gamified-stat-icon" aria-hidden="true">🔥</span>
+        <div className="gamified-stat-data">
+          <strong>{streak}</strong>
+          <span>Day Streak</span>
+        </div>
+      </Link>
+      <div className="gamified-stat-chip" title="Total active and due learning cards">
+        <span className="gamified-stat-icon" aria-hidden="true">🪙</span>
+        <div className="gamified-stat-data">
+          <strong>{cardsCount}</strong>
+          <span>Cards</span>
+        </div>
+      </div>
+      <div className="gamified-stat-chip" title="Badges and learning achievements">
+        <span className="gamified-stat-icon" aria-hidden="true">🎖️</span>
+        <div className="gamified-stat-data">
+          <strong>{badgesCount}</strong>
+          <span>Badges</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FeaturedHeroCard({ dashboard }: { dashboard: DashboardSummary }) {
+  const activeSession = dashboard.active_sessions[0];
+  const dueSheet = dashboard.due_sheets[0];
+  const newSheet = dashboard.new_sheets[0];
+
+  let pill = "Featured Lesson";
+  let title = "Your English Decks";
+  let subtitle = "Start studying flashcards to build long-term memory.";
+  let href = "/workbooks";
+  let ctaText = "Explore Decks";
+  let mascot = "⭐";
+
+  if (activeSession) {
+    pill = "Continue Session";
+    title = activeSession.sheet.name;
+    subtitle = `${activeSession.sheet.workbook_name} · ${activeSession.total_cards} cards`;
+    href = `/study-sessions/${activeSession.id}`;
+    ctaText = "Continue Learning";
+    mascot = "🚀";
+  } else if (dueSheet) {
+    pill = "Due for Review";
+    title = dueSheet.name;
+    subtitle = `${dueSheet.workbook_name} · Due now · ${formatLabel(dueSheet.priority)} priority`;
+    href = `/sheets/${dueSheet.id}/study?mode=review`;
+    ctaText = "Review Now";
+    mascot = "🎯";
+  } else if (newSheet) {
+    pill = "Start New Sheet";
+    title = newSheet.name;
+    subtitle = `${newSheet.workbook_name} · ${newSheet.card_count} new cards ready`;
+    href = `/sheets/${newSheet.id}/study`;
+    ctaText = "Start Learning";
+    mascot = "📚";
+  }
+
+  return (
+    <section className="featured-hero-card" aria-label="Featured learning activity">
+      <span className="hero-pill-badge">{pill}</span>
+      <div className="hero-content-wrap">
+        <div className="hero-text-block">
+          <h2 className="hero-title">{title}</h2>
+          <p className="hero-subtitle">{subtitle}</p>
+          <Link href={href} className="hero-cta-btn">
+            {ctaText} <Icon name="arrow" size={18} />
+          </Link>
+        </div>
+        <div className="hero-mascot-badge" aria-hidden="true">
+          {mascot}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ExplorePastelGrid({ dashboard }: { dashboard: DashboardSummary }) {
+  return (
+    <section className="explore-section" aria-label="Explore learning modules">
+      <div className="explore-section-header">
+        <h3>✨ Let&apos;s Explore</h3>
+        <Link href="/workbooks" className="text-link" style={{ fontSize: "12px" }}>
+          View all <Icon name="arrow" size={15} />
+        </Link>
+      </div>
+      <div className="explore-grid">
+        <Link href="/workbooks" className="explore-tile pastel-blue" aria-label="Explore English SRS Workbooks">
+          <div className="explore-tile-icon-wrap" aria-hidden="true">📚</div>
+          <div className="explore-tile-info">
+            <strong>English SRS</strong>
+            <span>All Workbooks</span>
+          </div>
+        </Link>
+
+        <Link href="/workbooks" className="explore-tile pastel-peach" aria-label="Quick Recall fast practice">
+          <div className="explore-tile-icon-wrap" aria-hidden="true">⚡</div>
+          <div className="explore-tile-info">
+            <strong>Quick Recall</strong>
+            <span>Fast recall mode</span>
+          </div>
+        </Link>
+
+        <Link href="/calendar" className="explore-tile pastel-mint" aria-label="Study Calendar and streak">
+          <div className="explore-tile-icon-wrap" aria-hidden="true">📅</div>
+          <div className="explore-tile-info">
+            <strong>Calendar</strong>
+            <span>Check-in streak</span>
+          </div>
+        </Link>
+
+        <Link href="/import" className="explore-tile pastel-lavender" aria-label="Import deck from Excel or Anki">
+          <div className="explore-tile-icon-wrap" aria-hidden="true">📥</div>
+          <div className="explore-tile-info">
+            <strong>Import Deck</strong>
+            <span>Excel / Sheets</span>
+          </div>
+        </Link>
+
+        <Link href="/workbooks" className="explore-tile pastel-coral" aria-label={`Weak cards: ${dashboard.weak_card_count} cards`}>
+          <div className="explore-tile-icon-wrap" aria-hidden="true">🎯</div>
+          <div className="explore-tile-info">
+            <strong>Weak Cards</strong>
+            <span>{dashboard.weak_card_count} to fix</span>
+          </div>
+        </Link>
+
+        <Link href="#today-review" className="explore-tile pastel-yellow" aria-label={`Today's review: ${dashboard.due_sheets.length} due`}>
+          <div className="explore-tile-icon-wrap" aria-hidden="true">🏆</div>
+          <div className="explore-tile-info">
+            <strong>Quiz Review</strong>
+            <span>{dashboard.due_sheets.length} due</span>
+          </div>
+        </Link>
+      </div>
+    </section>
+  );
+}
+
+

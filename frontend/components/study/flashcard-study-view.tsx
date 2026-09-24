@@ -170,7 +170,29 @@ export function FlashcardStudyView({ sessionId }: FlashcardStudyViewProps) {
 }
 
 function RoundSummary({ round, isBusy, onStartRound }: { round: StudySession["round_summaries"][number]; isBusy: boolean; onStartRound: (scope: StudyRoundScope) => Promise<void> }) {
-  return <section className="study-round-summary"><p className="eyebrow">Round {round.round_number} complete</p><h2>{round.recall_percentage}% remembered</h2><dl><div><dt>Remembered</dt><dd>{round.remembered_count}</dd></div><div><dt>Again</dt><dd>{round.again_count}</dd></div><div><dt>Cards</dt><dd>{round.total_cards}</dd></div></dl><p>Choose a focused retry, or repeat the full set before finishing.</p><div className="study-round-summary-actions"><button type="button" disabled={isBusy} onClick={() => void onStartRound("forgotten")}>Study only forgotten cards <Icon name="arrow" size={18} /></button><button type="button" className="secondary" disabled={isBusy} onClick={() => void onStartRound("all")}>Study all cards again <Icon name="refresh" size={18} /></button></div></section>;
+  return (
+    <section className="study-round-summary">
+      <div className="study-encouragement-banner">
+        <span style={{ fontSize: "20px" }}>🎉</span>
+        <div>
+          <strong>Awesome! You&apos;re doing great!</strong>
+          <span style={{ display: "block", fontSize: "12px", opacity: 0.85 }}>Keep up the momentum to master these cards.</span>
+        </div>
+      </div>
+      <p className="eyebrow" style={{ marginTop: "16px" }}>Round {round.round_number} complete</p>
+      <h2>{round.recall_percentage}% remembered</h2>
+      <dl>
+        <div><dt>Remembered</dt><dd>{round.remembered_count}</dd></div>
+        <div><dt>Again</dt><dd>{round.again_count}</dd></div>
+        <div><dt>Cards</dt><dd>{round.total_cards}</dd></div>
+      </dl>
+      <p>Choose a focused retry, or repeat the full set before finishing.</p>
+      <div className="study-round-summary-actions">
+        <button type="button" disabled={isBusy} onClick={() => void onStartRound("forgotten")}>Study only forgotten cards <Icon name="arrow" size={18} /></button>
+        <button type="button" className="secondary" disabled={isBusy} onClick={() => void onStartRound("all")}>Study all cards again <Icon name="refresh" size={18} /></button>
+      </div>
+    </section>
+  );
 }
 
 function formatDirection(direction: StudySession["direction"]) { if (direction === "en_to_vi") return "English to Vietnamese"; if (direction === "vi_to_en") return "Vietnamese to English"; return "Mixed direction"; }
