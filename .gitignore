@@ -15,3 +15,13 @@ backend/.env
 frontend/.env.local
 plan/
 guide/
+.codex/
+.hallmark/
+docs/
+designs
+spamle/
+scripts/
+stlich/
+backend/.pytest_tmp/
+.pytest_tmp/
+*.md

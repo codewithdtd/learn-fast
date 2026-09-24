@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-type Theme = "light" | "dark" | "retro";
+type Theme = "light" | "dark" | "retro" | "playful";
 
 export function ThemeToggle({ compact = false }: { compact?: boolean }) {
   const [theme, setTheme] = useState<Theme>("light");
@@ -11,7 +11,7 @@ export function ThemeToggle({ compact = false }: { compact?: boolean }) {
   useEffect(() => {
     setMounted(true);
     const storedTheme = window.localStorage.getItem("learn-fast-theme");
-    if (storedTheme === "light" || storedTheme === "dark" || storedTheme === "retro") {
+    if (storedTheme === "light" || storedTheme === "dark" || storedTheme === "retro" || storedTheme === "playful") {
       setTheme(storedTheme);
     } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
       setTheme("dark");
@@ -24,6 +24,8 @@ export function ThemeToggle({ compact = false }: { compact?: boolean }) {
       nextTheme = "dark";
     } else if (theme === "dark") {
       nextTheme = "retro";
+    } else if (theme === "retro") {
+      nextTheme = "playful";
     } else {
       nextTheme = "light";
     }
@@ -40,12 +42,14 @@ export function ThemeToggle({ compact = false }: { compact?: boolean }) {
     light: "Light mode",
     dark: "Dark mode",
     retro: "Retro Farm",
+    playful: "Playful EdTech",
   };
 
   const nextLabels: Record<Theme, string> = {
     light: "Switch to dark mode",
     dark: "Switch to retro farm mode",
-    retro: "Switch to light mode",
+    retro: "Switch to playful edtech mode",
+    playful: "Switch to light mode",
   };
 
   return (
@@ -69,6 +73,11 @@ export function ThemeToggle({ compact = false }: { compact?: boolean }) {
             <path d="M12 20v-8" />
             <path d="M12 12c0-3.5 3-6.5 7-6.5 0 4-3 7-7 7z" />
             <path d="M12 15c0-2.5-2.5-4.5-5.5-4.5 0 3 2.5 5 5.5 5z" />
+          </svg>
+        ) : activeTheme === "playful" ? (
+          /* Biểu tượng ngôi sao năng động Playful EdTech */
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" fill="currentColor" fillOpacity="0.2" />
           </svg>
         ) : (
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

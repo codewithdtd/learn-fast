@@ -6949,3 +6949,544 @@ a {
   }
 }
 
+
+/* ==============================================================================
+   DAY 40: Playful EdTech Theme Tokens & Gamified Mobile UI
+   ============================================================================== */
+
+:root[data-theme="playful"] {
+  color-scheme: light;
+
+  /* Base & Canvas */
+  --background: #f4f8fa;
+  --foreground: #1e293b;
+
+  /* Surface */
+  --surface: #ffffff;
+  --surface-low: #f0f7f9;
+  --surface-high: #e2eff3;
+
+  /* Primary Accent - Vibrant Teal & Cyan */
+  --primary: #0d9488;
+  --primary-container: #0f766e;
+  --primary-soft: #ccfbf1;
+
+  /* Success - Bright Mint */
+  --green: #10b981;
+  --green-soft: #d1fae5;
+
+  /* Gold / Yellow - Warm Honey */
+  --gold: #f59e0b;
+  --gold-soft: #fef3c7;
+
+  /* Error / Coral - Cheerful Coral */
+  --error: #f43f5e;
+  --error-soft: #ffe4e6;
+
+  /* Text & Border */
+  --muted: #64748b;
+  --outline: #e2e8f0;
+
+  /* Radius - Playful rounded super-ellipses */
+  --radius-md: 16px;
+  --radius-lg: 24px;
+
+  /* Shadows - Tactile soft drop */
+  --shadow-soft: 0 8px 24px rgb(13 148 136 / 10%);
+}
+
+:root[data-theme="playful"] body {
+  background: var(--background);
+}
+
+:root[data-theme="playful"] .brand-mark,
+:root[data-theme="playful"] .mobile-brand-mark {
+  background: linear-gradient(135deg, #0d9488 0%, #0284c7 100%);
+  box-shadow: 0 4px 12px rgba(13, 148, 136, 0.28);
+}
+
+:root[data-theme="playful"] .mobile-nav-link.active {
+  background: #0d9488;
+  color: #ffffff;
+  border-radius: 16px;
+}
+
+:root[data-theme="playful"] .button.primary {
+  background: #0d9488;
+  border-radius: 9999px;
+  box-shadow: 0 3px 0 #0f766e, 0 6px 16px rgba(13, 148, 136, 0.22);
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+:root[data-theme="playful"] .button.primary:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 #0f766e, 0 3px 8px rgba(13, 148, 136, 0.2);
+}
+
+:root[data-theme="playful"] .button.secondary {
+  border-radius: 9999px;
+  border: 1.5px solid var(--outline);
+}
+
+
+/* Gamified Mobile Header & Welcome Section */
+.dashboard-welcome-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.welcome-avatar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.welcome-avatar {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary) 0%, #0284c7 100%);
+  color: #ffffff;
+  font-size: 20px;
+  font-weight: 900;
+  box-shadow: 0 4px 14px rgba(13, 148, 136, 0.28);
+  border: 3px solid var(--surface);
+  flex-shrink: 0;
+}
+
+.welcome-text h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: -0.025em;
+  color: var(--foreground);
+}
+
+.welcome-text p {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+/* Gamified Horizontal Stat Bar */
+.gamified-stats-bar {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 20px;
+  background: var(--surface);
+  border: 1px solid var(--outline);
+  box-shadow: var(--shadow-soft);
+  margin-bottom: 22px;
+}
+
+.gamified-stat-chip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 14px;
+  background: var(--surface-low);
+  text-decoration: none;
+  color: var(--foreground);
+  transition: transform 120ms ease, background 120ms ease;
+}
+
+.gamified-stat-chip:hover {
+  background: var(--surface-high);
+}
+
+.gamified-stat-chip:active {
+  transform: scale(0.97);
+}
+
+.gamified-stat-icon {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.gamified-stat-data {
+  display: flex;
+  flex-direction: column;
+}
+
+.gamified-stat-data strong {
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1.1;
+  color: var(--foreground);
+}
+
+.gamified-stat-data span {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* Featured Hero Card */
+.featured-hero-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 24px;
+  padding: 22px 24px;
+  background: linear-gradient(135deg, #e0f2fe 0%, #eef2ff 100%);
+  border: 1px solid #bae6fd;
+  box-shadow: 0 10px 24px rgba(14, 165, 233, 0.12);
+  margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+:root[data-theme="dark"] .featured-hero-card {
+  background: linear-gradient(135deg, #1e293b 0%, #172554 100%);
+  border-color: #334155;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+}
+
+:root[data-theme="retro"] .featured-hero-card {
+  background: linear-gradient(135deg, #dfceb8 0%, #d4c1a9 100%);
+  border-color: #bc9f80;
+}
+
+.hero-pill-badge {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.85);
+  color: #0369a1;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+:root[data-theme="dark"] .hero-pill-badge {
+  background: rgba(30, 41, 59, 0.9);
+  color: #38bdf8;
+}
+
+:root[data-theme="retro"] .hero-pill-badge {
+  background: #ebdcc9;
+  color: #4f7435;
+}
+
+.hero-content-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.hero-text-block {
+  flex: 1;
+  min-width: 0;
+}
+
+.hero-title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  color: #0f172a;
+}
+
+:root[data-theme="dark"] .hero-title {
+  color: #f8fafc;
+}
+
+:root[data-theme="retro"] .hero-title {
+  color: #382417;
+}
+
+.hero-subtitle {
+  margin: 6px 0 16px;
+  font-size: 13.5px;
+  color: #334155;
+  line-height: 1.4;
+  font-weight: 500;
+}
+
+:root[data-theme="dark"] .hero-subtitle {
+  color: #94a3b8;
+}
+
+:root[data-theme="retro"] .hero-subtitle {
+  color: #6b5544;
+}
+
+.hero-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 46px;
+  padding: 0 24px;
+  border-radius: 9999px;
+  background: var(--primary);
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 800;
+  text-decoration: none;
+  box-shadow: 0 4px 14px rgba(13, 148, 136, 0.35);
+  transition: transform 120ms ease, box-shadow 120ms ease;
+  border: none;
+  cursor: pointer;
+}
+
+.hero-cta-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(13, 148, 136, 0.45);
+}
+
+.hero-cta-btn:active {
+  transform: translateY(1px);
+}
+
+.hero-mascot-badge {
+  display: grid;
+  place-items: center;
+  width: 68px;
+  height: 68px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--primary);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+  font-size: 32px;
+  flex-shrink: 0;
+}
+
+:root[data-theme="dark"] .hero-mascot-badge {
+  background: rgba(30, 41, 59, 0.85);
+}
+
+:root[data-theme="retro"] .hero-mascot-badge {
+  background: #dfceb8;
+}
+
+
+/* "Let's Explore" Pastel Squircle Grid */
+.explore-section {
+  margin-bottom: 28px;
+}
+
+.explore-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.explore-section-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.explore-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+@media (min-width: 768px) {
+  .explore-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.explore-tile {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 110px;
+  padding: 16px;
+  border-radius: 22px;
+  text-decoration: none;
+  border: 1px solid transparent;
+  transition: transform 140ms ease, box-shadow 140ms ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.explore-tile:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.07);
+}
+
+.explore-tile:active {
+  transform: scale(0.97);
+}
+
+.explore-tile-icon-wrap {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.85);
+  font-size: 20px;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+:root[data-theme="dark"] .explore-tile-icon-wrap {
+  background: rgba(15, 23, 42, 0.6);
+}
+
+.explore-tile-info strong {
+  display: block;
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+.explore-tile-info span {
+  display: block;
+  font-size: 11.5px;
+  font-weight: 600;
+  margin-top: 2px;
+  opacity: 0.85;
+}
+
+/* Pastel Tile Colorways */
+.explore-tile.pastel-blue {
+  background: #e0f2fe;
+  border-color: #bae6fd;
+  color: #0369a1;
+}
+
+.explore-tile.pastel-peach {
+  background: #ffedd5;
+  border-color: #fed7aa;
+  color: #c2410c;
+}
+
+.explore-tile.pastel-yellow {
+  background: #fef3c7;
+  border-color: #fde68a;
+  color: #b45309;
+}
+
+.explore-tile.pastel-mint {
+  background: #dcfce7;
+  border-color: #bbf7d0;
+  color: #15803d;
+}
+
+.explore-tile.pastel-lavender {
+  background: #f3e8ff;
+  border-color: #e9d5ff;
+  color: #7e22ce;
+}
+
+.explore-tile.pastel-coral {
+  background: #ffe4e6;
+  border-color: #fecdd3;
+  color: #be123c;
+}
+
+:root[data-theme="dark"] .explore-tile.pastel-blue { background: #172554; border-color: #1e3a8a; color: #93c5fd; }
+:root[data-theme="dark"] .explore-tile.pastel-peach { background: #431407; border-color: #7c2d12; color: #fdba74; }
+:root[data-theme="dark"] .explore-tile.pastel-yellow { background: #451a03; border-color: #78350f; color: #fde047; }
+:root[data-theme="dark"] .explore-tile.pastel-mint { background: #052e16; border-color: #14532d; color: #86efac; }
+:root[data-theme="dark"] .explore-tile.pastel-lavender { background: #3b0764; border-color: #581c87; color: #d8b4fe; }
+:root[data-theme="dark"] .explore-tile.pastel-coral { background: #4c0519; border-color: #881337; color: #fda4af; }
+
+/* Star Badge in Study Progress */
+.study-progress-step-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.study-star-badge {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #fef08a;
+  color: #ca8a04;
+  font-size: 17px;
+  font-weight: 900;
+  box-shadow: 0 2px 8px rgba(202, 138, 4, 0.28);
+  flex-shrink: 0;
+}
+
+:root[data-theme="dark"] .study-star-badge {
+  background: #854d0e;
+  color: #fef08a;
+}
+
+/* Playful Tactile 3D Study Answer Buttons */
+:root[data-theme="playful"] .study-answer-button {
+  border-radius: 9999px;
+  min-height: 58px;
+  font-size: 16px;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+:root[data-theme="playful"] .study-answer-button.again {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #b91c1c;
+  box-shadow: 0 3px 0 #ef4444;
+}
+
+:root[data-theme="playful"] .study-answer-button.again:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 #ef4444;
+}
+
+:root[data-theme="playful"] .study-answer-button.remembered {
+  background: #d1fae5;
+  border-color: #6ee7b7;
+  color: #047857;
+  box-shadow: 0 3px 0 #10b981;
+}
+
+:root[data-theme="playful"] .study-answer-button.remembered:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 #10b981;
+}
+
+/* Study Encouragement Banner */
+.study-encouragement-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 18px;
+  border-radius: 18px;
+  background: #dcfce7;
+  border: 1px solid #86efac;
+  color: #15803d;
+  font-size: 13.5px;
+  font-weight: 700;
+  margin-top: 16px;
+}
+
+:root[data-theme="dark"] .study-encouragement-banner {
+  background: #052e16;
+  border-color: #166534;
+  color: #86efac;
+}
+
