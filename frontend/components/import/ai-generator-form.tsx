@@ -9,6 +9,7 @@ import {
   generateAICards,
   getWorkbook,
   getWorkbooks,
+  mineAICards,
   type AIGeneratedCardItem,
   type SheetSummary,
   type WorkbookListItem,
@@ -21,6 +22,21 @@ const QUICK_TOPICS = [
   { label: "💼 Phỏng vấn xin việc", value: "Job Interview & Career Background" },
   { label: "🍽️ Gọi món & Ăn uống", value: "Dining Out & Ordering Food" },
   { label: "🤝 Đàm phán & Thương lượng", value: "Business Negotiation & Deals" },
+];
+
+const QUICK_SAMPLES = [
+  {
+    label: "🏢 Startup & Business",
+    text: "The startup decided to call it a day after failing to see eye to eye with investors on their current valuation, which left the founders in a tight spot.",
+  },
+  {
+    label: "☕ Công việc & Đời sống",
+    text: "I'd love to grab a coffee and catch up, but right now I'm snowed under with work and need to get a head start on this report.",
+  },
+  {
+    label: "📰 Kinh tế & Công nghệ",
+    text: "Central banks are walking a tightrope between curbing inflation and avoiding a recession, while tech giants double down on AI infrastructure.",
+  },
 ];
 
 export function AIGeneratorForm() {
@@ -38,6 +54,10 @@ export function AIGeneratorForm() {
   const [workbookMode, setWorkbookMode] = useState<"existing" | "new">("existing");
   const [newWorkbookName, setNewWorkbookName] = useState("AI Vocabulary Collection");
   const [sheetMode, setSheetMode] = useState<"new_sheet" | "append">("new_sheet");
+
+  // Generator sub-mode: "topic" (Day 41) vs "mine" (Day 42 Sentence Mining)
+  const [generatorMode, setGeneratorMode] = useState<"topic" | "mine">("topic");
+  const [miningText, setMiningText] = useState("");
 
   const [topic, setTopic] = useState("");
   const [cardCount, setCardCount] = useState<10 | 20 | 40>(20);
@@ -100,6 +120,39 @@ export function AIGeneratorForm() {
     e.preventDefault();
     if (!isAdmin) {
       setError("Chức năng sinh bài học bằng AI yêu cầu quyền Quản trị viên (Admin).");
+      return;
+    }
+
+    if (generatorMode === "mine") {
+      if (miningText.trim().length < 5) {
+        setError("Vui lòng dán ít nhất một câu văn (tối thiểu 5 ký tự) để AI phân tích và bóc tách.");
+        return;
+      }
+
+      setIsGenerating(true);
+      setError(null);
+      setLoadingStep("Đang phân tích ngữ liệu văn bản và trích xuất các conversational chunks...");
+
+      try {
+        const resp = await mineAICards({
+          text: miningText.trim(),
+          target_sheet_id:
+            sheetMode === "append" && selectedSheetId ? selectedSheetId : undefined,
+          target_workbook_id:
+            workbookMode === "existing" && selectedWorkbookId
+              ? selectedWorkbookId
+              : undefined,
+        });
+
+        setGeneratedSheetName(resp.sheet_name);
+        setGeneratedCards(resp.cards);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Không thể bóc tách chunks từ văn bản.";
+        setError(msg);
+      } finally {
+        setIsGenerating(false);
+        setLoadingStep("");
+      }
       return;
     }
 
@@ -279,35 +332,67 @@ export function AIGeneratorForm() {
           <div className="ai-section-title">
             <span className="ai-section-num">2</span>
             <div>
-              <h3>Chủ đề & Cấu hình AI</h3>
-              <p>AI sẽ sinh các Chunks, Mẫu câu cửa miệng và Cụm từ thông dụng tự nhiên.</p>
+              <h3>Phương thức sinh thẻ & Cấu hình AI</h3>
+              <p>Chọn sinh danh sách theo chủ đề hoặc dán câu văn/bài báo để AI tự động bóc tách cụm từ.</p>
             </div>
           </div>
 
-          <div className="ai-field">
-            <label htmlFor="ai-topic-input">Chủ đề bài học (Tùy chọn):</label>
-            <input
-              id="ai-topic-input"
-              type="text"
-              value={topic}
-              onChange={(e) => setTopic(e.target.value)}
-              placeholder="Để trống nếu muốn sinh ngẫu nhiên các cụm từ giao tiếp thông dụng..."
-              className="ai-text-input"
-            />
-            <div className="ai-quick-topics">
-              <span className="ai-quick-label">Gợi ý nhanh:</span>
-              {QUICK_TOPICS.map((item) => (
-                <button
-                  key={item.value}
-                  type="button"
-                  className="ai-topic-chip"
-                  onClick={() => setTopic(item.value)}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
+          {/* Sub-mode Tabs */}
+          <div className="ai-mode-tabs" role="tablist">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={generatorMode === "topic"}
+              className={`ai-mode-tab ${generatorMode === "topic" ? "active" : ""}`}
+              onClick={() => {
+                setGeneratorMode("topic");
+                setError(null);
+              }}
+            >
+              <span className="ai-mode-icon">🎯</span>
+              <span>Sinh theo Chủ đề (Topic)</span>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={generatorMode === "mine"}
+              className={`ai-mode-tab ${generatorMode === "mine" ? "active" : ""}`}
+              onClick={() => {
+                setGeneratorMode("mine");
+                setError(null);
+              }}
+            >
+              <span className="ai-mode-icon">📰</span>
+              <span>Bóc tách từ Câu / Bài báo (Sentence Mining)</span>
+            </button>
           </div>
+
+          {generatorMode === "topic" ? (
+            <div className="ai-topic-mode-content">
+              <div className="ai-field">
+                <label htmlFor="ai-topic-input">Chủ đề bài học (Tùy chọn):</label>
+                <input
+                  id="ai-topic-input"
+                  type="text"
+                  value={topic}
+                  onChange={(e) => setTopic(e.target.value)}
+                  placeholder="Để trống nếu muốn sinh ngẫu nhiên các cụm từ giao tiếp thông dụng..."
+                  className="ai-text-input"
+                />
+                <div className="ai-quick-topics">
+                  <span className="ai-quick-label">Gợi ý nhanh:</span>
+                  {QUICK_TOPICS.map((item) => (
+                    <button
+                      key={item.value}
+                      type="button"
+                      className="ai-topic-chip"
+                      onClick={() => setTopic(item.value)}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
           <div className="ai-form-row-2">
             <div className="ai-field">
@@ -354,34 +439,73 @@ export function AIGeneratorForm() {
               </select>
             </div>
           </div>
-        </section>
-
-        {error && (
-          <div className="ai-alert-error" role="alert">
-            <Icon name="weak" size={20} />
-            <span>{error}</span>
-          </div>
-        )}
-
-        <div className="ai-action-bar">
-          <button
-            type="submit"
-            disabled={isGenerating || !isAdmin}
-            className="ai-generate-submit-btn"
-          >
-            {isGenerating ? (
-              <>
-                <span className="ai-spinner" aria-hidden="true" />
-                <span>{loadingStep || "Đang xử lý cùng AI..."}</span>
-              </>
-            ) : (
-              <>
-                <span className="ai-sparkle-icon">✨</span>
-                <span>Sinh {cardCount} thẻ giao tiếp với AI</span>
-              </>
-            )}
-          </button>
         </div>
+      ) : (
+        <div className="ai-mine-mode-content">
+          <div className="ai-field">
+            <label htmlFor="ai-mine-textarea">
+              Đoạn trích tiếng Anh (câu báo chí, email, podcast quote, tin tức):
+            </label>
+            <textarea
+              id="ai-mine-textarea"
+              rows={4}
+              value={miningText}
+              onChange={(e) => setMiningText(e.target.value)}
+              placeholder="Dán câu văn hoặc đoạn văn bất kỳ đọc được trên báo chí, Reddit, công việc..."
+              className="ai-textarea-input"
+            />
+            <div className="ai-quick-topics">
+              <span className="ai-quick-label">Mẫu câu thử nghiệm nhanh:</span>
+              {QUICK_SAMPLES.map((sample) => (
+                <button
+                  key={sample.label}
+                  type="button"
+                  className="ai-topic-chip"
+                  onClick={() => setMiningText(sample.text)}
+                >
+                  {sample.label}
+                </button>
+              ))}
+            </div>
+            <p className="ai-help-text">
+              💡 AI sẽ tự động phân tích ngữ liệu, nhận diện các collocations và phrasal verbs đắt giá, giữ nguyên câu trích dẫn làm ví dụ ngữ cảnh và dịch nghĩa tiếng Việt sát thực tế.
+            </p>
+          </div>
+        </div>
+      )}
+    </section>
+
+    {error && (
+      <div className="ai-alert-error" role="alert">
+        <Icon name="weak" size={20} />
+        <span>{error}</span>
+      </div>
+    )}
+
+    <div className="ai-action-bar">
+      <button
+        type="submit"
+        disabled={isGenerating || !isAdmin}
+        className="ai-generate-submit-btn"
+      >
+        {isGenerating ? (
+          <>
+            <span className="ai-spinner" aria-hidden="true" />
+            <span>{loadingStep || "Đang xử lý cùng AI..."}</span>
+          </>
+        ) : generatorMode === "mine" ? (
+          <>
+            <span className="ai-sparkle-icon">✨</span>
+            <span>Bóc tách Chunks từ văn bản với AI</span>
+          </>
+        ) : (
+          <>
+            <span className="ai-sparkle-icon">✨</span>
+            <span>Sinh {cardCount} thẻ giao tiếp với AI</span>
+          </>
+        )}
+      </button>
+    </div>
 
       </form>
     </div>

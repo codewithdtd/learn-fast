@@ -709,6 +709,12 @@ export type AIGenerateRequest = {
   target_workbook_id?: number;
 };
 
+export type AIMineRequest = {
+  text: string;
+  target_sheet_id?: number;
+  target_workbook_id?: number;
+};
+
 export type AIGeneratedSheetResponse = {
   sheet_name: string;
   cards: AIGeneratedCardItem[];
@@ -736,6 +742,14 @@ export type AISaveSheetResponse = {
 
 export async function generateAICards(data: AIGenerateRequest): Promise<AIGeneratedSheetResponse> {
   return requestJson<AIGeneratedSheetResponse>("/api/v1/ai/generate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function mineAICards(data: AIMineRequest): Promise<AIGeneratedSheetResponse> {
+  return requestJson<AIGeneratedSheetResponse>("/api/v1/ai/mine", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
