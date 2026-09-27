@@ -26,6 +26,20 @@ class AIGenerateRequest(BaseModel):
     target_workbook_id: Optional[int] = None
 
 
+class AIMineRequest(BaseModel):
+    text: str = Field(..., min_length=5, max_length=3000)
+    target_sheet_id: Optional[int] = None
+    target_workbook_id: Optional[int] = None
+
+    @field_validator("text")
+    @classmethod
+    def validate_text(cls, value: str) -> str:
+        trimmed = value.strip()
+        if len(trimmed) < 5:
+            raise ValueError("Văn bản cần có ít nhất 5 ký tự để trích xuất.")
+        return trimmed
+
+
 class AIGeneratedSheetResponse(BaseModel):
     sheet_name: str
     cards: list[AIGeneratedCardItem]

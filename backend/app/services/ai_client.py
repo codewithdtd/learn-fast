@@ -36,6 +36,34 @@ Focus on:
 Do not include markdown commentary outside the JSON."""
 
 
+MINE_CHUNKS_SYSTEM_PROMPT = """You are an expert English lexicographer, linguistic annotator, and conversational coach.
+Analyze the provided English input text (article, excerpt, news quote, or dialogue) and extract high-value lexical chunks for language learners.
+
+Extraction Guidelines:
+1. Target High-Value Chunks:
+   - Meaningful conversational collocations, phrasal verbs, idioms, fixed/semi-fixed prepositional chunks (e.g., "call it a day", "see eye to eye on", "come to terms with", "pave the way for", "in light of").
+   - Extract the canonical/dictionary form of the chunk (lemmatized/base form where appropriate, e.g., use "see eye to eye" instead of "saw eye to eye", or "touch base with [someone]").
+   - Omit trivial single basic words (e.g., "company", "happy", "said"), pure grammar articles, and non-idiomatic literal combinations.
+2. Context Retention:
+   - example_en: MUST use the original sentence (or relevant sentence clause) from the user's input text where this chunk appears so the learner remembers the real-world context. Strip any dialogue markers like "A:", "B:".
+   - example_vi: Provide an accurate, natural Vietnamese translation of that original context sentence.
+   - meaning: Provide a clear, concise Vietnamese explanation/meaning of the chunk itself (under 12 words).
+3. Output Format:
+   - Output MUST be strictly valid JSON matching this schema:
+{
+  "sheet_name": "Concise Suggested Topic/Sheet Title based on the text (e.g., 'Reading Notes: Tech Mergers')",
+  "cards": [
+    {
+      "phrase": "canonical chunk",
+      "meaning": "nghĩa tiếng Việt ngắn gọn",
+      "example_en": "original sentence from input",
+      "example_vi": "dịch câu sang tiếng Việt"
+    }
+  ]
+}
+Do not include any commentary outside the JSON."""
+
+
 def _clean_model_response(raw_text: str) -> str:
     """Loại bỏ thẻ suy nghĩ (<think>...</think>) và các khối markdown code fence."""
     text = re.sub(r"<think>.*?</think>", "", raw_text, flags=re.DOTALL).strip()
@@ -244,4 +272,66 @@ def generate_ai_cards(
         cards=all_cards,
         total_generated=len(all_cards),
     )
+
+
+
+def extract_chunks_from_text(
+    text: str,
+    existing_phrases: Optional[list[str]] = None,
+) -> tuple[str, list[AIGeneratedCardItem]]:
+    """Trích xuất các conversational chunks, collocations từ đoạn văn bản/báo chí."""
+    text_clean = text.strip()
+    if not text_clean:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Văn bản đầu vào không được để trống.",
+        )
+
+    excluded_prompt = ""
+    if existing_phrases:
+        phrases_str = ", ".join(f'"{p}"' for p in existing_phrases[:60])
+        excluded_prompt = f"\nDo NOT extract any of these already known phrases: {phrases_str}."
+
+    user_content = (
+        f'Input text to mine chunks from:\n"""\n{text_clean}\n"""\n'
+        f"{excluded_prompt}\n"
+        "Extract between 1 and 8 of the most valuable, idiomatic conversational collocations or chunks and return them as JSON."
+    )
+
+    messages = [
+        {"role": "system", "content": MINE_CHUNKS_SYSTEM_PROMPT},
+        {"role": "user", "content": user_content},
+    ]
+
+    raw_content = call_9router_chat(messages=messages)
+    cleaned_json = _clean_model_response(raw_content)
+
+    try:
+        parsed_data = json.loads(cleaned_json)
+    except json.JSONDecodeError as err:
+        logger.error(f"Failed to parse mined chunks JSON: {cleaned_json}. Error: {err}")
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="AI trả về dữ liệu trích xuất không đúng chuẩn định dạng JSON. Vui lòng thử lại.",
+        )
+
+    sheet_name = str(parsed_data.get("sheet_name", "")).strip()
+    if not sheet_name:
+        sheet_name = "Reading Notes Chunks"
+
+    raw_cards = parsed_data.get("cards", [])
+    if not isinstance(raw_cards, list) or len(raw_cards) == 0:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Không tìm thấy cụm từ hoặc collocation phù hợp trong đoạn văn bản này. Vui lòng thử đoạn văn phong phú hơn.",
+        )
+
+    cards = [_clean_card_item(c) for c in raw_cards if isinstance(c, dict) and c.get("phrase")]
+    if not cards:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Không thể trích xuất cụm từ hợp lệ từ đoạn văn bản.",
+        )
+
+    return sheet_name, cards
 

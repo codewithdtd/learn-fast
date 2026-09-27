@@ -230,3 +230,69 @@ def test_save_append_to_existing_sheet(
     assert updated_sheet.flashcards[2].phrase == "gamma"
     assert updated_sheet.flashcards[3].phrase == "delta"
 
+
+
+def test_extract_chunks_from_text_success():
+    """Kiểm tra hàm extract_chunks_from_text bóc tách thành công các collocations."""
+    from app.services.ai_client import extract_chunks_from_text
+
+    mock_response = json.dumps({
+        "sheet_name": "Tech Startup News Chunks",
+        "cards": [
+            {
+                "phrase": "call it a day",
+                "meaning": "dừng lại, kết thúc hoạt động",
+                "example_en": "The startup decided to call it a day after failing to raise funds.",
+                "example_vi": "Startup quyết định dừng lại sau khi thất bại trong việc gọi vốn.",
+            },
+            {
+                "phrase": "see eye to eye on",
+                "meaning": "đồng quan điểm, nhất trí",
+                "example_en": "The founders could not see eye to eye on the company valuation.",
+                "example_vi": "Các nhà sáng lập không thể đồng quan điểm về định giá công ty.",
+            },
+        ],
+    })
+
+    with patch("app.services.ai_client.call_9router_chat", return_value=mock_response):
+        sheet_name, cards = extract_chunks_from_text(
+            text="The startup decided to call it a day after failing to raise funds. The founders could not see eye to eye on the company valuation."
+        )
+        assert sheet_name == "Tech Startup News Chunks"
+        assert len(cards) == 2
+        assert cards[0].phrase == "call it a day"
+        assert cards[1].phrase == "see eye to eye on"
+
+
+def test_mine_chunks_endpoint_requires_admin(api_client: TestClient):
+    """Yêu cầu token admin khi gọi endpoint bóc tách câu văn /mine."""
+    resp = api_client.post("/api/v1/ai/mine", json={"text": "A quick test sentence."})
+    assert resp.status_code == 401
+
+
+def test_mine_chunks_endpoint_success(api_client: TestClient, admin_headers: dict[str, str]):
+    """Gọi endpoint /mine thành công với quyền admin và nhận về danh sách thẻ."""
+    mock_response = json.dumps({
+        "sheet_name": "Market Analysis Chunks",
+        "cards": [
+            {
+                "phrase": "in the long run",
+                "meaning": "về lâu về dài",
+                "example_en": "These investments will definitely pay off in the long run.",
+                "example_vi": "Các khoản đầu tư này chắc chắn sẽ sinh lời về lâu về dài.",
+            }
+        ],
+    })
+
+    with patch("app.services.ai_client.call_9router_chat", return_value=mock_response):
+        resp = api_client.post(
+            "/api/v1/ai/mine",
+            headers=admin_headers,
+            json={"text": "These investments will definitely pay off in the long run."},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["sheet_name"] == "Market Analysis Chunks"
+        assert data["total_generated"] == 1
+        assert data["cards"][0]["phrase"] == "in the long run"
+

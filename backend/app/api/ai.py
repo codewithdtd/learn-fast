@@ -8,10 +8,11 @@ from app.models.user import User
 from app.schemas.ai import (
     AIGenerateRequest,
     AIGeneratedSheetResponse,
+    AIMineRequest,
     AISaveSheetRequest,
     AISaveSheetResponse,
 )
-from app.services.ai_client import generate_ai_cards
+from app.services.ai_client import extract_chunks_from_text, generate_ai_cards
 from app.services.ai_sheet_service import get_exclusion_phrases, save_ai_generated_sheet
 
 logger = logging.getLogger(__name__)
@@ -41,6 +42,34 @@ def generate_cards_endpoint(
         total_count=request.count,
         level=request.level,
         existing_phrases=exclusion_phrases,
+    )
+
+
+@router.post(
+    "/mine",
+    response_model=AIGeneratedSheetResponse,
+    summary="Bóc tách chunks từ câu văn/báo chí bằng Local AI",
+)
+def mine_chunks_endpoint(
+    request: AIMineRequest,
+    db: Session = Depends(get_db),
+    admin_user: User = Depends(get_current_admin),
+) -> AIGeneratedSheetResponse:
+    """Phân tích đoạn văn bản, bóc tách các collocations/chunks và giữ nguyên câu văn ngữ cảnh gốc."""
+    exclusion_phrases = get_exclusion_phrases(
+        db=db,
+        user=admin_user,
+        sheet_id=request.target_sheet_id,
+        workbook_id=request.target_workbook_id,
+    )
+    sheet_name, cards = extract_chunks_from_text(
+        text=request.text,
+        existing_phrases=exclusion_phrases,
+    )
+    return AIGeneratedSheetResponse(
+        sheet_name=sheet_name,
+        cards=cards,
+        total_generated=len(cards),
     )
 
 
