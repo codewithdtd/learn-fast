@@ -48,6 +48,7 @@ class SheetSummary(BaseModel):
     status: SheetStatus
     priority: SheetPriority
     next_review_at: datetime | None
+    is_ai_generated: bool = False
 
 
 class WorkbookDetail(WorkbookListItem):

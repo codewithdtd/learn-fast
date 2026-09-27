@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.ai import router as ai_router
 from app.api.auth import router as auth_router
 from app.api.calendar import router as calendar_router
 from app.api.dashboard import router as dashboard_router
@@ -43,3 +44,4 @@ app.include_router(sheets_router, prefix="/api/v1")
 app.include_router(flashcards_router, prefix="/api/v1")
 app.include_router(quick_recall_router, prefix="/api/v1")
 app.include_router(study_sessions_router, prefix="/api/v1")
+app.include_router(ai_router, prefix="/api/v1")
