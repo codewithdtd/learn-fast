@@ -20,7 +20,7 @@ export function ImportWorkbookForm() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!isAdmin) {
-      setError(new WorkbookImportError("Chức năng Import chỉ dành cho Quản trị viên (Admin). Vui lòng đăng nhập tài khoản Admin để tiếp tục."));
+      setError(new WorkbookImportError("Only administrators can import workbooks. Sign in with an administrator account to continue."));
       return;
     }
     if (!file || isImporting) return;
@@ -43,8 +43,8 @@ export function ImportWorkbookForm() {
           </svg>
         </div>
         <div className="admin-restriction-text">
-          <strong>Quyền Quản trị viên (Admin Required)</strong>
-          <p>Chỉ Quản trị viên mới có quyền tải lên và cập nhật danh sách bài học Excel mới vào hệ thống.</p>
+          <strong>Administrator access required</strong>
+          <p>Only administrators can upload Excel workbooks and add new study content to the system.</p>
         </div>
       </div>
     )}
