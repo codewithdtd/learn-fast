@@ -36,7 +36,7 @@ class AIMineRequest(BaseModel):
     def validate_text(cls, value: str) -> str:
         trimmed = value.strip()
         if len(trimmed) < 5:
-            raise ValueError("Văn bản cần có ít nhất 5 ký tự để trích xuất.")
+            raise ValueError("Source text must contain at least 5 characters.")
         return trimmed
 
 

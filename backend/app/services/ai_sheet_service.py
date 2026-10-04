@@ -60,13 +60,13 @@ def save_ai_generated_sheet(
     if settings.demo_mode:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Chế độ Demo Showcase đang bật: Không thể lưu dữ liệu mới vào hệ thống.",
+            detail="Demo mode is enabled. New content cannot be saved.",
         )
 
     if not payload.cards:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Danh sách thẻ lưu không được để trống.",
+            detail="At least one card is required to save.",
         )
 
     try:
@@ -75,7 +75,7 @@ def save_ai_generated_sheet(
             if not payload.target_sheet_id:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Thiếu target_sheet_id khi lưu ở chế độ append.",
+                    detail="A target sheet is required when appending cards.",
                 )
 
             sheet_stmt = select(StudySheet).join(Workbook).where(StudySheet.id == payload.target_sheet_id)
@@ -85,7 +85,7 @@ def save_ai_generated_sheet(
             if not sheet:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Không tìm thấy Study Sheet đích hoặc bạn không có quyền truy cập.",
+                    detail="The target study sheet was not found or is not accessible.",
                 )
 
             workbook = sheet.workbook
@@ -136,7 +136,7 @@ def save_ai_generated_sheet(
             if not workbook:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Không tìm thấy Workbook được chọn hoặc bạn không có quyền truy cập.",
+                    detail="The selected workbook was not found or is not accessible.",
                 )
         else:
             new_wb_name = payload.new_workbook_name or "AI Vocabulary Collection"
@@ -205,5 +205,5 @@ def save_ai_generated_sheet(
         logger.error(f"Error saving AI generated sheet: {err}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Lỗi khi lưu Study Sheet vào cơ sở dữ liệu: {str(err)}",
+            detail="Could not save the study sheet. Please try again.",
         )

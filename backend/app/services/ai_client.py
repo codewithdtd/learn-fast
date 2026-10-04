@@ -140,25 +140,25 @@ def call_9router_chat(
         logger.error(f"Cannot connect to 9router at {url}: {err}")
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Không thể kết nối đến Local AI (9Router). Vui lòng đảm bảo 9router đang hoạt động trên port 20128.",
+            detail="Could not connect to the AI service. Check AI_BASE_URL and your network connection.",
         )
     except httpx.TimeoutException as err:
         logger.error(f"9router request timeout after {req_timeout}s: {err}")
         raise HTTPException(
             status_code=status.HTTP_504_GATEWAY_TIMEOUT,
-            detail=f"Local AI phản hồi quá thời gian quy định ({req_timeout}s). Vui lòng thử lại với số lượng thẻ ít hơn.",
+            detail=f"The AI service timed out after {req_timeout}s. Try again with fewer cards.",
         )
     except httpx.HTTPStatusError as err:
         logger.error(f"9router returned HTTP {err.response.status_code}: {err.response.text}")
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"Lỗi từ Local AI gateway: {err.response.text[:200]}",
+            detail=f"The AI service returned an error (HTTP {err.response.status_code}). Please try again.",
         )
     except Exception as err:
         logger.error(f"Unexpected error when calling 9router: {err}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Lỗi không xác định khi giao tiếp với AI: {str(err)}",
+            detail="An unexpected error occurred while communicating with the AI service.",
         )
 
 
@@ -197,7 +197,7 @@ def generate_single_batch(
         logger.error(f"Failed to parse JSON from AI response: {err}. Raw text:\n{clean_json_str}")
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
-            detail="AI trả về dữ liệu không đúng chuẩn định dạng JSON. Vui lòng thử sinh lại.",
+            detail="The AI response was not valid JSON. Please try again.",
         )
 
     sheet_name = str(parsed_data.get("sheet_name", "")).strip()
@@ -208,7 +208,7 @@ def generate_single_batch(
     if not isinstance(raw_cards, list) or len(raw_cards) == 0:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
-            detail="AI không tạo ra danh sách thẻ nào. Vui lòng thử lại.",
+            detail="The AI did not generate any cards. Please try again.",
         )
 
     cards = [_clean_card_item(c) for c in raw_cards if isinstance(c, dict) and c.get("phrase")]
@@ -284,7 +284,7 @@ def extract_chunks_from_text(
     if not text_clean:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Văn bản đầu vào không được để trống.",
+            detail="The source text cannot be empty.",
         )
 
     excluded_prompt = ""
@@ -312,7 +312,7 @@ def extract_chunks_from_text(
         logger.error(f"Failed to parse mined chunks JSON: {cleaned_json}. Error: {err}")
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
-            detail="AI trả về dữ liệu trích xuất không đúng chuẩn định dạng JSON. Vui lòng thử lại.",
+            detail="The AI response was not valid JSON. Please try again.",
         )
 
     sheet_name = str(parsed_data.get("sheet_name", "")).strip()
@@ -323,14 +323,14 @@ def extract_chunks_from_text(
     if not isinstance(raw_cards, list) or len(raw_cards) == 0:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Không tìm thấy cụm từ hoặc collocation phù hợp trong đoạn văn bản này. Vui lòng thử đoạn văn phong phú hơn.",
+            detail="No suitable phrases or collocations were found. Try a more detailed passage.",
         )
 
     cards = [_clean_card_item(c) for c in raw_cards if isinstance(c, dict) and c.get("phrase")]
     if not cards:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Không thể trích xuất cụm từ hợp lệ từ đoạn văn bản.",
+            detail="Could not extract any valid phrases from the source text.",
         )
 
     return sheet_name, cards
