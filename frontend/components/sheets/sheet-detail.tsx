@@ -95,6 +95,7 @@ export function SheetDetailView({ sheetId }: SheetDetailProps) {
             <p className="sheet-detail-kicker">Sheet {sheet.position} · {formatLabel(sheet.status)}</p>
             <div className="sheet-detail-name-row">
               <h1>{sheet.name}</h1>
+              {sheet.is_ai_generated && <span className="sheet-ai-badge">✨ AI Generated</span>}
               <InlineNameEditor value={sheet.name} label="sheet name" onSave={handleSheetRenamed} />
             </div>
             <p className="sheet-detail-subtitle">Part of <Link href={`/workbooks/${sheet.workbook.id}`}>{sheet.workbook.name}</Link></p>

@@ -49,7 +49,7 @@ export function SheetTableView({ sheetId }: SheetTableViewProps) {
         setError(
           caughtError instanceof Error
             ? caughtError.message
-            : "Không thể tải bảng flashcard.",
+            : "Could not load flashcards.",
         );
       }
     } finally {
@@ -77,7 +77,7 @@ export function SheetTableView({ sheetId }: SheetTableViewProps) {
         setError(
           caughtError instanceof Error
             ? caughtError.message
-            : "Không thể tải bảng flashcard.",
+            : "Could not load flashcards.",
         );
       })
       .finally(() => {
@@ -138,13 +138,13 @@ export function SheetTableView({ sheetId }: SheetTableViewProps) {
       setError(
         caughtError instanceof Error
           ? caughtError.message
-          : "Không thể lưu trạng thái flashcard.",
+          : "Could not save the flashcard status.",
       );
       throw caughtError;
     }
   }
 
-  if (isLoading) return <PageMessage>Đang tải bảng flashcard…</PageMessage>;
+  if (isLoading) return <PageMessage>Loading flashcards…</PageMessage>;
   if (notFound) return <NotFound />;
   if (error && !sheet) return <RetryError message={error} onRetry={loadTable} />;
   if (!sheet) return null;
@@ -214,9 +214,9 @@ export function SheetTableView({ sheetId }: SheetTableViewProps) {
       )}
 
       {cards.length === 0 ? (
-        <PageMessage>Sheet này chưa có flashcard.</PageMessage>
+        <PageMessage>This sheet does not have any flashcards yet.</PageMessage>
       ) : filteredCards.length === 0 ? (
-        <PageMessage>Không có flashcard khớp với tìm kiếm hoặc filter hiện tại.</PageMessage>
+        <PageMessage>No flashcards match the current search or filter.</PageMessage>
       ) : (
         <div className="mt-6 overflow-x-auto rounded-xl border border-slate-200 bg-white">
           <table className="min-w-[900px] w-full border-collapse text-left text-sm">
@@ -289,7 +289,7 @@ function NotFound() {
     <section className="rounded-xl border border-slate-200 bg-white p-8 text-center">
       <h1 className="text-xl font-semibold">Sheet not found</h1>
       <Link href="/workbooks" className="mt-4 inline-block text-sky-700 hover:underline">
-        Quay lại workbooks
+        Back to workbooks
       </Link>
     </section>
   );
@@ -310,7 +310,7 @@ function RetryError({
         onClick={() => void onRetry()}
         className="mt-3 rounded-md border border-rose-300 px-3 py-1.5 text-sm font-semibold"
       >
-        Thử lại
+        Try again
       </button>
     </section>
   );

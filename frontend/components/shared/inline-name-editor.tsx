@@ -28,7 +28,7 @@ export function InlineNameEditor({ value, label, onSave }: InlineNameEditorProps
 
   function startEditing() {
     if (!isAdmin) {
-      setPermissionAlert("Chỉ Quản trị viên (Admin) mới có quyền chỉnh sửa tên.");
+      setPermissionAlert("Only administrators can rename workbooks and sheets.");
       setTimeout(() => setPermissionAlert(null), 4000);
       return;
     }

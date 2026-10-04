@@ -19,6 +19,13 @@ class Settings(BaseSettings):
     # When enabled, database mutations (workbook import, delete, rename, register) are blocked.
     demo_mode: bool = False
 
+    # 9Router Local AI Configuration
+    # Kết nối endpoint OpenAI-compatible của 9router local để tự động sinh flashcards
+    ai_base_url: str = "http://localhost:20128/v1"
+    ai_api_key: str = ""
+    ai_model: str = "Anti_2"
+    ai_request_timeout: float = 90.0
+
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 

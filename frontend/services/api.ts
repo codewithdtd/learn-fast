@@ -52,6 +52,7 @@ export type SheetSummary = {
   status: SheetStatus;
   priority: SheetPriority;
   next_review_at: string | null;
+  is_ai_generated?: boolean;
 };
 
 export type WorkbookDetail = WorkbookListItem & {
@@ -690,6 +691,76 @@ export async function markNotificationAsRead(id: number): Promise<{ success: boo
 export async function markAllNotificationsAsRead(): Promise<MarkReadResponse> {
   return requestJson<MarkReadResponse>("/api/v1/notifications/read-all", {
     method: "POST",
+  });
+}
+
+export type AIGeneratedCardItem = {
+  phrase: string;
+  meaning: string;
+  example_en: string;
+  example_vi: string;
+};
+
+export type AIGenerateRequest = {
+  topic?: string;
+  count?: number;
+  level?: string;
+  target_sheet_id?: number;
+  target_workbook_id?: number;
+};
+
+export type AIMineRequest = {
+  text: string;
+  target_sheet_id?: number;
+  target_workbook_id?: number;
+};
+
+export type AIGeneratedSheetResponse = {
+  sheet_name: string;
+  cards: AIGeneratedCardItem[];
+  total_generated: number;
+};
+
+export type AISaveSheetRequest = {
+  mode: "new_sheet" | "append";
+  workbook_id?: number;
+  new_workbook_name?: string;
+  target_sheet_id?: number;
+  sheet_name: string;
+  cards: AIGeneratedCardItem[];
+};
+
+export type AISaveSheetResponse = {
+  workbook_id: number;
+  workbook_name: string;
+  sheet_id: number;
+  sheet_name: string;
+  cards_added: number;
+  total_cards: number;
+  is_appended: boolean;
+};
+
+export async function generateAICards(data: AIGenerateRequest): Promise<AIGeneratedSheetResponse> {
+  return requestJson<AIGeneratedSheetResponse>("/api/v1/ai/generate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function mineAICards(data: AIMineRequest): Promise<AIGeneratedSheetResponse> {
+  return requestJson<AIGeneratedSheetResponse>("/api/v1/ai/mine", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function saveAISheet(data: AISaveSheetRequest): Promise<AISaveSheetResponse> {
+  return requestJson<AISaveSheetResponse>("/api/v1/ai/save", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
   });
 }
 

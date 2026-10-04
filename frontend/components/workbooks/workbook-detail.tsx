@@ -35,7 +35,7 @@ export function WorkbookDetailView({ workbookId }: WorkbookDetailProps) {
       if (caughtError instanceof ApiRequestError && caughtError.status === 404) {
         setNotFound(true);
       } else {
-        setError(caughtError instanceof Error ? caughtError.message : "Không thể tải workbook.");
+        setError(caughtError instanceof Error ? caughtError.message : "Could not load this workbook.");
       }
     } finally {
       setIsLoading(false);
@@ -60,7 +60,7 @@ export function WorkbookDetailView({ workbookId }: WorkbookDetailProps) {
         setError(
           caughtError instanceof Error
             ? caughtError.message
-            : "Không thể tải workbook.",
+            : "Could not load this workbook.",
         );
       })
       .finally(() => {
@@ -77,7 +77,7 @@ export function WorkbookDetailView({ workbookId }: WorkbookDetailProps) {
   if (error) return <RetryError message={error} onRetry={loadWorkbook} />;
   if (!workbook) return null;
   /*
-    return <p className="text-slate-600">Đang tải workbook…</p>;
+    return <p className="text-slate-600">Loading workbook…</p>;
   }
   if (notFound) {
     return <NotFound />;
@@ -296,7 +296,7 @@ function NotFound() {
     <section className="workbook-state-card">
       <h1 className="text-xl font-semibold">Workbook not found</h1>
       <Link href="/workbooks" className="mt-4 inline-block text-sky-700 hover:underline">
-        Quay lại workbooks
+        Back to workbooks
       </Link>
     </section>
   );
@@ -311,7 +311,7 @@ function RetryError({ message, onRetry }: { message: string; onRetry: () => Prom
         onClick={() => void onRetry()}
         className="button secondary"
       >
-        Thử lại
+        Try again
       </button>
     </section>
   );

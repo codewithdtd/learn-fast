@@ -23,6 +23,7 @@ export function SheetListItem({ sheet }: SheetListItemProps) {
         <span className="workbook-sheet-copy">
           <span className="workbook-sheet-title-row">
             <strong>{sheet.name}</strong>
+            {sheet.is_ai_generated && <span className="sheet-ai-badge">✨ AI</span>}
             {isDue && <span className="sheet-due-badge">Due</span>}
           </span>
           <span className="workbook-sheet-meta">

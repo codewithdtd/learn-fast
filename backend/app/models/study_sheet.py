@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, Enum as SqlEnum
+from sqlalchemy import Boolean, DateTime, Enum as SqlEnum
 from sqlalchemy import ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -62,6 +62,10 @@ class StudySheet(TimestampMixin, Base):
     )
     review_count: Mapped[int] = mapped_column(Integer, default=0, server_default="0", nullable=False)
     lapse_count: Mapped[int] = mapped_column(Integer, default=0, server_default="0", nullable=False)
+    # Đánh dấu sheet được sinh tự động bằng AI thay vì import từ file Excel thủ công
+    is_ai_generated: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default="0", nullable=False
+    )
 
     workbook: Mapped["Workbook"] = relationship(back_populates="sheets")
     flashcards: Mapped[list["Flashcard"]] = relationship(

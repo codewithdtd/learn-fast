@@ -21,7 +21,7 @@ export function PrioritySelector({ sheetId, priority, onSaved }: PrioritySelecto
 
   async function handleChange(nextPriority: SheetPriority) {
     if (!isAdmin) {
-      setError("Chỉ Quản trị viên (Admin) mới có quyền đổi độ ưu tiên của bài học.");
+      setError("Only administrators can change a sheet's study priority.");
       return;
     }
     if (nextPriority === selectedPriority || isSaving) {
@@ -39,7 +39,7 @@ export function PrioritySelector({ sheetId, priority, onSaved }: PrioritySelecto
       // Restore the previous display value when persistence fails so the UI
       // never suggests that a priority update was saved when it was not.
       setSelectedPriority(previousPriority);
-      setError(caughtError instanceof Error ? caughtError.message : "Không thể lưu priority.");
+      setError(caughtError instanceof Error ? caughtError.message : "Could not save the priority.");
     } finally {
       setIsSaving(false);
     }
@@ -61,7 +61,7 @@ export function PrioritySelector({ sheetId, priority, onSaved }: PrioritySelecto
         <option value="medium">Medium</option>
         <option value="low">Low</option>
       </select>
-      {isSaving && <p className="mt-1 text-xs text-slate-500">Đang lưu…</p>}
+      {isSaving && <p className="mt-1 text-xs text-slate-500">Saving…</p>}
       {error && <p role="alert" className="mt-1 text-xs text-rose-700">{error}</p>}
     </div>
   );
