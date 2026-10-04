@@ -19,11 +19,11 @@ export default function ImportPage() {
             <p>
               {activeTab === "excel"
                 ? "Turn your Excel vocabulary spreadsheets into study-ready flashcards."
-                : "Tự động sinh các mẫu câu và cụm từ giao tiếp thông dụng từ Local AI."}
+                : "Generate useful conversational phrases and sentence chunks with AI."}
             </p>
           </header>
 
-          <div className="import-tabs-nav" role="tablist" aria-label="Phương thức tạo nội dung">
+          <div className="import-tabs-nav" role="tablist" aria-label="Content creation method">
             <button
               type="button"
               role="tab"
@@ -32,7 +32,7 @@ export default function ImportPage() {
               onClick={() => setActiveTab("ai")}
             >
               <span className="import-tab-icon">✨</span>
-              <span>Tự sinh bằng AI</span>
+              <span>Generate with AI</span>
             </button>
             <button
               type="button"
@@ -42,7 +42,7 @@ export default function ImportPage() {
               onClick={() => setActiveTab("excel")}
             >
               <span className="import-tab-icon">📂</span>
-              <span>Nhập file Excel</span>
+              <span>Import Excel</span>
             </button>
           </div>
 

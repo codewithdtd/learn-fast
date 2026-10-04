@@ -16,12 +16,12 @@ import {
 } from "@/services/api";
 
 const QUICK_TOPICS = [
-  { label: "🏢 Cuộc họp công sở", value: "Office Meetings & Status Updates" },
-  { label: "☕ Giao tiếp thường ngày", value: "Everyday Small Talk & Socializing" },
-  { label: "✈️ Du lịch & Đi lại", value: "Travel, Airport & Commuting" },
-  { label: "💼 Phỏng vấn xin việc", value: "Job Interview & Career Background" },
-  { label: "🍽️ Gọi món & Ăn uống", value: "Dining Out & Ordering Food" },
-  { label: "🤝 Đàm phán & Thương lượng", value: "Business Negotiation & Deals" },
+  { label: "🏢 Office Meetings", value: "Office Meetings & Status Updates" },
+  { label: "☕ Everyday Conversation", value: "Everyday Small Talk & Socializing" },
+  { label: "✈️ Travel & Commuting", value: "Travel, Airport & Commuting" },
+  { label: "💼 Job Interviews", value: "Job Interview & Career Background" },
+  { label: "🍽️ Dining & Food", value: "Dining Out & Ordering Food" },
+  { label: "🤝 Negotiation", value: "Business Negotiation & Deals" },
 ];
 
 const QUICK_SAMPLES = [
@@ -30,11 +30,11 @@ const QUICK_SAMPLES = [
     text: "The startup decided to call it a day after failing to see eye to eye with investors on their current valuation, which left the founders in a tight spot.",
   },
   {
-    label: "☕ Công việc & Đời sống",
+    label: "☕ Work & Everyday Life",
     text: "I'd love to grab a coffee and catch up, but right now I'm snowed under with work and need to get a head start on this report.",
   },
   {
-    label: "📰 Kinh tế & Công nghệ",
+    label: "📰 Economy & Technology",
     text: "Central banks are walking a tightrope between curbing inflation and avoiding a recession, while tech giants double down on AI infrastructure.",
   },
 ];
@@ -119,19 +119,19 @@ export function AIGeneratorForm() {
   async function handleGenerate(e: React.FormEvent) {
     e.preventDefault();
     if (!isAdmin) {
-      setError("Chức năng sinh bài học bằng AI yêu cầu quyền Quản trị viên (Admin).");
+      setError("Only administrators can use AI card generation.");
       return;
     }
 
     if (generatorMode === "mine") {
       if (miningText.trim().length < 5) {
-        setError("Vui lòng dán ít nhất một câu văn (tối thiểu 5 ký tự) để AI phân tích và bóc tách.");
+        setError("Paste at least 5 characters for AI to analyze and extract useful phrases.");
         return;
       }
 
       setIsGenerating(true);
       setError(null);
-      setLoadingStep("Đang phân tích ngữ liệu văn bản và trích xuất các conversational chunks...");
+      setLoadingStep("Analyzing the text and extracting useful phrases...");
 
       try {
         const resp = await mineAICards({
@@ -147,7 +147,7 @@ export function AIGeneratorForm() {
         setGeneratedSheetName(resp.sheet_name);
         setGeneratedCards(resp.cards);
       } catch (err) {
-        const msg = err instanceof Error ? err.message : "Không thể bóc tách chunks từ văn bản.";
+        const msg = err instanceof Error ? err.message : "Could not extract phrases from the text.";
         setError(msg);
       } finally {
         setIsGenerating(false);
@@ -160,8 +160,8 @@ export function AIGeneratorForm() {
     setError(null);
     setLoadingStep(
       cardCount === 40
-        ? "Đang kết nối AI và sinh batch 1 (20 thẻ)..."
-        : `Đang kết nối AI và tạo ${cardCount} thẻ giao tiếp...`
+        ? "Connecting to AI and generating batch 1 of 2 (20 cards)..."
+        : `Connecting to AI and generating ${cardCount} conversation cards...`
     );
 
     try {
@@ -180,7 +180,7 @@ export function AIGeneratorForm() {
       setGeneratedSheetName(resp.sheet_name);
       setGeneratedCards(resp.cards);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Không thể sinh thẻ bằng AI.";
+      const msg = err instanceof Error ? err.message : "Could not generate cards with AI.";
       setError(msg);
     } finally {
       setIsGenerating(false);
@@ -218,8 +218,8 @@ export function AIGeneratorForm() {
             </svg>
           </div>
           <div className="admin-restriction-text">
-            <strong>Quyền Quản trị viên (Admin Required)</strong>
-            <p>Chỉ Quản trị viên mới có quyền tạo nội dung bài học mới vào thư viện hệ thống.</p>
+            <strong>Administrator access required</strong>
+            <p>Only administrators can create AI-generated study content.</p>
           </div>
         </div>
       )}
@@ -230,14 +230,14 @@ export function AIGeneratorForm() {
           <div className="ai-section-title">
             <span className="ai-section-num">1</span>
             <div>
-              <h3>Nơi lưu trữ (Destination)</h3>
-              <p>Chọn Workbook và Study Sheet sẽ chứa các thẻ được sinh.</p>
+              <h3>Destination</h3>
+              <p>Choose the workbook and study sheet that will contain these cards.</p>
             </div>
           </div>
 
           <div className="ai-form-grid">
             <div className="ai-field">
-              <label>Workbook đích:</label>
+              <label>Target workbook:</label>
               <div className="ai-radio-toggle">
                 <button
                   type="button"
@@ -245,14 +245,14 @@ export function AIGeneratorForm() {
                   onClick={() => setWorkbookMode("existing")}
                   disabled={workbooks.length === 0}
                 >
-                  Chọn Workbook có sẵn
+                  Choose an existing workbook
                 </button>
                 <button
                   type="button"
                   className={`ai-toggle-btn ${workbookMode === "new" ? "active" : ""}`}
                   onClick={() => setWorkbookMode("new")}
                 >
-                  ➕ Tạo Workbook mới
+                  ➕ Create a new workbook
                 </button>
               </div>
 
@@ -276,7 +276,7 @@ export function AIGeneratorForm() {
                   type="text"
                   value={newWorkbookName}
                   onChange={(e) => setNewWorkbookName(e.target.value)}
-                  placeholder="Tên Workbook mới..."
+                  placeholder="New workbook name..."
                   className="ai-text-input"
                   required
                 />
@@ -285,14 +285,14 @@ export function AIGeneratorForm() {
 
             {workbookMode === "existing" && (
               <div className="ai-field">
-                <label>Study Sheet đích:</label>
+                <label>Target study sheet:</label>
                 <div className="ai-radio-toggle">
                   <button
                     type="button"
                     className={`ai-toggle-btn ${sheetMode === "new_sheet" ? "active" : ""}`}
                     onClick={() => setSheetMode("new_sheet")}
                   >
-                    Tạo Sheet mới
+                    Create a new sheet
                   </button>
                   <button
                     type="button"
@@ -300,7 +300,7 @@ export function AIGeneratorForm() {
                     onClick={() => setSheetMode("append")}
                     disabled={workbookSheets.length === 0}
                   >
-                    Nối tiếp vào Sheet có sẵn
+                    Append to an existing sheet
                   </button>
                 </div>
 
@@ -313,12 +313,12 @@ export function AIGeneratorForm() {
                     >
                       {workbookSheets.map((s) => (
                         <option key={s.id} value={s.id}>
-                          {s.name} ({s.card_count} thẻ đã có)
+                          {s.name} ({s.card_count} existing cards)
                         </option>
                       ))}
                     </select>
                     <p className="ai-help-text">
-                      💡 Hệ thống sẽ tự động quét các cụm từ cũ trong sheet này để không sinh trùng lặp!
+                      💡 Existing phrases in this sheet will be excluded to avoid duplicates.
                     </p>
                   </div>
                 )}
@@ -332,8 +332,8 @@ export function AIGeneratorForm() {
           <div className="ai-section-title">
             <span className="ai-section-num">2</span>
             <div>
-              <h3>Phương thức sinh thẻ & Cấu hình AI</h3>
-              <p>Chọn sinh danh sách theo chủ đề hoặc dán câu văn/bài báo để AI tự động bóc tách cụm từ.</p>
+              <h3>Generation method & AI settings</h3>
+              <p>Choose a topic or paste an article so AI can extract useful phrases from it.</p>
             </div>
           </div>
 
@@ -350,7 +350,7 @@ export function AIGeneratorForm() {
               }}
             >
               <span className="ai-mode-icon">🎯</span>
-              <span>Sinh theo Chủ đề (Topic)</span>
+              <span>Generate by topic</span>
             </button>
             <button
               type="button"
@@ -363,24 +363,24 @@ export function AIGeneratorForm() {
               }}
             >
               <span className="ai-mode-icon">📰</span>
-              <span>Bóc tách từ Câu / Bài báo (Sentence Mining)</span>
+              <span>Extract from a sentence or article</span>
             </button>
           </div>
 
           {generatorMode === "topic" ? (
             <div className="ai-topic-mode-content">
               <div className="ai-field">
-                <label htmlFor="ai-topic-input">Chủ đề bài học (Tùy chọn):</label>
+                <label htmlFor="ai-topic-input">Study topic (optional):</label>
                 <input
                   id="ai-topic-input"
                   type="text"
                   value={topic}
                   onChange={(e) => setTopic(e.target.value)}
-                  placeholder="Để trống nếu muốn sinh ngẫu nhiên các cụm từ giao tiếp thông dụng..."
+                  placeholder="Leave blank to generate common conversational phrases..."
                   className="ai-text-input"
                 />
                 <div className="ai-quick-topics">
-                  <span className="ai-quick-label">Gợi ý nhanh:</span>
+                  <span className="ai-quick-label">Quick suggestions:</span>
                   {QUICK_TOPICS.map((item) => (
                     <button
                       key={item.value}
@@ -396,46 +396,46 @@ export function AIGeneratorForm() {
 
           <div className="ai-form-row-2">
             <div className="ai-field">
-              <label>Số lượng thẻ:</label>
+              <label>Number of cards:</label>
               <div className="ai-card-count-options">
                 <button
                   type="button"
                   className={`ai-count-btn ${cardCount === 10 ? "active" : ""}`}
                   onClick={() => setCardCount(10)}
                 >
-                  <strong>10 thẻ</strong>
-                  <small>Nhanh</small>
+                  <strong>10 cards</strong>
+                  <small>Quick</small>
                 </button>
                 <button
                   type="button"
                   className={`ai-count-btn ${cardCount === 20 ? "active" : ""}`}
                   onClick={() => setCardCount(20)}
                 >
-                  <strong>20 thẻ</strong>
-                  <small>Tiêu chuẩn</small>
+                  <strong>20 cards</strong>
+                  <small>Standard</small>
                 </button>
                 <button
                   type="button"
                   className={`ai-count-btn ${cardCount === 40 ? "active" : ""}`}
                   onClick={() => setCardCount(40)}
                 >
-                  <strong>40 thẻ</strong>
-                  <small>2 Batch ngầm ✨</small>
+                  <strong>40 cards</strong>
+                  <small>2 sequential batches ✨</small>
                 </button>
               </div>
             </div>
 
             <div className="ai-field">
-              <label htmlFor="ai-level-select">Trình độ mục tiêu:</label>
+              <label htmlFor="ai-level-select">Target proficiency:</label>
               <select
                 id="ai-level-select"
                 value={level}
                 onChange={(e) => setLevel(e.target.value)}
                 className="ai-select-input"
               >
-                <option value="Elementary A2-B1">Elementary A2-B1 (Cơ bản giao tiếp)</option>
-                <option value="Intermediate B1-B2">Intermediate B1-B2 (Phổ biến công sở)</option>
-                <option value="Advanced C1">Advanced C1 (Tự nhiên, phản xạ cao cấp)</option>
+                <option value="Elementary A2-B1">Elementary A2-B1 (Basic conversation)</option>
+                <option value="Intermediate B1-B2">Intermediate B1-B2 (Common workplace English)</option>
+                <option value="Advanced C1">Advanced C1 (Natural, advanced fluency)</option>
               </select>
             </div>
           </div>
@@ -444,18 +444,18 @@ export function AIGeneratorForm() {
         <div className="ai-mine-mode-content">
           <div className="ai-field">
             <label htmlFor="ai-mine-textarea">
-              Đoạn trích tiếng Anh (câu báo chí, email, podcast quote, tin tức):
+              English source text (article, email, podcast excerpt, or news):
             </label>
             <textarea
               id="ai-mine-textarea"
               rows={4}
               value={miningText}
               onChange={(e) => setMiningText(e.target.value)}
-              placeholder="Dán câu văn hoặc đoạn văn bất kỳ đọc được trên báo chí, Reddit, công việc..."
+              placeholder="Paste a sentence or passage from an article, Reddit, or workplace text..."
               className="ai-textarea-input"
             />
             <div className="ai-quick-topics">
-              <span className="ai-quick-label">Mẫu câu thử nghiệm nhanh:</span>
+              <span className="ai-quick-label">Try a sample:</span>
               {QUICK_SAMPLES.map((sample) => (
                 <button
                   key={sample.label}
@@ -468,7 +468,7 @@ export function AIGeneratorForm() {
               ))}
             </div>
             <p className="ai-help-text">
-              💡 AI sẽ tự động phân tích ngữ liệu, nhận diện các collocations và phrasal verbs đắt giá, giữ nguyên câu trích dẫn làm ví dụ ngữ cảnh và dịch nghĩa tiếng Việt sát thực tế.
+              💡 AI will identify useful collocations and phrasal verbs, preserve the original sentence as context, and provide natural Vietnamese translations.
             </p>
           </div>
         </div>
@@ -491,17 +491,17 @@ export function AIGeneratorForm() {
         {isGenerating ? (
           <>
             <span className="ai-spinner" aria-hidden="true" />
-            <span>{loadingStep || "Đang xử lý cùng AI..."}</span>
+            <span>{loadingStep || "Working with AI..."}</span>
           </>
         ) : generatorMode === "mine" ? (
           <>
             <span className="ai-sparkle-icon">✨</span>
-            <span>Bóc tách Chunks từ văn bản với AI</span>
+            <span>Extract phrases from text with AI</span>
           </>
         ) : (
           <>
             <span className="ai-sparkle-icon">✨</span>
-            <span>Sinh {cardCount} thẻ giao tiếp với AI</span>
+            <span>Generate {cardCount} conversation cards with AI</span>
           </>
         )}
       </button>

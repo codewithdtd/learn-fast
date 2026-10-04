@@ -56,12 +56,12 @@ export function AIPreviewDeck({
 
   async function handleSave() {
     if (!sheetName.trim()) {
-      setError("Vui lòng đặt tên cho Study Sheet.");
+      setError("Enter a name for the study sheet.");
       return;
     }
     const validCards = cards.filter((c) => c.phrase.trim() && c.meaning.trim());
     if (validCards.length === 0) {
-      setError("Cần ít nhất một thẻ hợp lệ (có cụm từ và giải nghĩa) để lưu.");
+      setError("Add at least one valid card with a phrase and meaning before saving.");
       return;
     }
 
@@ -79,7 +79,7 @@ export function AIPreviewDeck({
       });
       setSaveResult(result);
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Lỗi không xác định khi lưu Study Sheet.";
+      const message = err instanceof Error ? err.message : "An unexpected error occurred while saving the study sheet.";
       setError(message);
     } finally {
       setIsSaving(false);
@@ -94,25 +94,25 @@ export function AIPreviewDeck({
         </div>
         <div className="ai-success-details">
           <span className="ai-badge-pill">✨ AI Flashcards Saved</span>
-          <h2>{saveResult.is_appended ? "Đã nối tiếp thẻ thành công!" : "Đã tạo Study Sheet thành công!"}</h2>
+          <h2>{saveResult.is_appended ? "Cards added successfully!" : "Study sheet created successfully!"}</h2>
           <p>
-            Study Sheet <strong>{saveResult.sheet_name}</strong> trong Workbook{" "}
-            <strong>{saveResult.workbook_name}</strong> hiện có <strong>{saveResult.total_cards} thẻ</strong>{" "}
-            (+{saveResult.cards_added} thẻ AI vừa thêm).
+            Study sheet <strong>{saveResult.sheet_name}</strong> in workbook{" "}
+            <strong>{saveResult.workbook_name}</strong> now has <strong>{saveResult.total_cards} cards</strong>{" "}
+            ({saveResult.cards_added} AI-generated cards added).
           </p>
 
           <div className="ai-success-actions">
             <Link href={`/sheets/${saveResult.sheet_id}/study`} className="ai-btn-primary">
               <Icon name="study" size={20} />
-              <span>Bắt đầu học ngay (SRS)</span>
+              <span>Start studying (SRS)</span>
             </Link>
             <Link href={`/sheets/${saveResult.sheet_id}/table`} className="ai-btn-secondary">
               <Icon name="books" size={20} />
-              <span>Xem bảng từ vựng</span>
+              <span>View vocabulary table</span>
             </Link>
             <button type="button" onClick={onBackToConfig} className="ai-btn-ghost">
               <Icon name="refresh" size={18} />
-              <span>Tạo thêm bài học khác</span>
+              <span>Create another set</span>
             </button>
           </div>
         </div>
@@ -124,26 +124,26 @@ export function AIPreviewDeck({
     <div className="ai-preview-deck-wrapper">
       <header className="ai-preview-header">
         <div className="ai-preview-title-box">
-          <span className="ai-badge-pill">✨ Xem trước Flashcards AI ({cards.length} thẻ)</span>
+          <span className="ai-badge-pill">✨ AI flashcard preview ({cards.length} cards)</span>
           <div className="ai-sheet-name-input-group">
-            <label htmlFor="ai-sheet-name-input">Tên Study Sheet:</label>
+            <label htmlFor="ai-sheet-name-input">Study sheet name:</label>
             <input
               id="ai-sheet-name-input"
               type="text"
               value={sheetName}
               onChange={(e) => setSheetName(e.target.value)}
-              placeholder="Ví dụ: Daily Workplace Chunks..."
+              placeholder="e.g. Daily Workplace Phrases..."
               className="ai-sheet-name-field"
             />
           </div>
           <p className="ai-destination-hint">
-            Đích đến:{" "}
+            Destination:{" "}
             <strong>
               {mode === "append"
-                ? "Nối tiếp vào Sheet có sẵn"
+                ? "Append to an existing sheet"
                 : workbookId
-                ? "Thêm Sheet mới vào Workbook đã chọn"
-                : `Tạo Workbook mới: "${newWorkbookName || "AI Vocabulary Collection"}"`}
+                ? "Add a new sheet to the selected workbook"
+                : `Create a new workbook: "${newWorkbookName || "AI Vocabulary Collection"}"`}
             </strong>
           </p>
         </div>
@@ -155,7 +155,7 @@ export function AIPreviewDeck({
             className="ai-btn-ghost"
             disabled={isSaving}
           >
-            ← Quay lại cấu hình
+            ← Back to settings
           </button>
           <button
             type="button"
@@ -164,7 +164,7 @@ export function AIPreviewDeck({
             disabled={isSaving || cards.length === 0}
           >
             <Icon name="check" size={18} />
-            <span>{isSaving ? "Đang lưu vào CSDL..." : `Lưu ${cards.length} thẻ vào thư viện`}</span>
+            <span>{isSaving ? "Saving to your library..." : `Save ${cards.length} cards to your library`}</span>
           </button>
         </div>
       </header>
@@ -185,8 +185,8 @@ export function AIPreviewDeck({
                 type="button"
                 onClick={() => handleRemoveCard(idx)}
                 className="ai-card-remove-btn"
-                title="Xóa thẻ này"
-                aria-label={`Xóa thẻ số ${idx + 1}`}
+                title="Remove this card"
+                aria-label={`Remove card ${idx + 1}`}
               >
                 ✕
               </button>
@@ -194,7 +194,7 @@ export function AIPreviewDeck({
 
             <div className="ai-card-fields">
               <div className="ai-field-group">
-                <label>Cụm từ / Chunk (EN):</label>
+                <label>Phrase or chunk (English):</label>
                 <input
                   type="text"
                   value={card.phrase}
@@ -205,18 +205,18 @@ export function AIPreviewDeck({
               </div>
 
               <div className="ai-field-group">
-                <label>Giải nghĩa (VI):</label>
+                <label>Meaning (Vietnamese):</label>
                 <input
                   type="text"
                   value={card.meaning}
                   onChange={(e) => handleCardChange(idx, "meaning", e.target.value)}
                   className="ai-input-meaning"
-                  placeholder="e.g. liên lạc nhanh"
+                  placeholder="Enter the Vietnamese meaning."
                 />
               </div>
 
               <div className="ai-field-group">
-                <label>Câu ví dụ (EN):</label>
+                <label>Example sentence (English):</label>
                 <input
                   type="text"
                   value={card.example_en}
@@ -227,13 +227,13 @@ export function AIPreviewDeck({
               </div>
 
               <div className="ai-field-group">
-                <label>Dịch ví dụ (VI):</label>
+                <label>Example translation (Vietnamese):</label>
                 <input
                   type="text"
                   value={card.example_vi}
                   onChange={(e) => handleCardChange(idx, "example_vi", e.target.value)}
                   className="ai-input-example"
-                  placeholder="e.g. Hãy liên lạc nhanh vào sáng mai."
+                  placeholder="Enter a natural Vietnamese translation."
                 />
               </div>
             </div>
@@ -247,7 +247,7 @@ export function AIPreviewDeck({
           onClick={handleAddEmptyCard}
           className="ai-btn-add-card"
         >
-          ➕ Thêm thẻ thủ công
+          ➕ Add a card manually
         </button>
 
         <button
@@ -257,7 +257,7 @@ export function AIPreviewDeck({
           disabled={isSaving || cards.length === 0}
         >
           <Icon name="check" size={20} />
-          <span>{isSaving ? "Đang lưu vào CSDL..." : `Lưu tất cả ${cards.length} thẻ`}</span>
+          <span>{isSaving ? "Saving to your library..." : `Save all ${cards.length} cards`}</span>
         </button>
       </div>
     </div>
