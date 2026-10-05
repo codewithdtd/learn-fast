@@ -30,10 +30,10 @@ def test_demo_mode_blocks_destructive_mutations(api_client: TestClient):
         res_get = api_client.get("/api/v1/workbooks")
         assert res_get.status_code == 200
 
-        # Health endpoint reports demo_mode: true
+        # Health checks stay minimal even when demo mode is enabled.
         res_health = api_client.get("/api/v1/health")
         assert res_health.status_code == 200
-        assert res_health.json()["demo_mode"] is True
+        assert res_health.text == "ok"
 
     finally:
         # Restore setting

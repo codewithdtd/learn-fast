@@ -9,7 +9,6 @@ def test_health_endpoint_returns_ok() -> None:
     response = client.get("/api/v1/health")
 
     assert response.status_code == 200
-    data = response.json()
-    assert data["status"] == "ok"
-    assert "demo_mode" in data
+    assert response.text == "ok"
+    assert response.headers["content-type"].startswith("text/plain")
 
