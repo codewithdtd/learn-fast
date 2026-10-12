@@ -14,6 +14,9 @@ export interface SpeechOptions {
   onError?: (error: unknown) => void;
 }
 
+let availableVoices: SpeechSynthesisVoice[] = [];
+let isListeningForVoices = false;
+
 /**
  * Checks if the Web Speech Synthesis API is supported in the current environment.
  */
@@ -28,8 +31,20 @@ export function isSpeechSupported(): boolean {
 function getBestEnglishVoice(): SpeechSynthesisVoice | null {
   if (!isSpeechSupported()) return null;
 
-  const voices = window.speechSynthesis.getVoices();
-  if (!voices || voices.length === 0) return null;
+  const currentVoices = window.speechSynthesis.getVoices();
+  if (currentVoices.length > 0) {
+    availableVoices = currentVoices;
+  }
+  if (!isListeningForVoices) {
+    // iOS Safari can populate its voice list after the page starts, so keep the cache fresh.
+    window.speechSynthesis.addEventListener("voiceschanged", () => {
+      availableVoices = window.speechSynthesis.getVoices();
+    });
+    isListeningForVoices = true;
+  }
+
+  const voices = currentVoices.length > 0 ? currentVoices : availableVoices;
+  if (voices.length === 0) return null;
 
   // 1. First priority: Natural / Premium / Neural English voices
   const premiumEnVoice = voices.find(
@@ -48,7 +63,21 @@ function getBestEnglishVoice(): SpeechSynthesisVoice | null {
   if (standardEnVoice) return standardEnVoice;
 
   // 3. Fallback: Any voice with language starting with 'en'
-  return voices.find((v) => v.lang.startsWith("en")) || null;
+  return (
+    voices.find((v) => v.lang.startsWith("en")) ||
+    voices.find((v) => v.default) ||
+    voices[0] ||
+    null
+  );
+}
+
+// Nạp danh sách voice sớm để Safari có thời gian khởi tạo voice trước lần chạm phát âm đầu tiên.
+if (isSpeechSupported()) {
+  availableVoices = window.speechSynthesis.getVoices();
+  window.speechSynthesis.addEventListener("voiceschanged", () => {
+    availableVoices = window.speechSynthesis.getVoices();
+  });
+  isListeningForVoices = true;
 }
 
 /**
@@ -60,9 +89,6 @@ export function speakEnglish(text: string, options: SpeechOptions = {}): void {
     options.onEnd?.();
     return;
   }
-
-  // Cancel any ongoing speech to avoid queued overlap
-  window.speechSynthesis.cancel();
 
   const utterance = new SpeechSynthesisUtterance(text.trim());
   utterance.lang = options.lang || "en-US";
@@ -94,6 +120,7 @@ export function speakEnglish(text: string, options: SpeechOptions = {}): void {
     options.onEnd?.();
   };
 
+  // Tránh cancel ngay trước speak: WebKit có thể loại utterance mới khỏi queue sau khi cancel.
   window.speechSynthesis.speak(utterance);
 }
 
