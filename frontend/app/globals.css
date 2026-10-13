@@ -1812,7 +1812,7 @@ a {
     left: 0;
     z-index: 40;
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 6px;
     border-top: 1px solid var(--outline);
     background: color-mix(in srgb, var(--surface) 94%, transparent);
