@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -26,7 +28,20 @@ class Settings(BaseSettings):
     ai_model: str = "Anti_2"
     ai_request_timeout: float = 90.0
 
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    # Writing AI is capped per user per local calendar day to keep provider cost predictable.
+    writing_daily_ai_quota: int = 5
+    writing_topic_generation_daily_quota: int = 3
+    writing_max_words: int = 300
+    writing_max_characters: int = 4000
+    writing_grading_timeout: float = 90.0
+    writing_timezone: str = "Asia/Bangkok"
+
+    # Neo vào thư mục backend để chạy uvicorn từ root vẫn đọc đúng quota và cấu hình local.
+    model_config = SettingsConfigDict(
+        env_file=Path(__file__).resolve().parents[2] / ".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
 
 
 settings = Settings()

@@ -9,7 +9,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.main import app
+from app.main import api_app, app
 from app.models import Flashcard, StudySheet, Workbook
 from app.services.excel_types import ParsedCard, ParsedSheet, ParsedWorkbook
 from app.services.workbook_import import (
@@ -40,10 +40,10 @@ def api_client(db_session: Session):
     def override_get_db():
         yield db_session
 
-    app.dependency_overrides[get_db] = override_get_db
+    api_app.dependency_overrides[get_db] = override_get_db
     with TestClient(app) as client:
         yield client
-    app.dependency_overrides.clear()
+    api_app.dependency_overrides.clear()
 
 
 def test_import_service_persists_relationships_and_aggregates(db_session: Session) -> None:

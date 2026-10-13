@@ -99,6 +99,8 @@ def call_9router_chat(
     messages: list[dict[str, str]],
     temperature: float = 0.7,
     timeout: Optional[float] = None,
+    max_tokens: Optional[int] = None,
+    json_output: bool = False,
 ) -> str:
     """Thực hiện HTTP POST gọi endpoint OpenAI-compatible của 9Router local."""
     url = f"{settings.ai_base_url.rstrip('/')}/chat/completions"
@@ -112,6 +114,11 @@ def call_9router_chat(
         "temperature": temperature,
         "stream": False,
     }
+    if max_tokens is not None:
+        payload["max_tokens"] = max_tokens
+    if json_output:
+        # Writing cần JSON có thể parse; vẫn phải validate schema và đối chiếu lỗi với bài viết sau đó.
+        payload["response_format"] = {"type": "json_object"}
 
     req_timeout = timeout or settings.ai_request_timeout
 
