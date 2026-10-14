@@ -1,0 +1,182 @@
+[
+  {
+    "slug": "my-home",
+    "title_vi": "Chỗ ở của tôi",
+    "title_en": "My home",
+    "prompt_vi": "Mô tả nơi bạn đang sống và điều bạn thích nhất ở đó.",
+    "prompt_en": "Describe where you live and what you like most about it.",
+    "difficulty": "basic",
+    "format": "paragraph",
+    "target_word_count": 90,
+    "sentence_hints": [
+      {"idea_vi":"Bạn sống ở đâu?","question_en":"Where do you live?","frame_en":"I live in ..."},
+      {"idea_vi":"Ngôi nhà hoặc căn hộ của bạn như thế nào?","question_en":"What is your home like?","frame_en":"My home is ... and it has ..."},
+      {"idea_vi":"Bạn sống cùng ai?","question_en":"Who do you live with?","frame_en":"I live with ..."},
+      {"idea_vi":"Bạn thích điều gì nhất ở nơi đó?","question_en":"What do you like most about it?","frame_en":"My favourite thing about it is ..."},
+      {"idea_vi":"Nơi đó khiến bạn cảm thấy thế nào?","question_en":"How does it make you feel?","frame_en":"It makes me feel ... because ..."}
+    ],
+    "paragraph_hints": {"opening_vi":"Nêu nơi bạn sống và vị trí.","opening_en":"Say where you live and where it is.","details_vi":"Mô tả vài đặc điểm và những người sống cùng bạn.","details_en":"Describe a few features and the people you live with.","closing_vi":"Nêu điều bạn thích và cảm nhận của bạn.","closing_en":"Explain what you like and how you feel there.","connectors":[{"vi":"ngoài ra","en":"also"},{"vi":"bởi vì","en":"because"},{"vi":"cuối cùng","en":"finally"}],"vocabulary":[{"vi":"khu phố yên tĩnh","en":"a quiet neighbourhood"},{"vi":"phòng khách rộng","en":"a spacious living room"}]}
+  },
+  {
+    "slug": "daily-routine",
+    "title_vi": "Thói quen hằng ngày",
+    "title_en": "My daily routine",
+    "prompt_vi": "Mô tả một ngày bình thường của bạn từ buổi sáng đến buổi tối.",
+    "prompt_en": "Describe a typical day, from morning until evening.",
+    "difficulty": "basic",
+    "format": "paragraph",
+    "target_word_count": 90,
+    "sentence_hints": [
+      {"idea_vi":"Bạn thường thức dậy lúc mấy giờ?","question_en":"What time do you usually wake up?","frame_en":"I usually wake up at ..."},
+      {"idea_vi":"Bạn làm gì đầu tiên vào buổi sáng?","question_en":"What do you do first in the morning?","frame_en":"First, I ..."},
+      {"idea_vi":"Ban ngày bạn học hoặc làm việc ở đâu?","question_en":"Where do you study or work during the day?","frame_en":"During the day, I ..."},
+      {"idea_vi":"Bạn làm gì để thư giãn?","question_en":"What do you do to relax?","frame_en":"After ... , I like to ..."},
+      {"idea_vi":"Bạn thường kết thúc ngày như thế nào?","question_en":"How do you usually end your day?","frame_en":"Before I go to bed, I ..."}
+    ],
+    "paragraph_hints": {"opening_vi":"Giới thiệu lịch sinh hoạt thường ngày.","opening_en":"Introduce your usual daily schedule.","details_vi":"Kể các hoạt động theo trình tự thời gian.","details_en":"Describe activities in time order.","closing_vi":"Nêu phần bạn thích nhất hoặc muốn thay đổi.","closing_en":"Say which part you enjoy most or want to change.","connectors":[{"vi":"sau đó","en":"then"},{"vi":"vào buổi chiều","en":"in the afternoon"},{"vi":"trước khi","en":"before"}],"vocabulary":[{"vi":"đi làm","en":"go to work"},{"vi":"thư giãn","en":"unwind"}]}
+  },
+  {
+    "slug": "work-or-studies",
+    "title_vi": "Công việc hoặc việc học",
+    "title_en": "My work or studies",
+    "prompt_vi": "Mô tả công việc hoặc việc học hiện tại và điều bạn thấy thú vị.",
+    "prompt_en": "Describe your current job or studies and what you find interesting.",
+    "difficulty": "basic",
+    "format": "paragraph",
+    "target_word_count": 100,
+    "sentence_hints": [
+      {"idea_vi":"Bạn làm nghề gì hoặc đang học gì?","question_en":"What do you do or study?","frame_en":"I am a ... / I study ..."},
+      {"idea_vi":"Bạn làm việc hoặc học ở đâu?","question_en":"Where do you work or study?","frame_en":"I work/study at ..."},
+      {"idea_vi":"Một ngày thường có những nhiệm vụ gì?","question_en":"What do you usually do in a day?","frame_en":"On a typical day, I ..."},
+      {"idea_vi":"Bạn thích điều gì nhất?","question_en":"What do you enjoy most?","frame_en":"I especially enjoy ... because ..."},
+      {"idea_vi":"Bạn muốn đạt được điều gì trong tương lai?","question_en":"What would you like to achieve in the future?","frame_en":"In the future, I hope to ..."}
+    ],
+    "paragraph_hints": {"opening_vi":"Nêu công việc hoặc ngành học.","opening_en":"Name your job or subject.","details_vi":"Mô tả nơi làm/học và nhiệm vụ chính.","details_en":"Describe the place and your main tasks.","closing_vi":"Chia sẻ điều bạn thích và mục tiêu.","closing_en":"Share what you enjoy and your goal.","connectors":[{"vi":"mỗi ngày","en":"every day"},{"vi":"đặc biệt là","en":"especially"},{"vi":"trong tương lai","en":"in the future"}],"vocabulary":[{"vi":"làm việc nhóm","en":"work as a team"},{"vi":"giải quyết vấn đề","en":"solve problems"}]}
+  },
+  {
+    "slug": "my-hometown",
+    "title_vi": "Quê hương của tôi",
+    "title_en": "My hometown",
+    "prompt_vi": "Mô tả quê hương của bạn và một điều du khách có thể làm ở đó.",
+    "prompt_en": "Describe your hometown and one thing a visitor can do there.",
+    "difficulty": "basic",
+    "format": "paragraph",
+    "target_word_count": 90,
+    "sentence_hints": [
+      {"idea_vi":"Quê bạn ở đâu?","question_en":"Where is your hometown?","frame_en":"My hometown is in ..."},
+      {"idea_vi":"Nơi đó lớn hay nhỏ?","question_en":"Is it a large or small place?","frame_en":"It is a ... city/town with ..."},
+      {"idea_vi":"Nơi đó nổi tiếng về điều gì?","question_en":"What is it known for?","frame_en":"It is known for ..."},
+      {"idea_vi":"Du khách có thể thăm hoặc làm gì?","question_en":"What can visitors see or do?","frame_en":"Visitors can ..."},
+      {"idea_vi":"Bạn cảm thấy thế nào về quê mình?","question_en":"How do you feel about it?","frame_en":"I feel ... about my hometown because ..."}
+    ],
+    "paragraph_hints": {"opening_vi":"Giới thiệu tên và vị trí quê hương.","opening_en":"Introduce its name and location.","details_vi":"Nêu đặc điểm, địa điểm hoặc hoạt động nổi bật.","details_en":"Mention a feature, place, or activity.","closing_vi":"Nói vì sao nơi đó có ý nghĩa với bạn.","closing_en":"Explain why it is meaningful to you.","connectors":[{"vi":"ở miền ...","en":"in the ... region"},{"vi":"chẳng hạn như","en":"such as"},{"vi":"vì vậy","en":"so"}],"vocabulary":[{"vi":"chợ địa phương","en":"a local market"},{"vi":"phong cảnh đẹp","en":"beautiful scenery"}]}
+  },
+  {
+    "slug": "my-family",
+    "title_vi": "Gia đình của tôi",
+    "title_en": "My family",
+    "prompt_vi": "Giới thiệu gia đình bạn và một hoạt động các thành viên thường làm cùng nhau.",
+    "prompt_en": "Introduce your family and an activity you often do together.",
+    "difficulty": "basic",
+    "format": "paragraph",
+    "target_word_count": 90,
+    "sentence_hints": [
+      {"idea_vi":"Gia đình bạn có bao nhiêu người?","question_en":"How many people are in your family?","frame_en":"There are ... people in my family."},
+      {"idea_vi":"Bạn muốn giới thiệu những ai?","question_en":"Who would you like to introduce?","frame_en":"I live with ..."},
+      {"idea_vi":"Mỗi người có tính cách thế nào?","question_en":"What are they like?","frame_en":"My ... is ... and ..."},
+      {"idea_vi":"Gia đình thường làm gì cùng nhau?","question_en":"What do you often do together?","frame_en":"We often ... together."},
+      {"idea_vi":"Vì sao bạn trân trọng gia đình?","question_en":"Why is your family important to you?","frame_en":"I value my family because ..."}
+    ],
+    "paragraph_hints": {"opening_vi":"Nêu số thành viên và giới thiệu chung.","opening_en":"Give the number of family members and a brief introduction.","details_vi":"Mô tả một vài thành viên và hoạt động chung.","details_en":"Describe a few members and a shared activity.","closing_vi":"Nêu cảm nhận về gia đình.","closing_en":"Share how you feel about your family.","connectors":[{"vi":"cùng nhau","en":"together"},{"vi":"vào cuối tuần","en":"at weekends"},{"vi":"điều tôi thích là","en":"what I like is"}],"vocabulary":[{"vi":"hòa đồng","en":"easy-going"},{"vi":"dành thời gian bên nhau","en":"spend time together"}]}
+  },
+  {
+    "slug": "my-hobbies",
+    "title_vi": "Sở thích của tôi",
+    "title_en": "My hobbies",
+    "prompt_vi": "Mô tả một sở thích bạn yêu thích và lý do bạn thường dành thời gian cho nó.",
+    "prompt_en": "Describe a hobby you enjoy and why you spend time on it.",
+    "difficulty": "basic",
+    "format": "paragraph",
+    "target_word_count": 90,
+    "sentence_hints": [
+      {"idea_vi":"Sở thích của bạn là gì?","question_en":"What is your hobby?","frame_en":"One of my favourite hobbies is ..."},
+      {"idea_vi":"Bạn bắt đầu sở thích đó khi nào?","question_en":"When did you start it?","frame_en":"I started ... when ..."},
+      {"idea_vi":"Bạn thường làm việc đó ở đâu hoặc với ai?","question_en":"Where or with whom do you do it?","frame_en":"I usually ... with ..."},
+      {"idea_vi":"Bạn thích điều gì khi làm việc đó?","question_en":"What do you enjoy about it?","frame_en":"I enjoy it because ..."},
+      {"idea_vi":"Bạn muốn thử điều gì tiếp theo?","question_en":"What would you like to try next?","frame_en":"Next, I would like to ..."}
+    ],
+    "paragraph_hints": {"opening_vi":"Nêu sở thích bạn chọn.","opening_en":"Name the hobby you chose.","details_vi":"Kể cách bạn bắt đầu và thường thực hiện nó.","details_en":"Explain how you started and usually do it.","closing_vi":"Nêu lợi ích hoặc kế hoạch tiếp theo.","closing_en":"Share a benefit or a future plan.","connectors":[{"vi":"lúc đầu","en":"at first"},{"vi":"khi có thời gian","en":"when I have time"},{"vi":"nhờ đó","en":"because of this"}],"vocabulary":[{"vi":"giảm căng thẳng","en":"reduce stress"},{"vi":"luyện tập thường xuyên","en":"practise regularly"}]}
+  },
+  {
+    "slug": "my-weekend",
+    "title_vi": "Cuối tuần của tôi",
+    "title_en": "My weekend",
+    "prompt_vi": "Mô tả cách bạn thường dành thời gian vào cuối tuần.",
+    "prompt_en": "Describe how you usually spend your weekend.",
+    "difficulty": "basic",
+    "format": "paragraph",
+    "target_word_count": 90,
+    "sentence_hints": [
+      {"idea_vi":"Bạn thường làm gì vào sáng thứ Bảy?","question_en":"What do you usually do on Saturday morning?","frame_en":"On Saturday morning, I usually ..."},
+      {"idea_vi":"Bạn thường gặp ai vào cuối tuần?","question_en":"Who do you usually see at the weekend?","frame_en":"I often spend time with ..."},
+      {"idea_vi":"Bạn thích hoạt động nào nhất?","question_en":"Which activity do you enjoy most?","frame_en":"My favourite activity is ..."},
+      {"idea_vi":"Bạn có dành thời gian nghỉ ngơi không?","question_en":"Do you make time to relax?","frame_en":"I also make time to ..."},
+      {"idea_vi":"Cuối tuần giúp bạn thế nào?","question_en":"How does the weekend help you?","frame_en":"It helps me ... before ..."}
+    ],
+    "paragraph_hints": {"opening_vi":"Nêu cuối tuần của bạn thường yên tĩnh hay bận rộn.","opening_en":"Say whether your weekends are quiet or busy.","details_vi":"Mô tả một vài hoạt động và người đi cùng.","details_en":"Describe a few activities and who joins you.","closing_vi":"Nêu vì sao bạn thích lịch cuối tuần đó.","closing_en":"Explain why you like that weekend routine.","connectors":[{"vi":"vào sáng thứ Bảy","en":"on Saturday morning"},{"vi":"sau đó","en":"after that"},{"vi":"trước tuần mới","en":"before the new week"}],"vocabulary":[{"vi":"gặp bạn bè","en":"meet friends"},{"vi":"nạp lại năng lượng","en":"recharge"}]}
+  },
+  {
+    "slug": "favourite-meal",
+    "title_vi": "Món ăn yêu thích",
+    "title_en": "My favourite meal",
+    "prompt_vi": "Mô tả một món ăn bạn yêu thích, nguyên liệu chính và thời điểm bạn thường ăn món đó.",
+    "prompt_en": "Describe a meal you enjoy, its main ingredients, and when you usually eat it.",
+    "difficulty": "basic",
+    "format": "paragraph",
+    "target_word_count": 90,
+    "sentence_hints": [
+      {"idea_vi":"Món ăn bạn yêu thích là gì?","question_en":"What is your favourite meal?","frame_en":"My favourite meal is ..."},
+      {"idea_vi":"Món đó có nguyên liệu gì?","question_en":"What ingredients does it have?","frame_en":"It is made with ..."},
+      {"idea_vi":"Món đó có hương vị hoặc kết cấu ra sao?","question_en":"What does it taste or feel like?","frame_en":"It tastes ... and feels ..."},
+      {"idea_vi":"Bạn thường ăn món đó khi nào và với ai?","question_en":"When and with whom do you eat it?","frame_en":"I usually have it ... with ..."},
+      {"idea_vi":"Vì sao món đó đặc biệt với bạn?","question_en":"Why is it special to you?","frame_en":"It is special because ..."}
+    ],
+    "paragraph_hints": {"opening_vi":"Giới thiệu món ăn.","opening_en":"Introduce the meal.","details_vi":"Mô tả nguyên liệu, hương vị và thời điểm ăn.","details_en":"Describe the ingredients, taste, and occasion.","closing_vi":"Nêu lý do món ăn có ý nghĩa với bạn.","closing_en":"Explain why the meal matters to you.","connectors":[{"vi":"được làm từ","en":"is made with"},{"vi":"thường thì","en":"usually"},{"vi":"gợi cho tôi nhớ","en":"reminds me of"}],"vocabulary":[{"vi":"rau tươi","en":"fresh vegetables"},{"vi":"vị đậm đà","en":"a rich flavour"}]}
+  },
+  {
+    "slug": "place-to-visit",
+    "title_vi": "Một nơi tôi muốn đến",
+    "title_en": "A place I want to visit",
+    "prompt_vi": "Mô tả một nơi bạn muốn đến, điều bạn muốn làm ở đó và lý do bạn chọn nơi này.",
+    "prompt_en": "Describe a place you want to visit, what you would do there, and why you chose it.",
+    "difficulty": "basic",
+    "format": "paragraph",
+    "target_word_count": 100,
+    "sentence_hints": [
+      {"idea_vi":"Bạn muốn đến đâu?","question_en":"Where would you like to go?","frame_en":"I would like to visit ..."},
+      {"idea_vi":"Nơi đó nằm ở đâu?","question_en":"Where is it located?","frame_en":"It is located in ..."},
+      {"idea_vi":"Bạn đã biết điều gì về nơi đó?","question_en":"What do you know about the place?","frame_en":"I have heard that ..."},
+      {"idea_vi":"Bạn muốn làm gì ở đó?","question_en":"What would you like to do there?","frame_en":"While I am there, I would ..."},
+      {"idea_vi":"Vì sao bạn muốn đến nơi đó?","question_en":"Why do you want to go there?","frame_en":"I want to go there because ..."}
+    ],
+    "paragraph_hints": {"opening_vi":"Nêu tên hoặc loại địa điểm.","opening_en":"Name the place or type of place.","details_vi":"Nêu vị trí và hoạt động bạn muốn trải nghiệm.","details_en":"Give its location and an activity you want to try.","closing_vi":"Giải thích lý do bạn mong chờ chuyến đi.","closing_en":"Explain why you are looking forward to the trip.","connectors":[{"vi":"một ngày nào đó","en":"one day"},{"vi":"ở đó","en":"there"},{"vi":"đặc biệt vì","en":"especially because"}],"vocabulary":[{"vi":"cảnh quan thiên nhiên","en":"natural scenery"},{"vi":"trải nghiệm văn hóa địa phương","en":"experience local culture"}]}
+  },
+  {
+    "slug": "shopping-habits",
+    "title_vi": "Thói quen mua sắm",
+    "title_en": "My shopping habits",
+    "prompt_vi": "Mô tả cách bạn thường mua sắm, nơi bạn thích mua và điều bạn cân nhắc trước khi mua.",
+    "prompt_en": "Describe how you usually shop, where you prefer to shop, and what you consider before buying.",
+    "difficulty": "basic",
+    "format": "paragraph",
+    "target_word_count": 100,
+    "sentence_hints": [
+      {"idea_vi":"Bạn thường mua những món gì?","question_en":"What do you usually buy?","frame_en":"I usually shop for ..."},
+      {"idea_vi":"Bạn thích mua trực tuyến hay tại cửa hàng?","question_en":"Do you prefer shopping online or in stores?","frame_en":"I prefer ... because ..."},
+      {"idea_vi":"Bạn thường mua sắm ở đâu?","question_en":"Where do you usually shop?","frame_en":"I often shop at ..."},
+      {"idea_vi":"Bạn xem xét điều gì trước khi mua?","question_en":"What do you consider before you buy something?","frame_en":"Before buying something, I check ..."},
+      {"idea_vi":"Bạn muốn thay đổi thói quen mua sắm không?","question_en":"Would you like to change any shopping habit?","frame_en":"I would like to ..."}
+    ],
+    "paragraph_hints": {"opening_vi":"Giới thiệu thói quen mua sắm chung.","opening_en":"Introduce your general shopping habits.","details_vi":"Nêu nơi bạn mua và cách chọn sản phẩm.","details_en":"Describe where you shop and how you choose items.","closing_vi":"Chia sẻ một thói quen muốn giữ hoặc thay đổi.","closing_en":"Share one habit you want to keep or change.","connectors":[{"vi":"thường thì","en":"usually"},{"vi":"trước khi quyết định","en":"before deciding"},{"vi":"để tiết kiệm","en":"to save"}],"vocabulary":[{"vi":"so sánh giá","en":"compare prices"},{"vi":"danh sách mua sắm","en":"shopping list"}]}
+  }
+]

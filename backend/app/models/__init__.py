@@ -21,6 +21,9 @@ from app.models.study_session_round import StudySessionRound
 from app.models.study_session_round_card import StudySessionRoundCard
 from app.models.user import User
 from app.models.workbook import Workbook
+from app.models.writing_attempt import WritingAttempt
+from app.models.writing_prompt import WritingPrompt
+from app.models.writing_usage import WritingAIUsage
 
 __all__ = [
     "Flashcard",
@@ -42,4 +45,7 @@ __all__ = [
     "StudySheet",
     "User",
     "Workbook",
+    "WritingAIUsage",
+    "WritingAttempt",
+    "WritingPrompt",
 ]

@@ -20,6 +20,8 @@ BLOCKED_PATTERNS = [
     ("PATCH", "/api/v1/workbooks"),
     ("POST", "/api/v1/auth/register"),
     ("POST", "/api/v1/auth/change-password"),
+    ("POST", "/api/v1/writing/attempts"),
+    ("PATCH", "/api/v1/writing/attempts"),
 ]
 
 

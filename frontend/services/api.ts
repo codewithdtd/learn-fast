@@ -1,3 +1,11 @@
+import type {
+  WritingAttempt,
+  WritingAttemptList,
+  WritingPrompt,
+  WritingPromptList,
+  WritingUsage,
+} from "@/types/writing";
+
 export type HealthResponse = {
   status: "ok";
   demo_mode?: boolean;
@@ -762,6 +770,80 @@ export async function saveAISheet(data: AISaveSheetRequest): Promise<AISaveSheet
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
+}
+
+export async function getWritingPrompts(): Promise<WritingPromptList> {
+  return requestJson<WritingPromptList>("/api/v1/writing/prompts");
+}
+
+export async function getWritingPrompt(promptId: number): Promise<WritingPrompt> {
+  return requestJson<WritingPrompt>(`/api/v1/writing/prompts/${promptId}`);
+}
+
+export async function createWritingAttempt(promptId: number, revisionOfId?: number): Promise<WritingAttempt> {
+  return requestJson<WritingAttempt>("/api/v1/writing/attempts", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ prompt_id: promptId, revision_of_id: revisionOfId }),
+  });
+}
+
+export async function generateRandomWritingAttempt(): Promise<WritingAttempt> {
+  return requestJson<WritingAttempt>("/api/v1/writing/attempts/random", {
+    method: "POST",
+  });
+}
+
+export async function saveWritingAttempt(
+  attemptId: number,
+  version: number,
+  draftText: string,
+): Promise<WritingAttempt> {
+  return requestJson<WritingAttempt>(`/api/v1/writing/attempts/${attemptId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ version, draft_text: draftText }),
+  });
+}
+
+export async function gradeWritingAttempt(attemptId: number, version: number, signal?: AbortSignal): Promise<WritingAttempt> {
+  return requestWritingJson<WritingAttempt>(`/api/v1/writing/attempts/${attemptId}/grade`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ version }),
+    signal,
+  }, 300_000);
+}
+
+export async function getWritingAttempt(attemptId: number): Promise<WritingAttempt> {
+  return requestWritingJson<WritingAttempt>(`/api/v1/writing/attempts/${attemptId}`);
+}
+
+export async function getWritingHistory(page = 1): Promise<WritingAttemptList> {
+  return requestJson<WritingAttemptList>(`/api/v1/writing/attempts?page=${page}&page_size=20`);
+}
+
+export async function getWritingUsage(): Promise<WritingUsage> {
+  return requestWritingJson<WritingUsage>("/api/v1/writing/usage");
+}
+
+async function requestWritingJson<T>(path: string, init?: RequestInit, timeoutMs = 15_000): Promise<T> {
+  const controller = new AbortController();
+  const externalSignal = init?.signal;
+  const cancel = () => controller.abort();
+  if (externalSignal?.aborted) cancel();
+  externalSignal?.addEventListener("abort", cancel, { once: true });
+  let timedOut = false;
+  const timer = setTimeout(() => { timedOut = true; controller.abort(); }, timeoutMs);
+  try {
+    return await requestJson<T>(path, { ...init, signal: controller.signal });
+  } catch (cause) {
+    if (timedOut) throw new ApiRequestError("The writing request timed out. Your saved draft is safe. Refresh the review status before retrying.", 408);
+    throw cause;
+  } finally {
+    clearTimeout(timer);
+    externalSignal?.removeEventListener("abort", cancel);
+  }
 }
 
 async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
