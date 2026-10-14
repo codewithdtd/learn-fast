@@ -1,4 +1,4 @@
-import type { KeyboardEvent as ReactKeyboardEvent } from "react";
+import { useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent } from "react";
 
 import { Icon } from "@/components/layout/app-shell";
 import { AudioPronounceButton } from "@/components/shared/audio-pronounce-button";
@@ -9,11 +9,22 @@ type FlashcardProps = {
   direction: StudyAnswerDirection;
   isFlipped: boolean;
   isDisabled: boolean;
+  canSwipe: boolean;
   answerResult: StudyAnswerResult | null;
   onFlip: () => void;
+  onSwipe: (result: StudyAnswerResult) => void;
 };
 
-export function Flashcard({ sessionCard, direction, isFlipped, isDisabled, answerResult, onFlip }: FlashcardProps) {
+const SWIPE_THRESHOLD = 72;
+const SWIPE_INTENT_THRESHOLD = 12;
+const SWIPE_DIRECTION_RATIO = 1.25;
+
+export function Flashcard({ sessionCard, direction, isFlipped, isDisabled, canSwipe, answerResult, onFlip, onSwipe }: FlashcardProps) {
+  const gesture = useRef<{ pointerId: number; startX: number; startY: number; movedHorizontally: boolean } | null>(null);
+  const suppressClick = useRef(false);
+  const [swipeOffset, setSwipeOffset] = useState(0);
+  const [swipePreview, setSwipePreview] = useState<StudyAnswerResult | null>(null);
+  const [isSwipeDragging, setIsSwipeDragging] = useState(false);
   const { flashcard } = sessionCard;
   const isEnglishPrompt = direction === "en_to_vi";
   const question = isEnglishPrompt ? flashcard.phrase : flashcard.meaning;
@@ -27,17 +38,73 @@ export function Flashcard({ sessionCard, direction, isFlipped, isDisabled, answe
     onFlip();
   }
 
+  function handlePointerDown(event: ReactPointerEvent<HTMLElement>) {
+    if (!canSwipe || (event.pointerType !== "touch" && event.pointerType !== "pen") || !event.isPrimary) return;
+    const target = event.target;
+    if (target instanceof Element && target.closest("button, a, input, textarea, select, [contenteditable='true']")) return;
+    suppressClick.current = false;
+    gesture.current = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, movedHorizontally: false };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+
+  function handlePointerMove(event: ReactPointerEvent<HTMLElement>) {
+    const active = gesture.current;
+    if (!active || active.pointerId !== event.pointerId) return;
+    const deltaX = event.clientX - active.startX;
+    const deltaY = event.clientY - active.startY;
+    if (Math.abs(deltaX) > SWIPE_INTENT_THRESHOLD && Math.abs(deltaX) > Math.abs(deltaY) * SWIPE_DIRECTION_RATIO) active.movedHorizontally = true;
+    if (!active.movedHorizontally || !isFlipped) return;
+    setIsSwipeDragging(true);
+    setSwipeOffset(Math.max(-120, Math.min(120, deltaX)));
+    setSwipePreview(deltaX < 0 ? "again" : "remembered");
+  }
+
+  function resetGesture() {
+    gesture.current = null;
+    setIsSwipeDragging(false);
+    setSwipeOffset(0);
+    setSwipePreview(null);
+  }
+
+  function handlePointerUp(event: ReactPointerEvent<HTMLElement>) {
+    const active = gesture.current;
+    if (!active || active.pointerId !== event.pointerId) return;
+    const deltaX = event.clientX - active.startX;
+    const deltaY = event.clientY - active.startY;
+    // Chỉ chấm sau khi mở đáp án và cử chỉ đủ rõ theo chiều ngang để tránh nhầm thao tác cuộn trang.
+    const isSwipe = active.movedHorizontally && Math.abs(deltaX) >= SWIPE_THRESHOLD && Math.abs(deltaX) > Math.abs(deltaY) * SWIPE_DIRECTION_RATIO;
+    suppressClick.current = active.movedHorizontally;
+    resetGesture();
+    // Giữ cùng kết quả SRS với hai nút hiện tại: kéo trái là quên, kéo phải là nhớ.
+    if (isSwipe && canSwipe && isFlipped && !isDisabled) onSwipe(deltaX < 0 ? "again" : "remembered");
+  }
+
+  function handlePointerCancel() {
+    suppressClick.current = true;
+    resetGesture();
+  }
+
   return (
     <article
-      className={`study-flashcard${isFlipped ? " is-flipped" : ""}${isDisabled ? " is-disabled" : ""}`}
+      className={`study-flashcard${isFlipped ? " is-flipped" : ""}${isDisabled ? " is-disabled" : ""}${isSwipeDragging ? " is-swipe-dragging" : ""}`}
+      style={{ transform: swipeOffset ? `translateX(${swipeOffset}px)` : undefined }}
       role="button"
       tabIndex={isDisabled ? -1 : 0}
-      aria-label={isFlipped ? "Hide answer" : "Show answer"}
+      aria-label={isFlipped ? "Hide answer. Swipe left if forgotten or right if remembered." : "Show answer"}
       aria-pressed={isFlipped}
       aria-disabled={isDisabled}
-      onClick={() => { if (!isDisabled) onFlip(); }}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerCancel}
+      onClick={(event) => {
+        if (suppressClick.current) { suppressClick.current = false; return; }
+        if (event.target instanceof Element && event.target.closest("button, a, input, textarea, select, [contenteditable='true']")) return;
+        if (!isDisabled) onFlip();
+      }}
       onKeyDown={handleKeyDown}
     >
+      {swipePreview && <span className={`study-swipe-preview ${swipePreview}`} aria-hidden="true">{swipePreview === "again" ? "Forgot" : "Remembered"}</span>}
       <div className="study-flashcard-inner">
         <div className="study-flashcard-face study-flashcard-front" aria-hidden={isFlipped}>
           <div className="study-flashcard-topline"><span>{directionLabel}</span><AnswerStatus result={answerResult} /></div>

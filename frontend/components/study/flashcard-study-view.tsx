@@ -49,11 +49,14 @@ export function FlashcardStudyView({ sessionId }: FlashcardStudyViewProps) {
     } finally { setIsLoading(false); }
   }, [applyLoadedSession, sessionId]);
 
-  useEffect(() => { void loadSession(); }, [loadSession]);
+  useEffect(() => {
+    const timer = window.setTimeout(() => void loadSession(), 0);
+    return () => window.clearTimeout(timer);
+  }, [loadSession]);
 
   const activeRound = session?.active_round ?? null;
   const latestRound = session?.round_summaries.at(-1) ?? null;
-  const roundCards = activeRound?.round_cards ?? [];
+  const roundCards = useMemo(() => activeRound?.round_cards ?? [], [activeRound]);
   const currentRoundCard = roundCards[currentIndex] ?? null;
   const currentCard = currentRoundCard?.session_card ?? null;
   const currentDirection = currentCard && session ? getCardStudyDirection(session.direction, currentCard, currentIndex) : null;
@@ -87,7 +90,8 @@ export function FlashcardStudyView({ sessionId }: FlashcardStudyViewProps) {
     // Sessions already left at a perfect round before this change are completed
     // automatically too. New sessions complete in the final answer request.
     if (session?.status === "active" && !activeRound && latestRound?.recall_percentage === 100 && !isFinishing) {
-      void finishLegacyPerfectSession();
+      const timer = window.setTimeout(() => void finishLegacyPerfectSession(), 0);
+      return () => window.clearTimeout(timer);
     }
   }, [activeRound, finishLegacyPerfectSession, isFinishing, latestRound?.id, latestRound?.recall_percentage, session?.status]);
 
@@ -160,8 +164,8 @@ export function FlashcardStudyView({ sessionId }: FlashcardStudyViewProps) {
     {activeRound ? <>
       <StudyProgress roundNumber={activeRound.round_number} totalCards={activeRound.total_cards} answeredCards={roundCounts.answered} rememberedCards={roundCounts.remembered} againCards={roundCounts.again} />
       {currentCard && currentDirection ? <div className="study-session-practice">
-        <div className="study-session-practice-meta"><span>Card {currentIndex + 1} of {roundCards.length}</span><span className="study-keyboard-hint">Use 1 for Again or 2 for Remembered.</span></div>
-        <Flashcard sessionCard={currentCard} direction={currentDirection} isFlipped={isFlipped} isDisabled={isInteractionLocked} answerResult={currentRoundCard.result} onFlip={() => setIsFlipped((flipped) => !flipped)} />
+        <div className="study-session-practice-meta"><span>Card {currentIndex + 1} of {roundCards.length}</span><span className="study-keyboard-hint">Use 1 for Again or 2 for Remembered.</span><span className="study-swipe-hint">After revealing: swipe left if forgotten, right if remembered.</span></div>
+        <Flashcard sessionCard={currentCard} direction={currentDirection} isFlipped={isFlipped} isDisabled={isInteractionLocked} canSwipe={canAnswer} answerResult={currentRoundCard.result} onFlip={() => setIsFlipped((flipped) => !flipped)} onSwipe={submitAnswer} />
         <div className="study-card-navigation" aria-label="Card navigation"><button type="button" className="study-card-navigation-button" disabled={currentIndex === 0 || isInteractionLocked} onClick={() => navigate(currentIndex - 1)}><Icon name="back" size={18} /> Previous</button><span>{currentIndex + 1} / {roundCards.length}</span><button type="button" className="study-card-navigation-button" disabled={currentIndex === roundCards.length - 1 || isInteractionLocked} onClick={() => navigate(currentIndex + 1)}>Next <Icon name="arrow" size={18} /></button></div>
         <div className="study-answer-actions"><button type="button" aria-pressed={currentRoundCard.result === "again"} className={`study-answer-button again${currentRoundCard.result === "again" ? " is-selected" : ""}`} disabled={!canAnswer} onClick={() => void submitAnswer("again")}><Icon name="refresh" size={21} /> Again <span>(1)</span></button><button type="button" aria-pressed={currentRoundCard.result === "remembered"} className={`study-answer-button remembered${currentRoundCard.result === "remembered" ? " is-selected" : ""}`} disabled={!canAnswer} onClick={() => void submitAnswer("remembered")}><Icon name="check" size={21} /> Remembered <span>(2)</span></button></div>
       </div> : <SessionState>This round has no cards.</SessionState>}
