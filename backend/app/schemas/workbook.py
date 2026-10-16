@@ -66,6 +66,28 @@ class WorkbookUpdate(BaseModel):
         return normalize_entity_name(value)
 
 
+class MoveSheetsRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    target_workbook_id: int
+    sheet_ids: list[int]
+
+    @field_validator("sheet_ids")
+    @classmethod
+    def validate_sheet_ids(cls, value: list[int]) -> list[int]:
+        if not value:
+            raise ValueError("At least one sheet must be selected.")
+        if len(value) != len(set(value)):
+            raise ValueError("Duplicate sheet IDs are not allowed.")
+        return value
+
+
+class MoveSheetsResponse(BaseModel):
+    moved_count: int
+    source_workbook_id: int
+    target_workbook_id: int
+
+
 class WorkbookReference(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
