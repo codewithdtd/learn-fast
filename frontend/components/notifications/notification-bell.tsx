@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 
 import { Icon } from "@/components/layout/app-shell";
@@ -13,43 +13,50 @@ import {
   type NotificationItem,
 } from "@/services/api";
 
+const subscribeToNothing = () => () => undefined;
+const getClientMountedSnapshot = () => true;
+const getServerMountedSnapshot = () => false;
+
+function subscribeToViewport(listener: () => void) {
+  window.addEventListener("resize", listener);
+  return () => window.removeEventListener("resize", listener);
+}
+
+function getIsMobileSnapshot() {
+  return window.innerWidth < 768;
+}
+
+function getServerIsMobileSnapshot() {
+  return false;
+}
+
 export function NotificationBell() {
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
-  const [mounted, setMounted] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  const mounted = useSyncExternalStore(subscribeToNothing, getClientMountedSnapshot, getServerMountedSnapshot);
+  const isMobile = useSyncExternalStore(subscribeToViewport, getIsMobileSnapshot, getServerIsMobileSnapshot);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Client-side detection & responsive check
   useEffect(() => {
-    setMounted(true);
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
+    let active = true;
+    const refresh = () => {
+      getNotifications(false, 10)
+        .then((data) => {
+          if (!active) return;
+          setNotifications(data.items);
+          setUnreadCount(data.unread_count);
+        })
+        .catch(() => undefined);
     };
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
-
-  async function fetchNotifs() {
-    try {
-      const data = await getNotifications(false, 10);
-      setNotifications(data.items);
-      setUnreadCount(data.unread_count);
-    } catch {
-      // Bỏ qua lỗi ngầm để không gián đoạn giao diện
-    }
-  }
-
-  useEffect(() => {
-    void fetchNotifs();
-    // Tự động kiểm tra thông báo mỗi 60 giây
-    const timer = setInterval(() => {
-      void fetchNotifs();
-    }, 60000);
-    return () => clearInterval(timer);
+    const initialTimer = window.setTimeout(refresh, 0);
+    const interval = window.setInterval(refresh, 60000);
+    return () => {
+      active = false;
+      window.clearTimeout(initialTimer);
+      window.clearInterval(interval);
+    };
   }, []);
 
   // Xử lý đóng dropdown khi click ra ngoài (chế độ Desktop)

@@ -15,9 +15,6 @@ export function DeleteWorkbookButton({ workbookId, workbookName, onDeleted }: De
   const [error, setError] = useState<string | null>(null);
 
   const isAdmin = isAuthenticated && user?.is_superuser === true;
-  if (!isAdmin) {
-    return null;
-  }
   const triggerRef = useRef<HTMLButtonElement>(null);
   const cancelRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -67,6 +64,8 @@ export function DeleteWorkbookButton({ workbookId, workbookName, onDeleted }: De
       setError(caughtError instanceof Error ? caughtError.message : "Could not delete this workbook.");
     } finally { setIsDeleting(false); }
   }
+
+  if (!isAdmin) return null;
 
   return <div className="delete-workbook-control">
     <button ref={triggerRef} type="button" className="delete-trigger" onClick={openDialog} disabled={isDeleting}>{isDeleting ? "Deleting…" : "Delete"}</button>

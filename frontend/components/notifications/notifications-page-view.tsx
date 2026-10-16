@@ -16,30 +16,29 @@ export function NotificationsPageView() {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [filter, setFilter] = useState<"all" | "unread">("all");
-  const [isLoading, setIsLoading] = useState(true);
+  const [loadedFilter, setLoadedFilter] = useState<"all" | "unread" | null>(null);
+  const [refreshVersion, setRefreshVersion] = useState(0);
   const [error, setError] = useState<string | null>(null);
-
-  async function loadData(unreadOnly: boolean) {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const data = await getNotifications(unreadOnly, 50);
-      setNotifications(data.items);
-      setUnreadCount(data.unread_count);
-    } catch (caughtError) {
-      setError(
-        caughtError instanceof Error
-          ? caughtError.message
-          : "Could not load notifications."
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  }
+  const isLoading = loadedFilter !== filter;
 
   useEffect(() => {
-    void loadData(filter === "unread");
-  }, [filter]);
+    let active = true;
+    getNotifications(filter === "unread", 50)
+      .then((data) => {
+        if (!active) return;
+        setNotifications(data.items);
+        setUnreadCount(data.unread_count);
+        setError(null);
+      })
+      .catch((caughtError: unknown) => {
+        if (!active) return;
+        setError(caughtError instanceof Error ? caughtError.message : "Could not load notifications.");
+      })
+      .finally(() => {
+        if (active) setLoadedFilter(filter);
+      });
+    return () => { active = false; };
+  }, [filter, refreshVersion]);
 
   async function handleMarkRead(id: number) {
     try {
@@ -113,7 +112,10 @@ export function NotificationsPageView() {
           <button
             type="button"
             className="button secondary"
-            onClick={() => void loadData(filter === "unread")}
+            onClick={() => {
+              setLoadedFilter(null);
+              setRefreshVersion((version) => version + 1);
+            }}
           >
             Try again
           </button>

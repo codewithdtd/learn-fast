@@ -10,7 +10,6 @@ import {
   getCalendarDayDetail,
   getCalendarMonth,
   type CalendarDayDetail,
-  type CalendarDaySummary,
   type CalendarMonthSummary,
 } from "@/services/api";
 
@@ -32,6 +31,10 @@ export function CalendarView() {
 function CalendarViewContent() {
   const searchParams = useSearchParams();
   const dateParam = searchParams.get("date");
+  return <CalendarViewState key={dateParam ?? "today"} dateParam={dateParam} />;
+}
+
+function CalendarViewState({ dateParam }: { dateParam: string | null }) {
 
   const today = new Date();
   const initialDateStr = dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam)
@@ -46,58 +49,40 @@ function CalendarViewContent() {
   const [calendarData, setCalendarData] = useState<CalendarMonthSummary | null>(null);
   const [selectedDate, setSelectedDate] = useState<string>(initialDateStr);
   const [dayDetail, setDayDetail] = useState<CalendarDayDetail | null>(null);
-  const [isLoadingMonth, setIsLoadingMonth] = useState(true);
-  const [isLoadingDay, setIsLoadingDay] = useState(false);
+  const [loadedMonthKey, setLoadedMonthKey] = useState<string | null>(null);
+  const [loadedDay, setLoadedDay] = useState<string | null>(null);
+  const [monthRefreshVersion, setMonthRefreshVersion] = useState(0);
   const [error, setError] = useState<string | null>(null);
-
-  // Sync date when url param changes
-  useEffect(() => {
-    if (dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam)) {
-      setSelectedDate(dateParam);
-      const y = Number(dateParam.slice(0, 4));
-      const m = Number(dateParam.slice(5, 7));
-      setCurrentYear(y);
-      setCurrentMonth(m);
-    }
-  }, [dateParam]);
-
-  async function loadMonth(year: number, month: number) {
-    setIsLoadingMonth(true);
-    setError(null);
-    try {
-      const data = await getCalendarMonth(year, month);
-      setCalendarData(data);
-    } catch (caughtError) {
-      setError(
-        caughtError instanceof Error
-          ? caughtError.message
-          : "Could not load calendar data."
-      );
-    } finally {
-      setIsLoadingMonth(false);
-    }
-  }
-
-  async function loadDayDetail(dateStr: string) {
-    setIsLoadingDay(true);
-    try {
-      const detail = await getCalendarDayDetail(dateStr);
-      setDayDetail(detail);
-    } catch {
-      // Ignore
-    } finally {
-      setIsLoadingDay(false);
-    }
-  }
+  const currentMonthKey = `${currentYear}-${currentMonth}`;
+  const isLoadingMonth = loadedMonthKey !== currentMonthKey;
+  const isLoadingDay = Boolean(selectedDate && loadedDay !== selectedDate);
 
   useEffect(() => {
-    void loadMonth(currentYear, currentMonth);
-  }, [currentYear, currentMonth]);
+    let active = true;
+    const monthKey = `${currentYear}-${currentMonth}`;
+    getCalendarMonth(currentYear, currentMonth)
+      .then((data) => {
+        if (!active) return;
+        setCalendarData(data);
+        setError(null);
+      })
+      .catch((caughtError: unknown) => {
+        if (!active) return;
+        setError(caughtError instanceof Error ? caughtError.message : "Could not load calendar data.");
+      })
+      .finally(() => {
+        if (active) setLoadedMonthKey(monthKey);
+      });
+    return () => { active = false; };
+  }, [currentYear, currentMonth, monthRefreshVersion]);
 
   useEffect(() => {
-    if (selectedDate) {
-      void loadDayDetail(selectedDate);
-    }
+    let active = true;
+    getCalendarDayDetail(selectedDate)
+      .then((detail) => { if (active) setDayDetail(detail); })
+      .catch(() => undefined)
+      .finally(() => { if (active) setLoadedDay(selectedDate); });
+    return () => { active = false; };
   }, [selectedDate]);
 
   function handlePrevMonth() {
@@ -217,7 +202,10 @@ function CalendarViewContent() {
           <button
             type="button"
             className="button secondary"
-            onClick={() => void loadMonth(currentYear, currentMonth)}
+            onClick={() => {
+              setLoadedMonthKey(null);
+              setMonthRefreshVersion((version) => version + 1);
+            }}
           >
             Try again
           </button>

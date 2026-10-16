@@ -47,8 +47,9 @@ export function AIGeneratorForm() {
   const [workbooks, setWorkbooks] = useState<WorkbookListItem[]>([]);
   const [selectedWorkbookId, setSelectedWorkbookId] = useState<number | null>(null);
   const [workbookSheets, setWorkbookSheets] = useState<SheetSummary[]>([]);
+  const [sheetsWorkbookId, setSheetsWorkbookId] = useState<number | null>(null);
   const [selectedSheetId, setSelectedSheetId] = useState<number | null>(null);
-  const [isLoadingWorkbooks, setIsLoadingWorkbooks] = useState(false);
+  const [isLoadingWorkbooks, setIsLoadingWorkbooks] = useState(true);
 
   // Form options
   const [workbookMode, setWorkbookMode] = useState<"existing" | "new">("existing");
@@ -71,49 +72,53 @@ export function AIGeneratorForm() {
   // Generated Result state for Preview Deck
   const [generatedSheetName, setGeneratedSheetName] = useState<string | null>(null);
   const [generatedCards, setGeneratedCards] = useState<AIGeneratedCardItem[] | null>(null);
+  const activeWorkbookSheets = workbookMode === "existing" && selectedWorkbookId === sheetsWorkbookId ? workbookSheets : [];
+  const activeSelectedSheetId = activeWorkbookSheets.some((sheet) => sheet.id === selectedSheetId) ? selectedSheetId : null;
 
   useEffect(() => {
-    async function loadWorkbooks() {
-      setIsLoadingWorkbooks(true);
-      try {
-        const items = await getWorkbooks();
+    let active = true;
+    getWorkbooks()
+      .then((items) => {
+        if (!active) return;
         setWorkbooks(items);
         if (items.length > 0) {
           setSelectedWorkbookId(items[0].id);
         } else {
           setWorkbookMode("new");
         }
-      } catch {
+      })
+      .catch(() => {
         // Fallback silently if offline or unauthenticated
-      } finally {
-        setIsLoadingWorkbooks(false);
-      }
-    }
-    loadWorkbooks();
+      })
+      .finally(() => {
+        if (active) setIsLoadingWorkbooks(false);
+      });
+    return () => { active = false; };
   }, []);
 
   useEffect(() => {
-    if (!selectedWorkbookId || workbookMode === "new") {
-      setWorkbookSheets([]);
-      setSelectedSheetId(null);
-      return;
-    }
+    if (!selectedWorkbookId || workbookMode === "new") return;
 
-    async function loadSheets() {
-      try {
-        const detail = await getWorkbook(String(selectedWorkbookId));
-        setWorkbookSheets(detail.sheets || []);
-        if (detail.sheets && detail.sheets.length > 0) {
-          setSelectedSheetId(detail.sheets[0].id);
+    let active = true;
+    getWorkbook(String(selectedWorkbookId))
+      .then((detail) => {
+        if (!active) return;
+        const sheets = detail.sheets || [];
+        setWorkbookSheets(sheets);
+        setSheetsWorkbookId(selectedWorkbookId);
+        if (sheets.length > 0) {
+          setSelectedSheetId(sheets[0].id);
         } else {
           setSelectedSheetId(null);
           setSheetMode("new_sheet");
         }
-      } catch {
+      })
+      .catch(() => {
+        if (!active) return;
         setWorkbookSheets([]);
-      }
-    }
-    loadSheets();
+        setSheetsWorkbookId(selectedWorkbookId);
+      });
+    return () => { active = false; };
   }, [selectedWorkbookId, workbookMode]);
 
   async function handleGenerate(e: React.FormEvent) {
@@ -137,7 +142,7 @@ export function AIGeneratorForm() {
         const resp = await mineAICards({
           text: miningText.trim(),
           target_sheet_id:
-            sheetMode === "append" && selectedSheetId ? selectedSheetId : undefined,
+          sheetMode === "append" && activeSelectedSheetId ? activeSelectedSheetId : undefined,
           target_workbook_id:
             workbookMode === "existing" && selectedWorkbookId
               ? selectedWorkbookId
@@ -170,7 +175,7 @@ export function AIGeneratorForm() {
         count: cardCount,
         level,
         target_sheet_id:
-          sheetMode === "append" && selectedSheetId ? selectedSheetId : undefined,
+          sheetMode === "append" && activeSelectedSheetId ? activeSelectedSheetId : undefined,
         target_workbook_id:
           workbookMode === "existing" && selectedWorkbookId
             ? selectedWorkbookId
@@ -202,7 +207,7 @@ export function AIGeneratorForm() {
         mode={sheetMode}
         workbookId={workbookMode === "existing" ? selectedWorkbookId ?? undefined : undefined}
         newWorkbookName={workbookMode === "new" ? newWorkbookName : undefined}
-        targetSheetId={sheetMode === "append" ? selectedSheetId ?? undefined : undefined}
+        targetSheetId={sheetMode === "append" ? activeSelectedSheetId ?? undefined : undefined}
         onBackToConfig={handleBackToConfig}
       />
     );
@@ -298,7 +303,7 @@ export function AIGeneratorForm() {
                     type="button"
                     className={`ai-toggle-btn ${sheetMode === "append" ? "active" : ""}`}
                     onClick={() => setSheetMode("append")}
-                    disabled={workbookSheets.length === 0}
+                    disabled={activeWorkbookSheets.length === 0}
                   >
                     Append to an existing sheet
                   </button>
@@ -307,11 +312,11 @@ export function AIGeneratorForm() {
                 {sheetMode === "append" && (
                   <div className="ai-select-wrap">
                     <select
-                      value={selectedSheetId ?? ""}
+                      value={activeSelectedSheetId ?? ""}
                       onChange={(e) => setSelectedSheetId(Number(e.target.value))}
                       className="ai-select-input"
                     >
-                      {workbookSheets.map((s) => (
+                      {activeWorkbookSheets.map((s) => (
                         <option key={s.id} value={s.id}>
                           {s.name} ({s.card_count} existing cards)
                         </option>

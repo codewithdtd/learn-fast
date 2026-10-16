@@ -1,22 +1,30 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 
 type Theme = "light" | "dark" | "retro" | "playful";
 
-export function ThemeToggle({ compact = false }: { compact?: boolean }) {
-  const [theme, setTheme] = useState<Theme>("light");
-  const [mounted, setMounted] = useState(false);
+const themeListeners = new Set<() => void>();
 
-  useEffect(() => {
-    setMounted(true);
-    const storedTheme = window.localStorage.getItem("learn-fast-theme");
-    if (storedTheme === "light" || storedTheme === "dark" || storedTheme === "retro" || storedTheme === "playful") {
-      setTheme(storedTheme);
-    } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-      setTheme("dark");
-    }
-  }, []);
+function subscribeToTheme(listener: () => void) {
+  themeListeners.add(listener);
+  return () => themeListeners.delete(listener);
+}
+
+function getThemeSnapshot(): Theme {
+  const storedTheme = window.localStorage.getItem("learn-fast-theme");
+  if (storedTheme === "light" || storedTheme === "dark" || storedTheme === "retro" || storedTheme === "playful") {
+    return storedTheme;
+  }
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
+function getServerThemeSnapshot(): Theme {
+  return "light";
+}
+
+export function ThemeToggle({ compact = false }: { compact?: boolean }) {
+  const theme = useSyncExternalStore(subscribeToTheme, getThemeSnapshot, getServerThemeSnapshot);
 
   function toggleTheme() {
     let nextTheme: Theme;
@@ -32,11 +40,10 @@ export function ThemeToggle({ compact = false }: { compact?: boolean }) {
 
     document.documentElement.dataset.theme = nextTheme;
     window.localStorage.setItem("learn-fast-theme", nextTheme);
-    setTheme(nextTheme);
+    themeListeners.forEach((listener) => listener());
   }
 
-  // Khi chưa mount thì render placeholder ổn định để chống hydration error
-  const activeTheme = mounted ? theme : "light";
+  const activeTheme = theme;
 
   const themeLabels: Record<Theme, string> = {
     light: "Light mode",
