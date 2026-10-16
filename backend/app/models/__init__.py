@@ -19,6 +19,9 @@ from app.models.study_session import StudySession
 from app.models.study_session_card import StudySessionCard
 from app.models.study_session_round import StudySessionRound
 from app.models.study_session_round_card import StudySessionRoundCard
+from app.models.speaking_attempt import SpeakingAttempt
+from app.models.speaking_prompt import SpeakingPrompt
+from app.models.speaking_usage import SpeakingAIUsage
 from app.models.user import User
 from app.models.workbook import Workbook
 from app.models.writing_attempt import WritingAttempt
@@ -42,6 +45,9 @@ __all__ = [
     "StudySessionRoundCard",
     "StudySessionStatus",
     "StudySessionType",
+    "SpeakingAIUsage",
+    "SpeakingAttempt",
+    "SpeakingPrompt",
     "StudySheet",
     "User",
     "Workbook",

@@ -10,6 +10,7 @@ from app.api.health import router as health_router
 from app.api.notifications import router as notifications_router
 from app.api.quick_recall import router as quick_recall_router
 from app.api.sheets import router as sheets_router
+from app.api.speaking import router as speaking_router
 from app.api.study_sessions import router as study_sessions_router
 from app.api.workbooks import router as workbooks_router
 from app.api.writing import router as writing_router
@@ -35,6 +36,7 @@ api_app.include_router(quick_recall_router, prefix="/api/v1")
 api_app.include_router(study_sessions_router, prefix="/api/v1")
 api_app.include_router(ai_router, prefix="/api/v1")
 api_app.include_router(writing_router, prefix="/api/v1")
+api_app.include_router(speaking_router, prefix="/api/v1")
 
 # Keep CORS outside FastAPI's exception middleware so the browser can read
 # server-error responses and reveal the API failure instead of masking it as CORS.
