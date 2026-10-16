@@ -840,6 +840,12 @@ export async function createSpeakingAttempt(promptId: number): Promise<SpeakingA
   });
 }
 
+export async function generateRandomSpeakingAttempt(): Promise<SpeakingAttempt> {
+  return requestSpeakingJson<SpeakingAttempt>("/api/v1/speaking/attempts/random", {
+    method: "POST",
+  }, 90_000);
+}
+
 export async function transcribeSpeakingAttempt(attemptId: number, audio: Blob, signal?: AbortSignal): Promise<SpeakingAttempt> {
   const body = new FormData();
   const extension = audio.type.includes("mp4") ? "m4a" : audio.type.includes("ogg") ? "ogg" : audio.type.includes("mpeg") ? "mp3" : "webm";

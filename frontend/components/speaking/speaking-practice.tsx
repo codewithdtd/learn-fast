@@ -8,6 +8,7 @@ import {
   getSpeakingHistory,
   getSpeakingPrompts,
   getSpeakingUsage,
+  generateRandomSpeakingAttempt,
   gradeSpeakingAttempt,
   saveSpeakingTranscript,
   transcribeSpeakingAttempt,
@@ -111,6 +112,24 @@ export function SpeakingPractice() {
       clearRecordingPreview();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "A speaking attempt could not be started.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function generateTopic() {
+    setError(null);
+    setNotice(null);
+    setBusy(true);
+    try {
+      const next = await generateRandomSpeakingAttempt();
+      setAttempt(next);
+      setTranscript("");
+      clearRecordingPreview();
+      setNotice("Your new AI speaking topic is ready. Use the bilingual hints to plan your answer.");
+      await refreshHistory().catch(() => undefined);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "An AI speaking topic could not be generated. Please try again.");
     } finally {
       setBusy(false);
     }
@@ -289,7 +308,7 @@ export function SpeakingPractice() {
       {attempt.status === "grading" && <p className={styles.loading} role="status" aria-live="polite">Your answer is being reviewed. This may take a little while.</p>}
       {attempt.feedback && <FeedbackPanel feedback={attempt.feedback} />}
     </section> : <>
-      <section className={styles.topicSection} aria-labelledby="speaking-topics-title"><div className={styles.sectionHeader}><div><p className={styles.eyebrow}>BEGINNER-FRIENDLY QUESTIONS</p><h3 id="speaking-topics-title">Choose a topic</h3></div></div>
+      <section className={styles.topicSection} aria-labelledby="speaking-topics-title"><div className={styles.sectionHeader}><div><p className={styles.eyebrow}>BEGINNER-FRIENDLY QUESTIONS</p><h3 id="speaking-topics-title">Choose a topic</h3><p className={styles.topicIntro}>Pick a practice question or let AI create a fresh one with bilingual hints.</p></div><button type="button" className={styles.generateTopicButton} disabled={busy || loading} onClick={() => void generateTopic()} aria-busy={busy}>{busy ? <><span className={styles.generateIcon} aria-hidden="true">◌</span>Creating topic…</> : <><span className={styles.generateIcon} aria-hidden="true">✦</span>Generate a topic with AI</>}</button></div>
         {loading ? <div className={styles.loading} role="status">Loading speaking topics…</div> : prompts.length === 0 ? <div className={styles.empty}>No speaking topics are available yet.</div> : <div className={styles.topicGrid}>{prompts.map((prompt) => <article key={prompt.id} className={styles.topicCard}><span className={styles.category}>{prompt.category === "ielts_part1" ? "IELTS PART 1" : "CONVERSATION"}</span><h4>{prompt.title_en}</h4><p>{prompt.question_en}</p><p className={styles.translation} lang="vi">{prompt.question_vi}</p><button type="button" className={styles.secondaryButton} disabled={busy || (usage !== null && usage.remaining <= 0)} onClick={() => void startAttempt(prompt)}>{busy ? "Starting…" : "Practice this question"}</button></article>)}</div>}
       </section>
     </>}
