@@ -35,6 +35,14 @@ def create_attempt(
     return speaking_service.create_attempt(db, current_user.id, payload.prompt_id)
 
 
+@router.post("/attempts/random", response_model=SpeakingAttemptRead, status_code=status.HTTP_201_CREATED)
+def generate_random_attempt(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> SpeakingAttemptRead:
+    return speaking_service.generate_random_attempt(db, current_user.id)
+
+
 @router.post("/attempts/{attempt_id}/transcribe", response_model=SpeakingAttemptRead)
 def transcribe_attempt(
     attempt_id: int,

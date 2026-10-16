@@ -134,6 +134,12 @@
 }
 .sectionHeader { align-items: end; }
 .sectionHeader h3 { margin-top: 6px; font-size: clamp(1.35rem, 3vw, 1.65rem); }
+.topicIntro { margin: 5px 0 0; color: var(--muted); line-height: 1.45; }
+.generateTopicButton { display: inline-flex; min-height: 48px; flex: 0 0 auto; align-items: center; justify-content: center; gap: 9px; border: 1px solid var(--primary); border-radius: 12px; padding: 10px 15px; background: var(--primary); color: var(--foreground); font: inherit; font-weight: 800; cursor: pointer; transition: background 140ms ease, transform 140ms ease, border-color 140ms ease; }
+.generateTopicButton:hover:not(:disabled) { transform: translateY(-1px); }
+.generateIcon { display: inline-grid; width: 20px; height: 20px; place-items: center; font-size: 1.15rem; }
+.generateTopicButton:focus-visible { outline: 3px solid var(--primary-container); outline-offset: 3px; }
+.generateTopicButton:disabled { opacity: .55; cursor: wait; }
 .topicGrid { gap: 14px; }
 .topicCard {
   min-height: 100%;
@@ -198,7 +204,7 @@
 }
 .historyList { gap: 10px; }
 .historyList button { border-radius: 13px; padding: 12px 14px; }
-.recordButton:focus-visible,.stopButton:focus-visible,.primaryButton:focus-visible,.secondaryButton:focus-visible,.textButton:focus-visible,.historyList button:focus-visible,.writingLink:focus-visible {
+.recordButton:focus-visible,.stopButton:focus-visible,.primaryButton:focus-visible,.secondaryButton:focus-visible,.textButton:focus-visible,.historyList button:focus-visible,.writingLink:focus-visible,.generateTopicButton:focus-visible {
   outline: 3px solid var(--primary-container);
   outline-offset: 3px;
 }
@@ -210,6 +216,8 @@
   .quota { min-width: 76px; padding: 10px 11px; }
   .quota strong { font-size: 1.35rem; }
   .topicSection,.history { border-radius: 18px; padding: 18px 14px; }
+  .sectionHeader { display: grid; align-items: start; }
+  .generateTopicButton { width: 100%; }
   .topicGrid { grid-template-columns: 1fr; gap: 11px; }
   .topicCard { padding: 16px; }
   .practiceCard { border-radius: 18px; padding: 18px 15px; }
@@ -221,6 +229,6 @@
   .feedback { border-radius: 16px; padding: 16px 14px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .topicCard,.recordButton,.stopButton,.primaryButton,.secondaryButton,.textButton { transition: none; }
-  .topicCard:hover,.recordButton:hover,.stopButton:hover,.primaryButton:hover,.secondaryButton:hover { transform: none; }
+  .topicCard,.recordButton,.stopButton,.primaryButton,.secondaryButton,.textButton,.generateTopicButton { transition: none; }
+  .topicCard:hover,.recordButton:hover,.stopButton:hover,.primaryButton:hover,.secondaryButton:hover,.generateTopicButton:hover { transform: none; }
 }

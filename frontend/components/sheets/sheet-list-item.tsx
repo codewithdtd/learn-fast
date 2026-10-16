@@ -3,18 +3,42 @@ import Link from "next/link";
 import { Icon } from "@/components/layout/app-shell";
 import { formatDate, formatLabel } from "@/lib/format";
 import type { SheetSummary } from "@/services/api";
+import { InlineNameEditor } from "@/components/shared/inline-name-editor";
 
 type SheetListItemProps = {
   sheet: SheetSummary;
+  management?: {
+    isSelected: boolean;
+    onToggle: (sheetId: number) => void;
+    onRename: (name: string) => Promise<void>;
+  };
 };
 
-export function SheetListItem({ sheet }: SheetListItemProps) {
+export function SheetListItem({ sheet, management }: SheetListItemProps) {
   const isDue = sheet.status === "due";
   const isLearned = sheet.status === "learned";
   const reviewDate = sheet.next_review_at ? formatDate(sheet.next_review_at) : "Not scheduled";
 
   return (
-    <li>
+    <li className={management ? "workbook-sheet-management-item" : undefined}>
+      {management && (
+        <div className="workbook-sheet-management-controls">
+          <label className="workbook-sheet-select">
+            <input
+              type="checkbox"
+              checked={management.isSelected}
+              onChange={() => management.onToggle(sheet.id)}
+              aria-label={`Select ${sheet.name}`}
+            />
+            <span>Select</span>
+          </label>
+          <InlineNameEditor
+            value={sheet.name}
+            label={`sheet ${sheet.name}`}
+            onSave={management.onRename}
+          />
+        </div>
+      )}
       <Link
         href={`/sheets/${sheet.id}`}
         className={`workbook-sheet-row status-${sheet.status}`}

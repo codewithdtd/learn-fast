@@ -22,6 +22,13 @@ class SpeakingRepository:
     def get_prompt(self, prompt_id: int) -> SpeakingPrompt | None:
         return self.db.scalar(select(SpeakingPrompt).where(SpeakingPrompt.id == prompt_id, SpeakingPrompt.is_active.is_(True)))
 
+    def create_generated_prompt(self, values: dict[str, Any]) -> SpeakingPrompt:
+        prompt = SpeakingPrompt(**values)
+        self.db.add(prompt)
+        # Flush lấy ID cho snapshot nhưng giữ prompt và attempt trong cùng transaction để tránh bản ghi mồ côi.
+        self.db.flush()
+        return prompt
+
     def create_attempt(self, user_id: int, prompt: SpeakingPrompt, snapshot: dict[str, Any]) -> SpeakingAttempt:
         attempt = SpeakingAttempt(user_id=user_id, prompt_id=prompt.id, prompt_snapshot=snapshot)
         self.db.add(attempt)

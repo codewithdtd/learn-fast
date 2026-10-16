@@ -15,6 +15,8 @@ from app.schemas.workbook import (
     WorkbookImportResponse,
     WorkbookListItem,
     WorkbookUpdate,
+    MoveSheetsRequest,
+    MoveSheetsResponse,
 )
 from app.services.excel_parser import parse_excel_workbook
 from app.services.excel_types import ExcelParseError, ExcelValidationError
@@ -24,6 +26,12 @@ from app.services.workbook_import import (
     WorkbookImportPersistenceError,
     import_parsed_workbook,
     validate_xlsx_filename,
+)
+from app.services.sheet_management import (
+    InvalidSheetMoveError,
+    SheetsNotFoundError,
+    WorkbookNotFoundError,
+    move_sheets,
 )
 
 
@@ -126,6 +134,44 @@ def delete_workbook(
         ) from error
 
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.post(
+    "/workbooks/{workbook_id}/sheets/move",
+    response_model=MoveSheetsResponse,
+)
+def move_workbook_sheets(
+    workbook_id: int,
+    request: MoveSheetsRequest,
+    db: Session = Depends(get_db),
+    admin_user: User = Depends(get_current_admin),
+) -> MoveSheetsResponse:
+    try:
+        moved_count = move_sheets(
+            db,
+            source_workbook_id=workbook_id,
+            target_workbook_id=request.target_workbook_id,
+            sheet_ids=request.sheet_ids,
+        )
+    except WorkbookNotFoundError as error:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error)) from error
+    except SheetsNotFoundError as error:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error)) from error
+    except InvalidSheetMoveError as error:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error)) from error
+    except SQLAlchemyError as error:
+        db.rollback()
+        logger.exception("Moving workbook sheets failed after database rollback.")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Sheets could not be moved. Please try again.",
+        ) from error
+
+    return MoveSheetsResponse(
+        moved_count=moved_count,
+        source_workbook_id=workbook_id,
+        target_workbook_id=request.target_workbook_id,
+    )
 
 
 @router.post(

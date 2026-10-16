@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+from uuid import uuid4
 from zoneinfo import ZoneInfo
 
 from fastapi import HTTPException
@@ -17,7 +18,7 @@ from app.schemas.speaking import (
     SpeakingPromptRead,
     SpeakingUsageRead,
 )
-from app.services.speaking_ai import TranscriptionProviderError, grade_speaking, transcribe_audio
+from app.services.speaking_ai import TranscriptionProviderError, generate_speaking_prompt, grade_speaking, transcribe_audio
 
 
 def _snapshot(prompt: SpeakingPrompt) -> dict:
@@ -50,6 +51,21 @@ def create_attempt(db: Session, user_id: int, prompt_id: int) -> SpeakingAttempt
     if prompt is None:
         raise HTTPException(status_code=404, detail="Speaking topic not found.")
     return _read(repo.create_attempt(user_id, prompt, _snapshot(prompt)))
+
+
+def generate_random_attempt(db: Session, user_id: int) -> SpeakingAttemptRead:
+    repo = SpeakingRepository(db)
+    try:
+        draft = generate_speaking_prompt()
+    except TranscriptionProviderError as error:
+        raise HTTPException(status_code=error.status_code or 502, detail=str(error)) from error
+    values = draft.model_dump()
+    values["slug"] = f"ai-{uuid4().hex}"
+    values["is_active"] = True
+    prompt = repo.create_generated_prompt(values)
+    # Lưu đề trước để attempt luôn có khóa ngoại hợp lệ và snapshot bền vững trong lịch sử.
+    attempt = repo.create_attempt(user_id, prompt, _snapshot(prompt))
+    return _read(attempt)
 
 
 def _get_owned(repo: SpeakingRepository, user_id: int, attempt_id: int, *, lock: bool = False) -> SpeakingAttempt:

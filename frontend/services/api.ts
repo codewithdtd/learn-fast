@@ -327,6 +327,22 @@ export async function updateWorkbookName(
   );
 }
 
+export async function moveSheetsToWorkbook(
+  sourceWorkbookId: number,
+  targetWorkbookId: number,
+  sheetIds: number[],
+): Promise<{ moved_count: number; source_workbook_id: number; target_workbook_id: number }> {
+  return requestJson<{
+    moved_count: number;
+    source_workbook_id: number;
+    target_workbook_id: number;
+  }>(`/api/v1/workbooks/${sourceWorkbookId}/sheets/move`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ target_workbook_id: targetWorkbookId, sheet_ids: sheetIds }),
+  });
+}
+
 export async function deleteWorkbook(id: string): Promise<void> {
   const response = await fetch(`${apiBaseUrl}/api/v1/workbooks/${encodeURIComponent(id)}`, {
     method: "DELETE",
@@ -838,6 +854,12 @@ export async function createSpeakingAttempt(promptId: number): Promise<SpeakingA
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ prompt_id: promptId }),
   });
+}
+
+export async function generateRandomSpeakingAttempt(): Promise<SpeakingAttempt> {
+  return requestSpeakingJson<SpeakingAttempt>("/api/v1/speaking/attempts/random", {
+    method: "POST",
+  }, 90_000);
 }
 
 export async function transcribeSpeakingAttempt(attemptId: number, audio: Blob, signal?: AbortSignal): Promise<SpeakingAttempt> {

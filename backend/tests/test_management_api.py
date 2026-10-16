@@ -4,7 +4,14 @@ from fastapi.testclient import TestClient
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.models import Flashcard, StudySheet, Workbook
+from app.models import (
+    Flashcard,
+    StudyDirection,
+    StudySession,
+    StudySessionType,
+    StudySheet,
+    Workbook,
+)
 
 
 def create_workbook(db: Session, name: str, imported_at: datetime) -> Workbook:
@@ -157,6 +164,83 @@ def test_patch_sheet_name_rejects_invalid_payloads(
     assert empty_name.status_code == 422
     assert too_long.status_code == 422
     assert db_session.get(StudySheet, sheet_id).name == "First"
+
+
+def test_admin_can_move_sheets_and_preserve_learning_data(
+    api_client: TestClient, db_session: Session, admin_headers: dict[str, str]
+) -> None:
+    now = datetime.now(timezone.utc)
+    source = create_workbook(db_session, "Source", now)
+    target = create_workbook(db_session, "Target", now)
+    moved_sheet = next(sheet for sheet in source.sheets if sheet.name == "First")
+    second_moved_sheet = next(sheet for sheet in source.sheets if sheet.name == "Second")
+    card_id = moved_sheet.flashcards[0].id
+    session = StudySession(
+        sheet_id=moved_sheet.id,
+        session_type=StudySessionType.NEW_LEARNING,
+        direction=StudyDirection.EN_TO_VI,
+        total_cards=2,
+    )
+    db_session.add(session)
+    db_session.commit()
+    session_id = session.id
+
+    denied = api_client.post(
+        f"/api/v1/workbooks/{source.id}/sheets/move",
+        json={"target_workbook_id": target.id, "sheet_ids": [moved_sheet.id, second_moved_sheet.id]},
+    )
+    response = api_client.post(
+        f"/api/v1/workbooks/{source.id}/sheets/move",
+        json={"target_workbook_id": target.id, "sheet_ids": [moved_sheet.id, second_moved_sheet.id]},
+        headers=admin_headers,
+    )
+
+    assert denied.status_code == 401
+    assert response.status_code == 200
+    assert response.json() == {
+        "moved_count": 2,
+        "source_workbook_id": source.id,
+        "target_workbook_id": target.id,
+    }
+    moved_after = db_session.get(StudySheet, moved_sheet.id)
+    assert moved_after is not None
+    assert moved_after.workbook_id == target.id
+    assert moved_after.position == 3
+    assert db_session.get(StudySheet, second_moved_sheet.id).position == 4
+    assert db_session.get(Flashcard, card_id) is not None
+    assert db_session.get(StudySession, session_id).sheet_id == moved_sheet.id
+    assert db_session.get(Workbook, source.id).sheet_count == 0
+    assert db_session.get(Workbook, source.id).total_cards == 0
+    assert db_session.get(Workbook, target.id).sheet_count == 4
+    assert db_session.get(Workbook, target.id).total_cards == 6
+
+
+def test_move_sheets_rejects_invalid_selection(
+    api_client: TestClient, db_session: Session, admin_headers: dict[str, str]
+) -> None:
+    source = create_workbook(db_session, "Source", datetime.now(timezone.utc))
+    target = create_workbook(db_session, "Target", datetime.now(timezone.utc))
+
+    same_workbook = api_client.post(
+        f"/api/v1/workbooks/{source.id}/sheets/move",
+        json={"target_workbook_id": source.id, "sheet_ids": [source.sheets[0].id]},
+        headers=admin_headers,
+    )
+    missing_sheet = api_client.post(
+        f"/api/v1/workbooks/{source.id}/sheets/move",
+        json={"target_workbook_id": target.id, "sheet_ids": [999]},
+        headers=admin_headers,
+    )
+    duplicate_sheet = api_client.post(
+        f"/api/v1/workbooks/{source.id}/sheets/move",
+        json={"target_workbook_id": target.id, "sheet_ids": [source.sheets[0].id] * 2},
+        headers=admin_headers,
+    )
+
+    assert same_workbook.status_code == 400
+    assert missing_sheet.status_code == 404
+    assert duplicate_sheet.status_code == 422
+    assert db_session.get(StudySheet, source.sheets[0].id).workbook_id == source.id
 
 
 def test_not_found_resources_return_consistent_messages(api_client: TestClient) -> None:
