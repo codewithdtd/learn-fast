@@ -32,6 +32,13 @@ def test_speaking_routes_are_admin_only(api_client, db_session, admin_headers):
     assert response.json()["items"][0]["hints"][0]["vi"]
 
 
+def test_speaking_history_endpoint_works_after_speaking_migration(api_client, admin_headers):
+    response = api_client.get("/api/v1/speaking/attempts", headers=admin_headers)
+
+    assert response.status_code == 200, response.text
+    assert response.json() == {"items": [], "total": 0}
+
+
 def test_ai_generated_speaking_topic_is_saved_with_attempt(api_client, db_session, admin_headers, monkeypatch):
     generated = SpeakingPromptDraft(
         title_en="A place to relax", title_vi="Một nơi để thư giãn",
