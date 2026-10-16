@@ -5039,7 +5039,16 @@ a {
   border: 0;
   background: transparent;
   box-shadow: none;
+  position: relative;
+  touch-action: pan-y;
+  transition: transform 180ms ease-out;
 }
+
+.study-flashcard.is-swipe-dragging { transition: none; }
+.study-swipe-preview { position: absolute; z-index: 2; top: 50%; border: 1px solid currentColor; border-radius: 999px; padding: 10px 16px; font-size: 15px; font-weight: 900; pointer-events: none; }
+.study-swipe-preview.again { left: 18px; color: var(--error); background: var(--surface); transform: translateY(-50%) rotate(-8deg); }
+.study-swipe-preview.remembered { right: 18px; color: var(--green); background: var(--surface); transform: translateY(-50%) rotate(8deg); }
+.study-swipe-hint { display: none; }
 
 .study-flashcard-inner {
   position: relative;
@@ -8242,5 +8251,9 @@ a {
   background: #052e16;
   border-color: #166534;
   color: #86efac;
+}
+
+@media (max-width: 639px) {
+  .study-swipe-hint { display: inline; color: var(--muted); font-size: 12px; line-height: 1.4; }
 }
 

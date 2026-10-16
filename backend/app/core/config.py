@@ -36,6 +36,15 @@ class Settings(BaseSettings):
     writing_grading_timeout: float = 90.0
     writing_timezone: str = "Asia/Bangkok"
 
+    # Speaking uses Gemini only for transcription; the existing text provider grades transcripts.
+    gemini_api_key: str = ""
+    gemini_asr_model: str = "gemini-3.5-transcribe"
+    speaking_daily_ai_quota: int = 5
+    speaking_max_audio_bytes: int = 20 * 1024 * 1024
+    speaking_provider_timeout: float = 150.0
+    speaking_grading_timeout: float = 90.0
+    speaking_timezone: str = "Asia/Bangkok"
+
     # Neo vào thư mục backend để chạy uvicorn từ root vẫn đọc đúng quota và cấu hình local.
     model_config = SettingsConfigDict(
         env_file=Path(__file__).resolve().parents[2] / ".env",

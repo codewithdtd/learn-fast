@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { useAuth } from "@/context/auth-context";
 
@@ -10,13 +10,18 @@ interface AuthModalProps {
   initialMode?: "login" | "register";
 }
 
+const subscribeToNothing = () => () => undefined;
+const getClientMountedSnapshot = () => true;
+const getServerMountedSnapshot = () => false;
+
 export function AuthModal({ isOpen, onClose, initialMode = "login" }: AuthModalProps) {
   const { login, register } = useAuth();
   const [mode, setMode] = useState<"login" | "register">(initialMode);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState<boolean>(false);
-  const [mounted, setMounted] = useState(false);
+  const mounted = useSyncExternalStore(subscribeToNothing, getClientMountedSnapshot, getServerMountedSnapshot);
+  const [previousProps, setPreviousProps] = useState({ isOpen, initialMode });
 
   // Form states
   const [usernameOrEmail, setUsernameOrEmail] = useState("");
@@ -25,18 +30,14 @@ export function AuthModal({ isOpen, onClose, initialMode = "login" }: AuthModalP
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
 
-  // Client-side portal mounting check
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // Đồng bộ mode khi props initialMode hoặc isOpen thay đổi
-  useEffect(() => {
+  // Reset the form in the same render that opens it, avoiding a stale-mode frame.
+  if (previousProps.isOpen !== isOpen || previousProps.initialMode !== initialMode) {
+    setPreviousProps({ isOpen, initialMode });
     if (isOpen) {
       setMode(initialMode);
       setError(null);
     }
-  }, [isOpen, initialMode]);
+  }
 
   // Hỗ trợ đóng modal bằng phím Escape (tiêu chuẩn Accessibility WCAG AA)
   useEffect(() => {

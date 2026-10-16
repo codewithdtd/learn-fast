@@ -5,6 +5,7 @@ import type {
   WritingPromptList,
   WritingUsage,
 } from "@/types/writing";
+import type { SpeakingAttempt, SpeakingAttemptList, SpeakingPromptList, SpeakingUsage } from "@/types/speaking";
 
 export type HealthResponse = {
   status: "ok";
@@ -825,6 +826,74 @@ export async function getWritingHistory(page = 1): Promise<WritingAttemptList> {
 
 export async function getWritingUsage(): Promise<WritingUsage> {
   return requestWritingJson<WritingUsage>("/api/v1/writing/usage");
+}
+
+export async function getSpeakingPrompts(): Promise<SpeakingPromptList> {
+  return requestJson<SpeakingPromptList>("/api/v1/speaking/prompts");
+}
+
+export async function createSpeakingAttempt(promptId: number): Promise<SpeakingAttempt> {
+  return requestJson<SpeakingAttempt>("/api/v1/speaking/attempts", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ prompt_id: promptId }),
+  });
+}
+
+export async function transcribeSpeakingAttempt(attemptId: number, audio: Blob, signal?: AbortSignal): Promise<SpeakingAttempt> {
+  const body = new FormData();
+  const extension = audio.type.includes("mp4") ? "m4a" : audio.type.includes("ogg") ? "ogg" : audio.type.includes("mpeg") ? "mp3" : "webm";
+  body.append("audio", audio, `speaking-answer.${extension}`);
+  return requestSpeakingJson<SpeakingAttempt>(`/api/v1/speaking/attempts/${attemptId}/transcribe`, { method: "POST", body, signal }, 190_000);
+}
+
+export async function saveSpeakingTranscript(attemptId: number, version: number, transcript: string): Promise<SpeakingAttempt> {
+  return requestJson<SpeakingAttempt>(`/api/v1/speaking/attempts/${attemptId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ version, transcript }),
+  });
+}
+
+export async function gradeSpeakingAttempt(attemptId: number, version: number, signal?: AbortSignal): Promise<SpeakingAttempt> {
+  return requestSpeakingJson<SpeakingAttempt>(`/api/v1/speaking/attempts/${attemptId}/grade`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ version }),
+    signal,
+  }, 180_000);
+}
+
+export async function getSpeakingAttempt(attemptId: number): Promise<SpeakingAttempt> {
+  return requestJson<SpeakingAttempt>(`/api/v1/speaking/attempts/${attemptId}`);
+}
+
+export async function getSpeakingHistory(): Promise<SpeakingAttemptList> {
+  return requestJson<SpeakingAttemptList>("/api/v1/speaking/attempts");
+}
+
+export async function getSpeakingUsage(): Promise<SpeakingUsage> {
+  return requestJson<SpeakingUsage>("/api/v1/speaking/usage");
+}
+
+async function requestSpeakingJson<T>(path: string, init: RequestInit, timeoutMs: number): Promise<T> {
+  const controller = new AbortController();
+  const externalSignal = init.signal;
+  const cancel = () => controller.abort();
+  if (externalSignal?.aborted) cancel();
+  externalSignal?.addEventListener("abort", cancel, { once: true });
+  const timer = setTimeout(cancel, timeoutMs);
+  try {
+    return await requestJson<T>(path, { ...init, signal: controller.signal });
+  } catch (cause) {
+    if (controller.signal.aborted && !externalSignal?.aborted) {
+      throw new ApiRequestError("The speaking request timed out. Refresh the attempt status before retrying.", 408);
+    }
+    throw cause;
+  } finally {
+    clearTimeout(timer);
+    externalSignal?.removeEventListener("abort", cancel);
+  }
 }
 
 async function requestWritingJson<T>(path: string, init?: RequestInit, timeoutMs = 15_000): Promise<T> {

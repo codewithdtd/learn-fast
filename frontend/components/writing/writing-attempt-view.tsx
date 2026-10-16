@@ -161,7 +161,7 @@ export function WritingAttemptView({ attemptId }: { attemptId: number }) {
   const canGrade = (attempt.status === "draft" || attempt.status === "failed") && !isGrading && usage?.remaining !== 0;
   return (
     <main className={styles.page}>
-      <div className={styles.pageHeading}><div><Link href="/writing" className={styles.backLink}>← All topics</Link><p className={styles.eyebrow}>{prompt.difficulty} WRITING PRACTICE</p><h1>{prompt.title_en}</h1><p lang="vi">{prompt.title_vi}</p></div><Link className={styles.historyLink} href="/writing/history">Writing history</Link></div>
+      <div className={styles.pageHeading}><div><Link href="/ai-support?tab=writing" className={styles.backLink}>← All topics</Link><p className={styles.eyebrow}>{prompt.difficulty} WRITING PRACTICE</p><h1>{prompt.title_en}</h1><p lang="vi">{prompt.title_vi}</p></div><Link className={styles.historyLink} href="/writing/history">Writing history</Link></div>
       <div className={styles.assignmentCard}><p className={styles.eyebrow}>YOUR TASK</p><h2>{prompt.prompt_en}</h2><p lang="vi">{prompt.prompt_vi}</p><div className={styles.assignmentMeta}><span>Suggested length: {prompt.target_word_count} words</span><span>Maximum: 300 words</span>{usage && <span>{usage.remaining} of {usage.daily_limit} feedback reviews left today</span>}</div></div>
       {error && <div className={styles.errorNotice} role="alert">{error}</div>}
       {pollingError && <div className={styles.errorNotice} role="alert"><span>{pollingError}</span><button className={styles.secondaryButton} onClick={() => void refreshReviewStatus()}>Refresh review status</button></div>}

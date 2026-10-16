@@ -12,19 +12,19 @@ export function WritingAdminGuard({ children }: { children: ReactNode }) {
   const [authOpen, setAuthOpen] = useState(false);
 
   if (isLoading) {
-    return <AppShell activeHref="/writing"><main className={styles.page}><div className={styles.loadingCard} role="status">Checking access...</div></main></AppShell>;
+    return <AppShell activeHref="/ai-support"><main className={styles.page}><div className={styles.loadingCard} role="status">Checking access...</div></main></AppShell>;
   }
 
   // Wait for verified account permissions before mounting children that fetch private Writing data.
   if (user?.is_superuser) return children;
 
   return (
-    <AppShell activeHref="/writing">
+    <AppShell activeHref="/ai-support">
       <main className={styles.page}>
         <section className={styles.emptyCard} aria-labelledby="writing-access-title">
           <p className={styles.eyebrow}>ADMIN ACCESS ONLY</p>
-          <h1 id="writing-access-title">Writing practice is restricted</h1>
-          <p>Only administrators can access writing practice, AI topics, feedback, and writing history.</p>
+          <h1 id="writing-access-title">AI Support is restricted</h1>
+          <p>Only administrators can access AI writing, speaking practice, feedback, and history.</p>
           {!user && <button className={styles.primaryButton} onClick={() => setAuthOpen(true)}>Sign in as an administrator</button>}
           <Link className={styles.backLink} href="/">Back to dashboard</Link>
         </section>

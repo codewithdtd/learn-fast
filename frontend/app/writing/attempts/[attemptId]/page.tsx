@@ -5,7 +5,7 @@ export default async function WritingAttemptPage({ params }: { params: Promise<{
   const { attemptId } = await params;
   const parsedAttemptId = Number(attemptId);
   if (!Number.isInteger(parsedAttemptId) || parsedAttemptId < 1) {
-    return <AppShell activeHref="/writing"><main><h1>Writing attempt not found</h1></main></AppShell>;
+    return <AppShell activeHref="/ai-support"><main><h1>Writing attempt not found</h1></main></AppShell>;
   }
-  return <AppShell activeHref="/writing"><WritingAttemptView attemptId={parsedAttemptId} /></AppShell>;
+  return <AppShell activeHref="/ai-support"><WritingAttemptView attemptId={parsedAttemptId} /></AppShell>;
 }

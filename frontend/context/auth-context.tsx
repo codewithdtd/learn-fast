@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
 import {
   getCurrentUser,
   getStoredAuthToken,
@@ -28,7 +28,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserRead | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  const fetchCurrentUser = async () => {
+  const fetchCurrentUser = useCallback(async () => {
     const token = getStoredAuthToken();
     if (!token) {
       setUser(null);
@@ -46,11 +46,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchCurrentUser();
-  }, []);
+    // Defer the initial token check until after mount so auth loading does not cause a cascading render.
+    const timer = window.setTimeout(() => {
+      void fetchCurrentUser();
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [fetchCurrentUser]);
 
   const login = async (data: LoginRequest) => {
     setIsLoading(true);
