@@ -29,6 +29,18 @@ class SpeakingPromptList(StrictModel):
     items: list[SpeakingPromptRead]
 
 
+class SpeakingPromptDraft(StrictModel):
+    """Structured AI output; bounds keep generated topic content usable in the UI."""
+
+    title_en: str = Field(min_length=3, max_length=160)
+    title_vi: str = Field(min_length=3, max_length=160)
+    question_en: str = Field(min_length=10, max_length=1000)
+    question_vi: str = Field(min_length=10, max_length=1000)
+    category: Literal["conversation", "ielts_part1"]
+    difficulty: Literal["basic"] = "basic"
+    hints: list[SpeakingHint] = Field(min_length=3, max_length=6)
+
+
 class SpeakingAttemptCreate(StrictModel):
     prompt_id: int = Field(gt=0)
 

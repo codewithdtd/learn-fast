@@ -3,8 +3,10 @@ from sqlalchemy import select
 from app.core.config import settings
 from app.core.security import create_access_token, get_password_hash
 from app.models.speaking_attempt import SpeakingAttempt
+from app.models.speaking_prompt import SpeakingPrompt
 from app.models.speaking_usage import SpeakingAIUsage
 from app.models.user import User
+from app.schemas.speaking import SpeakingPromptDraft
 from app.services import speaking as speaking_service
 from app.services import speaking_ai
 
@@ -28,6 +30,43 @@ def test_speaking_routes_are_admin_only(api_client, db_session, admin_headers):
     assert response.status_code == 200
     assert len(response.json()["items"]) == 8
     assert response.json()["items"][0]["hints"][0]["vi"]
+
+
+def test_ai_generated_speaking_topic_is_saved_with_attempt(api_client, db_session, admin_headers, monkeypatch):
+    generated = SpeakingPromptDraft(
+        title_en="A place to relax", title_vi="Một nơi để thư giãn",
+        question_en="Where do you like to go when you want to relax?",
+        question_vi="Bạn thích đi đâu khi muốn thư giãn?",
+        category="ielts_part1", hints=[
+            {"en": "Name the place.", "vi": "Nêu tên địa điểm."},
+            {"en": "Say what you do there.", "vi": "Nói bạn làm gì ở đó."},
+            {"en": "Explain why you like it.", "vi": "Giải thích vì sao bạn thích nơi đó."},
+        ],
+    )
+    monkeypatch.setattr(speaking_service, "generate_speaking_prompt", lambda: generated)
+    _, member_headers = _make_user(db_session, "speaking_generate_member", False)
+
+    assert api_client.post("/api/v1/speaking/attempts/random").status_code == 401
+    assert api_client.post("/api/v1/speaking/attempts/random", headers=member_headers).status_code == 403
+    response = api_client.post("/api/v1/speaking/attempts/random", headers=admin_headers)
+
+    assert response.status_code == 201, response.text
+    data = response.json()
+    assert data["prompt_snapshot"]["title_en"] == "A place to relax"
+    assert len(data["prompt_snapshot"]["hints"]) == 3
+    assert db_session.get(SpeakingPrompt, data["prompt_id"]).slug.startswith("ai-")
+    assert db_session.get(SpeakingAttempt, data["id"]).prompt_snapshot["question_vi"] == "Bạn thích đi đâu khi muốn thư giãn?"
+
+
+def test_ai_generated_speaking_topic_provider_failure_does_not_create_attempt(api_client, db_session, admin_headers, monkeypatch):
+    def fail_generation():
+        raise speaking_service.TranscriptionProviderError("Topic generation is temporarily unavailable.", 502)
+
+    monkeypatch.setattr(speaking_service, "generate_speaking_prompt", fail_generation)
+    response = api_client.post("/api/v1/speaking/attempts/random", headers=admin_headers)
+
+    assert response.status_code == 502
+    assert db_session.scalar(select(SpeakingAttempt)) is None
 
 
 def test_attempt_is_private_to_its_owner(api_client, db_session, admin_headers):
