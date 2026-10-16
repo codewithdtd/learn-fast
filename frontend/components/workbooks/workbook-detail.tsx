@@ -4,15 +4,20 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { Icon } from "@/components/layout/app-shell";
+import { useAuth } from "@/context/auth-context";
 import { InlineNameEditor } from "@/components/shared/inline-name-editor";
 import { SheetListItem } from "@/components/sheets/sheet-list-item";
 import { formatDate } from "@/lib/format";
 import {
   ApiRequestError,
   getWorkbook,
+  getWorkbooks,
+  moveSheetsToWorkbook,
+  updateSheetName,
   updateWorkbookName,
   type SheetSummary,
   type WorkbookDetail,
+  type WorkbookListItem,
 } from "@/services/api";
 
 type WorkbookDetailProps = {
@@ -20,7 +25,10 @@ type WorkbookDetailProps = {
 };
 
 export function WorkbookDetailView({ workbookId }: WorkbookDetailProps) {
+  const { user, isAuthenticated } = useAuth();
+  const isAdmin = isAuthenticated && user?.is_superuser === true;
   const [workbook, setWorkbook] = useState<WorkbookDetail | null>(null);
+  const [availableWorkbooks, setAvailableWorkbooks] = useState<WorkbookListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [notFound, setNotFound] = useState(false);
@@ -72,6 +80,11 @@ export function WorkbookDetailView({ workbookId }: WorkbookDetailProps) {
     };
   }, [workbookId]);
 
+  useEffect(() => {
+    if (!isAdmin) return;
+    void getWorkbooks().then(setAvailableWorkbooks).catch(() => setAvailableWorkbooks([]));
+  }, [isAdmin]);
+
   if (isLoading) return <WorkbookDetailLoading />;
   if (notFound) return <NotFound />;
   if (error) return <RetryError message={error} onRetry={loadWorkbook} />;
@@ -93,9 +106,20 @@ export function WorkbookDetailView({ workbookId }: WorkbookDetailProps) {
   const loadedWorkbook = workbook;
   return (
     <WorkbookDetailContent
+      key={workbookId}
       workbook={loadedWorkbook}
+      isAdmin={isAdmin}
+      availableWorkbooks={availableWorkbooks}
       onWorkbookRenamed={async (name) => {
         setWorkbook(await updateWorkbookName(workbookId, name));
+      }}
+      onSheetRenamed={async (sheetId, name) => {
+        await updateSheetName(String(sheetId), name);
+        setWorkbook(await getWorkbook(workbookId));
+      }}
+      onSheetsMoved={async () => {
+        setWorkbook(await getWorkbook(workbookId));
+        setAvailableWorkbooks(await getWorkbooks());
       }}
     />
   );
@@ -131,12 +155,57 @@ type WorkbookSummary = {
 
 function WorkbookDetailContent({
   workbook,
+  isAdmin,
+  availableWorkbooks,
   onWorkbookRenamed,
+  onSheetRenamed,
+  onSheetsMoved,
 }: {
   workbook: WorkbookDetail;
+  isAdmin: boolean;
+  availableWorkbooks: WorkbookListItem[];
   onWorkbookRenamed: (name: string) => Promise<void>;
+  onSheetRenamed: (sheetId: number, name: string) => Promise<void>;
+  onSheetsMoved: () => Promise<void>;
 }) {
+  const [selectedSheetIds, setSelectedSheetIds] = useState<Set<number>>(new Set());
+  const [targetWorkbookId, setTargetWorkbookId] = useState("");
+  const [isMoving, setIsMoving] = useState(false);
+  const [managementError, setManagementError] = useState<string | null>(null);
+  const [managementNotice, setManagementNotice] = useState<string | null>(null);
   const summary = getWorkbookSummary(workbook.sheets);
+  const targetWorkbooks = availableWorkbooks.filter((item) => item.id !== workbook.id);
+
+  function toggleSheet(sheetId: number) {
+    setSelectedSheetIds((current) => {
+      const next = new Set(current);
+      if (next.has(sheetId)) next.delete(sheetId);
+      else next.add(sheetId);
+      return next;
+    });
+  }
+
+  async function moveSelectedSheets() {
+    if (!targetWorkbookId || selectedSheetIds.size === 0 || isMoving) return;
+    setIsMoving(true);
+    setManagementError(null);
+    setManagementNotice(null);
+    try {
+      const result = await moveSheetsToWorkbook(
+        workbook.id,
+        Number(targetWorkbookId),
+        Array.from(selectedSheetIds),
+      );
+      const target = targetWorkbooks.find((item) => item.id === result.target_workbook_id);
+      setSelectedSheetIds(new Set());
+      await onSheetsMoved();
+      setManagementNotice(`${result.moved_count} sheet${result.moved_count === 1 ? "" : "s"} moved to ${target?.name ?? "the selected workbook"}.`);
+    } catch (caughtError) {
+      setManagementError(caughtError instanceof Error ? caughtError.message : "Sheets could not be moved.");
+    } finally {
+      setIsMoving(false);
+    }
+  }
 
   return (
     <section className="workbook-detail-content">
@@ -174,10 +243,53 @@ function WorkbookDetailContent({
           <span className="workbook-section-count">{workbook.sheets.length}</span>
         </div>
 
+        {isAdmin && workbook.sheets.length > 0 && (
+          <div className="workbook-sheet-manager" aria-label="Manage workbook sheets">
+            <div>
+              <strong>Organize sheets</strong>
+              <p>Select sheets, then move them together into another workbook.</p>
+            </div>
+            <div className="workbook-sheet-manager-actions">
+              <label>
+                <span className="sr-only">Destination workbook</span>
+                <select
+                  value={targetWorkbookId}
+                  onChange={(event) => setTargetWorkbookId(event.target.value)}
+                  disabled={isMoving || targetWorkbooks.length === 0}
+                >
+                  <option value="">Choose a workbook</option>
+                  {targetWorkbooks.map((item) => (
+                    <option key={item.id} value={item.id}>{item.name}</option>
+                  ))}
+                </select>
+              </label>
+              <button
+                type="button"
+                className="button primary"
+                onClick={() => void moveSelectedSheets()}
+                disabled={isMoving || !targetWorkbookId || selectedSheetIds.size === 0}
+              >
+                {isMoving ? "Moving…" : `Move ${selectedSheetIds.size || "selected"} sheet${selectedSheetIds.size === 1 ? "" : "s"}`}
+              </button>
+            </div>
+            {targetWorkbooks.length === 0 && <p className="workbook-manager-hint">Create or import another workbook before moving sheets.</p>}
+            {managementError && <p className="workbook-manager-error" role="alert">{managementError}</p>}
+            {managementNotice && <p className="workbook-manager-notice" role="status">{managementNotice}</p>}
+          </div>
+        )}
+
         {workbook.sheets.length > 0 ? (
           <ul className="workbook-sheet-list">
             {workbook.sheets.map((sheet) => (
-              <SheetListItem key={sheet.id} sheet={sheet} />
+              <SheetListItem
+                key={sheet.id}
+                sheet={sheet}
+                management={isAdmin ? {
+                  isSelected: selectedSheetIds.has(sheet.id),
+                  onToggle: toggleSheet,
+                  onRename: (name) => onSheetRenamed(sheet.id, name),
+                } : undefined}
+              />
             ))}
           </ul>
         ) : (

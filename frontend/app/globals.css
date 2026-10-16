@@ -1422,6 +1422,109 @@ a {
   list-style: none;
 }
 
+.workbook-sheet-manager {
+  display: grid;
+  gap: 14px;
+  border: 1px solid var(--outline);
+  border-radius: var(--radius-lg);
+  background: var(--surface-high);
+  padding: 18px 20px;
+}
+
+.workbook-sheet-manager > div:first-child strong {
+  color: var(--foreground);
+  font-size: 16px;
+}
+
+.workbook-sheet-manager p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.workbook-sheet-manager-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.workbook-sheet-manager-actions select {
+  min-height: 44px;
+  max-width: 100%;
+  border: 1px solid var(--outline);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--foreground);
+  padding: 0 12px;
+}
+
+.workbook-sheet-manager-actions .button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.workbook-manager-error,
+.workbook-manager-notice,
+.workbook-manager-hint {
+  margin: 0 !important;
+}
+
+.workbook-manager-error { color: var(--error) !important; }
+.workbook-manager-notice { color: var(--green) !important; }
+
+.workbook-sheet-management-item {
+  display: grid;
+  gap: 10px;
+  border: 1px solid var(--outline);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  padding: 14px;
+  box-shadow: var(--shadow-soft);
+}
+
+.workbook-sheet-management-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.workbook-sheet-management-controls .inline-name-trigger-wrapper {
+  margin-left: auto;
+}
+
+.workbook-sheet-select {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.workbook-sheet-select input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary);
+}
+
+.workbook-sheet-management-item .workbook-sheet-row {
+  border: 0;
+  box-shadow: none;
+  padding: 10px;
+}
+
+@media (max-width: 640px) {
+  .workbook-sheet-manager-actions,
+  .workbook-sheet-manager-actions label,
+  .workbook-sheet-manager-actions select,
+  .workbook-sheet-manager-actions .button {
+    width: 100%;
+  }
+
+  .workbook-sheet-management-item { padding: 10px; }
+}
+
 .workbook-sheet-row {
   display: grid;
   min-height: 132px;

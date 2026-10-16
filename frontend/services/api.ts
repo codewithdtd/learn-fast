@@ -327,6 +327,22 @@ export async function updateWorkbookName(
   );
 }
 
+export async function moveSheetsToWorkbook(
+  sourceWorkbookId: number,
+  targetWorkbookId: number,
+  sheetIds: number[],
+): Promise<{ moved_count: number; source_workbook_id: number; target_workbook_id: number }> {
+  return requestJson<{
+    moved_count: number;
+    source_workbook_id: number;
+    target_workbook_id: number;
+  }>(`/api/v1/workbooks/${sourceWorkbookId}/sheets/move`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ target_workbook_id: targetWorkbookId, sheet_ids: sheetIds }),
+  });
+}
+
 export async function deleteWorkbook(id: string): Promise<void> {
   const response = await fetch(`${apiBaseUrl}/api/v1/workbooks/${encodeURIComponent(id)}`, {
     method: "DELETE",
