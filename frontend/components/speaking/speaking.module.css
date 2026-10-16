@@ -1,0 +1,226 @@
+.page { display: grid; gap: 18px; width: 100%; padding-bottom: 28px; }
+.heading,.sectionHeader,.practiceTop,.feedbackHeading,.transcriptActions { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.heading { align-items: flex-start; }
+.heading h2,.sectionHeader h3,.practiceTop h3,.feedbackHeading h3 { margin: 4px 0; letter-spacing: -.035em; }
+.heading h2 { font-size: clamp(1.5rem, 4vw, 2rem); }
+.heading p:last-child { max-width: 620px; margin: 6px 0 0; color: var(--muted); line-height: 1.55; }
+.eyebrow { margin: 0; color: var(--foreground); font-size: .7rem; font-weight: 850; letter-spacing: .1em; }
+.quota { display: grid; min-width: 72px; border: 1px solid var(--outline); border-radius: var(--radius-lg); padding: 8px 10px; background: var(--surface); text-align: center; }
+.quota strong { color: var(--foreground); font-size: 1.35rem; line-height: 1.2; }
+.quota span { color: var(--muted); font-size: .68rem; }
+.notice,.error,.success,.warning,.loading,.empty { border: 1px solid var(--outline); border-radius: var(--radius-md); padding: 12px 14px; background: var(--surface); color: var(--muted); line-height: 1.5; }
+.notice { display: grid; gap: 3px; background: var(--surface-low); }
+.notice strong { color: var(--foreground); }
+.error { border-color: var(--error); background: var(--error-soft); color: var(--foreground); }
+.success { border-color: var(--green); background: var(--green-soft); color: var(--foreground); }
+.warning { border-color: var(--gold); background: var(--gold-soft); color: var(--foreground); }
+.practiceCard,.topicSection,.history,.feedback { min-width: 0; border: 1px solid var(--outline); border-radius: var(--radius-lg); padding: clamp(14px, 3vw, 22px); background: var(--surface); box-shadow: var(--shadow-soft); }
+.practiceTop { align-items: flex-start; }
+.practiceTop h3 { font-size: 1.35rem; }
+.category { display: inline-flex; color: var(--foreground); font-size: .68rem; font-weight: 850; letter-spacing: .08em; }
+.question { margin: 12px 0 4px; font-size: clamp(1.12rem, 3vw, 1.38rem); font-weight: 740; line-height: 1.45; }
+.translation { margin: 4px 0; color: var(--muted); line-height: 1.5; }
+.hints { margin: 16px 0; border-radius: var(--radius-md); padding: 14px; background: var(--surface-low); }
+.hints > strong { display: block; margin-bottom: 8px; }
+.hints ul,.strengths ul,.nextSteps ul { display: grid; gap: 10px; margin: 0; padding-left: 20px; }
+.hints li,.nextSteps li { padding-left: 2px; line-height: 1.45; }
+.hints li span,.nextSteps li span { display: block; }
+.hints li span + span,.nextSteps li span + span { color: var(--muted); }
+.recording { display: grid; gap: 14px; margin-top: 14px; border-top: 1px solid var(--outline); padding-top: 16px; }
+.recordRow { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.recordRow > span { color: var(--muted); font-size: .9rem; }
+.recordButton,.stopButton,.primaryButton,.secondaryButton,.textButton { min-height: 44px; border: 1px solid var(--outline); border-radius: var(--radius-md); padding: 9px 14px; font: inherit; font-size: .92rem; font-weight: 750; cursor: pointer; transition: background 140ms ease, transform 140ms ease, border-color 140ms ease; }
+.recordButton,.primaryButton { border-color: var(--primary); background: var(--primary); color: var(--foreground); }
+.stopButton { border-color: var(--error); background: var(--error-soft); color: var(--foreground); }
+.secondaryButton { background: var(--surface); color: var(--foreground); }
+.textButton { border-color: transparent; background: transparent; color: var(--muted); }
+.recordButton:hover,.stopButton:hover,.primaryButton:hover,.secondaryButton:hover { transform: translateY(-1px); }
+.secondaryButton:hover,.textButton:hover { border-color: var(--primary); background: var(--primary-soft); color: var(--primary-container); }
+.recordButton:focus-visible,.stopButton:focus-visible,.primaryButton:focus-visible,.secondaryButton:focus-visible,.textButton:focus-visible,.historyList button:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
+.recordButton:disabled,.stopButton:disabled,.primaryButton:disabled,.secondaryButton:disabled,.textButton:disabled { opacity: .52; cursor: not-allowed; transform: none; }
+.uploadBox { display: grid; gap: 12px; border: 1px solid var(--outline); border-radius: var(--radius-md); padding: 12px; }
+.uploadBox audio { width: 100%; min-height: 42px; }
+.consent { display: flex; align-items: flex-start; gap: 10px; color: var(--muted); font-size: .87rem; line-height: 1.45; }
+.consent input { width: 20px; height: 20px; margin: 1px 0 0; accent-color: var(--primary-container); flex: 0 0 auto; }
+.transcriptCard { display: grid; gap: 10px; margin-top: 18px; }
+.transcriptCard label { font-weight: 800; }
+.transcriptCard textarea { width: 100%; min-height: 140px; resize: vertical; border: 1px solid var(--outline); border-radius: var(--radius-md); padding: 12px; background: var(--surface); color: var(--foreground); font: inherit; line-height: 1.55; }
+.transcriptCard textarea:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
+.transcriptCard textarea:disabled { background: var(--surface-low); color: var(--muted); }
+.transcriptActions { align-items: flex-start; }
+.transcriptActions > span,.sectionHeader > span { padding-top: 10px; color: var(--muted); font-size: .82rem; }
+.transcriptActions > div { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+.topicSection,.history { display: grid; gap: 14px; }
+.sectionHeader h3 { font-size: 1.2rem; }
+.topicGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 12px; }
+.topicCard { display: flex; min-width: 0; flex-direction: column; align-items: flex-start; border: 1px solid var(--outline); border-radius: var(--radius-md); padding: 14px; background: var(--surface); }
+.topicCard h4 { margin: 7px 0 5px; font-size: 1.05rem; }
+.topicCard p { line-height: 1.45; }
+.topicCard .secondaryButton { width: 100%; margin-top: auto; }
+.historyList { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.historyList button { display: flex; width: 100%; min-height: 54px; align-items: center; justify-content: space-between; gap: 12px; border: 1px solid var(--outline); border-radius: var(--radius-md); padding: 9px 12px; background: var(--surface); color: var(--foreground); text-align: left; cursor: pointer; }
+.historyList button:hover { background: var(--surface-low); }
+.historyList button:disabled { opacity: .55; cursor: wait; }
+.historyList button > span:first-child { display: grid; gap: 3px; }
+.historyList small,.status { color: var(--muted); font-size: .78rem; }
+.status { border-radius: 999px; padding: 4px 8px; background: var(--surface-low); text-transform: capitalize; }
+.writingLink { min-height: 44px; display: inline-flex; align-items: center; color: var(--foreground); font-weight: 750; text-decoration: underline; text-underline-offset: 3px; }
+.feedback { display: grid; gap: 14px; margin-top: 18px; background: var(--surface-low); }
+.feedbackHeading h3 { font-size: 1.25rem; }
+.summary { border-left: 3px solid var(--primary); padding-left: 12px; line-height: 1.5; }
+.summary p { margin: 3px 0; }
+.summary p[lang="vi"],.criteria article p[lang="vi"],.improvements article p[lang="vi"] { color: var(--muted); }
+.criteria { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.criteria article,.improvements article,.strengths,.nextSteps { min-width: 0; border: 1px solid var(--outline); border-radius: var(--radius-md); padding: 12px; background: var(--surface); }
+.criteria article > div { display: flex; justify-content: space-between; gap: 8px; }
+.criteria article > div span { color: var(--foreground); font-weight: 850; white-space: nowrap; }
+.criteria article p,.improvements article p { margin: 8px 0 0; font-size: .9rem; line-height: 1.45; }
+.strengths,.nextSteps { display: grid; gap: 8px; }
+.strengths li span { display: block; }
+.strengths li span + span { color: var(--muted); }
+.improvements { display: grid; gap: 9px; }
+.improvements > strong { margin-top: 2px; }
+.improvements blockquote { margin: 0; border-left: 3px solid var(--gold); padding-left: 10px; font-weight: 750; }
+.disclaimer { margin: 0; color: var(--muted); font-size: .8rem; }
+@media (max-width: 620px) {
+  .heading { gap: 8px; }
+  .heading > div { min-width: 0; }
+  .quota { min-width: 62px; }
+  .practiceTop,.sectionHeader { align-items: flex-start; }
+  .practiceTop .textButton { padding-inline: 6px; font-size: .8rem; }
+  .transcriptActions { display: grid; }
+  .transcriptActions > div { justify-content: stretch; }
+  .transcriptActions > div button { flex: 1 1 140px; }
+  .criteria { grid-template-columns: 1fr; }
+  .historyList button { align-items: flex-start; }
+}
+
+/* The app shell intentionally leaves feature pages edge-to-edge; Speaking owns its reading gutter here. */
+.page {
+  width: min(100%, 1240px);
+  margin-inline: auto;
+  gap: 22px;
+  padding: 34px 0 52px;
+}
+.heading {
+  align-items: center;
+  padding: 4px 2px 22px;
+  border-bottom: 1px solid var(--outline);
+}
+.heading h2 { margin-top: 8px; font-size: clamp(1.8rem, 4vw, 2.35rem); }
+.eyebrow { color: var(--foreground); }
+.quota {
+  min-width: 92px;
+  border-color: var(--outline);
+  border-radius: 18px;
+  padding: 12px 15px;
+  background: var(--surface-low);
+}
+.quota strong { font-size: 1.55rem; }
+.notice {
+  grid-template-columns: 1fr;
+  gap: 5px;
+  border-color: transparent;
+  border-left: 3px solid var(--primary);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  padding: 13px 16px;
+}
+.topicSection,.history {
+  gap: 18px;
+  border-radius: 22px;
+  padding: clamp(18px, 3vw, 28px);
+  background: var(--surface-low);
+  box-shadow: none;
+}
+.sectionHeader { align-items: end; }
+.sectionHeader h3 { margin-top: 6px; font-size: clamp(1.35rem, 3vw, 1.65rem); }
+.topicGrid { gap: 14px; }
+.topicCard {
+  min-height: 100%;
+  gap: 2px;
+  border-color: var(--outline);
+  border-radius: 16px;
+  padding: 18px;
+  background: var(--surface);
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--foreground) 5%, transparent);
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+.topicCard:hover {
+  transform: translateY(-2px);
+  border-color: var(--primary);
+  box-shadow: var(--shadow-soft);
+}
+.topicCard h4 { margin-top: 10px; font-size: 1.12rem; }
+.topicCard p { margin: 6px 0; }
+.topicCard .secondaryButton { margin-top: auto; }
+.practiceCard {
+  border-radius: 22px;
+  padding: clamp(20px, 3.5vw, 32px);
+  box-shadow: var(--shadow-soft);
+}
+.practiceTop { padding-bottom: 17px; border-bottom: 1px solid var(--outline); }
+.practiceTop h3 { margin-top: 7px; font-size: clamp(1.3rem, 3vw, 1.65rem); }
+.question { margin-top: 22px; font-size: clamp(1.3rem, 3vw, 1.7rem); line-height: 1.4; }
+.translation { font-size: .98rem; }
+.hints {
+  margin: 22px 0;
+  border: 1px solid var(--outline);
+  border-radius: 16px;
+  padding: 18px;
+  background: var(--surface-low);
+}
+.hints > strong { margin-bottom: 12px; }
+.hints ul { gap: 14px; }
+.hints li span:first-child { font-weight: 650; }
+.hints li span + span { margin-top: 3px; }
+.recording {
+  gap: 16px;
+  border: 1px solid var(--outline);
+  border-radius: 16px;
+  padding: 18px;
+  background: var(--surface-low);
+}
+.recordButton,.stopButton,.primaryButton,.secondaryButton,.textButton { border-radius: 12px; }
+.recordButton,.primaryButton { color: var(--foreground); }
+.uploadBox { border-radius: 14px; padding: 14px; background: var(--surface); }
+.transcriptCard { gap: 12px; margin-top: 22px; }
+.transcriptCard textarea { min-height: 168px; border-radius: 14px; padding: 15px; }
+.feedback {
+  gap: 18px;
+  margin-top: 22px;
+  border-radius: 18px;
+  padding: clamp(18px, 3vw, 26px);
+}
+.criteria { gap: 12px; }
+.criteria article,.improvements article,.strengths,.nextSteps {
+  border-radius: 14px;
+  padding: 16px;
+}
+.historyList { gap: 10px; }
+.historyList button { border-radius: 13px; padding: 12px 14px; }
+.recordButton:focus-visible,.stopButton:focus-visible,.primaryButton:focus-visible,.secondaryButton:focus-visible,.textButton:focus-visible,.historyList button:focus-visible,.writingLink:focus-visible {
+  outline: 3px solid var(--primary-container);
+  outline-offset: 3px;
+}
+@media (max-width: 620px) {
+  .page { gap: 18px; padding: 24px 0 36px; }
+  .heading { align-items: flex-start; padding: 2px 0 18px; }
+  .heading h2 { font-size: 1.75rem; }
+  .heading p:last-child { max-width: 36ch; }
+  .quota { min-width: 76px; padding: 10px 11px; }
+  .quota strong { font-size: 1.35rem; }
+  .topicSection,.history { border-radius: 18px; padding: 18px 14px; }
+  .topicGrid { grid-template-columns: 1fr; gap: 11px; }
+  .topicCard { padding: 16px; }
+  .practiceCard { border-radius: 18px; padding: 18px 15px; }
+  .practiceTop { gap: 8px; }
+  .practiceTop .textButton { flex: 0 0 auto; min-height: 44px; padding-inline: 8px; }
+  .question { margin-top: 18px; }
+  .hints,.recording { padding: 15px; }
+  .transcriptActions > span { padding-top: 0; }
+  .feedback { border-radius: 16px; padding: 16px 14px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .topicCard,.recordButton,.stopButton,.primaryButton,.secondaryButton,.textButton { transition: none; }
+  .topicCard:hover,.recordButton:hover,.stopButton:hover,.primaryButton:hover,.secondaryButton:hover { transform: none; }
+}

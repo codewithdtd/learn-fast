@@ -1,6 +1,5 @@
-import { AppShell } from "@/components/layout/app-shell";
-import { WritingTopicList } from "@/components/writing/writing-topic-list";
+import { redirect } from "next/navigation";
 
 export default function WritingPage() {
-  return <AppShell activeHref="/writing"><WritingTopicList /></AppShell>;
+  redirect("/ai-support?tab=writing");
 }

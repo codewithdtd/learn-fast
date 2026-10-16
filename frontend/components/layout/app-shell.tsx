@@ -40,7 +40,7 @@ const navItems = [
   { href: "/calendar", label: "Calendar & Check-in", mobileLabel: "Calendar", icon: "calendar" as const },
   { href: "/workbooks", label: "Workbooks", mobileLabel: "Books", icon: "books" as const },
   { href: "/import", label: "Import", mobileLabel: "Import", icon: "import" as const },
-  { href: "/writing", label: "Writing practice", mobileLabel: "Writing", icon: "writing" as const },
+  { href: "/ai-support", label: "AI Support", mobileLabel: "AI Support", icon: "writing" as const },
 ];
 
 
