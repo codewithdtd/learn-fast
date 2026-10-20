@@ -11,7 +11,7 @@ export default async function QuickRecallPage({ params }: QuickRecallPageProps) 
   return (
     <AppShell activeHref="/workbooks">
       <main className="quick-recall-page">
-        <QuickRecallView sheetId={sheetId} />
+        <QuickRecallView key={sheetId} sheetId={sheetId} />
       </main>
     </AppShell>
   );
