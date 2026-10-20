@@ -122,7 +122,7 @@ export function SheetDetailView({ sheetId }: SheetDetailProps) {
           <section className="sheet-detail-actions" aria-labelledby="sheet-actions-title">
             <div className="section-heading"><div><p className="eyebrow">More ways to practice</p><h2 id="sheet-actions-title">Learning modes</h2></div></div>
             <div className="sheet-action-grid">
-              <ActionCard href={`/sheets/${sheet.id}/quick-recall`} icon="review" title="Quick Recall" description="Fast-paced recognition practice." tone="mint" />
+              <ActionCard href={`/sheets/${sheet.id}/quick-recall`} icon="review" title="Practice Exercises" description="Check your recall with quizzes, translation and fill-in-the-blank exercises." tone="mint" />
               <ActionCard href={`/sheets/${sheet.id}/table`} icon="books" title="Table View" description="Browse the full vocabulary list." tone="gold" />
             </div>
           </section>
