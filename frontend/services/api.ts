@@ -344,12 +344,9 @@ export async function moveSheetsToWorkbook(
 }
 
 export async function deleteWorkbook(id: string): Promise<void> {
-  const response = await fetch(`${apiBaseUrl}/api/v1/workbooks/${encodeURIComponent(id)}`, {
+  await requestNoContent(`/api/v1/workbooks/${encodeURIComponent(id)}`, {
     method: "DELETE",
   });
-  if (!response.ok) {
-    throw await toApiRequestError(response);
-  }
 }
 
 export async function getSheet(id: string): Promise<SheetDetail> {
@@ -952,6 +949,23 @@ async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
     throw await toApiRequestError(response);
   }
   return (await response.json()) as T;
+}
+
+async function requestNoContent(path: string, init?: RequestInit): Promise<void> {
+  // Các lệnh DELETE admin cần JWT như requestJson, nhưng phản hồi 204 không có JSON để parse.
+  const token = getStoredAuthToken();
+  const headers = new Headers(init?.headers || {});
+  if (token && !headers.has("Authorization")) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
+
+  const response = await fetch(`${apiBaseUrl}${path}`, {
+    ...init,
+    headers,
+  });
+  if (!response.ok) {
+    throw await toApiRequestError(response);
+  }
 }
 
 
