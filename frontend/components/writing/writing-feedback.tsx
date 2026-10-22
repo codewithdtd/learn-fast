@@ -14,7 +14,7 @@ const criteria = [
   ["grammar", "Grammar"],
 ] as const;
 
-export function WritingFeedbackView({ feedback, sourceText }: { feedback: WritingFeedback; sourceText: string }) {
+export function WritingFeedbackView({ feedback, sourceText, sentence = false }: { feedback: WritingFeedback; sourceText: string; sentence?: boolean }) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showCorrected, setShowCorrected] = useState(false);
   const segments = useMemo(() => splitAnnotatedText(sourceText, feedback), [feedback, sourceText]);
@@ -23,10 +23,10 @@ export function WritingFeedbackView({ feedback, sourceText }: { feedback: Writin
   return (
     <section className={styles.feedbackSection} aria-labelledby="feedback-title">
       <div className={styles.resultHeader}>
-        <div><p className={styles.eyebrow}>WRITING REVIEW</p><h2 id="feedback-title" tabIndex={-1}>Your feedback</h2><p>{feedback.summary_en}</p><p lang="vi">{feedback.summary_vi}</p></div>
-        <div className={styles.scoreCard}><span>Practice score</span><strong>{feedback.practice_score}<small>/10</small></strong><span>Not an official IELTS band score</span></div>
+        <div><p className={styles.eyebrow}>{sentence ? "SENTENCE REVIEW" : "WRITING REVIEW"}</p><h2 id="feedback-title" tabIndex={-1}>Your feedback</h2><p>{feedback.summary_en}</p><p lang="vi">{feedback.summary_vi}</p></div>
+        <div className={styles.scoreCard}><span>Practice score</span><strong>{feedback.practice_score}<small>/10</small></strong><span>{sentence ? "Language practice feedback" : "Not an official IELTS band score"}</span></div>
       </div>
-      <div className={styles.criteriaGrid}>{criteria.map(([key, label]) => { const item = feedback[key]; return <article className={styles.criterionCard} key={key}><div><strong>{label}</strong><b>{item.score.toFixed(1)}<small>/10</small></b></div><p>{item.explanation_en}</p><p lang="vi">{item.explanation_vi}</p></article>; })}</div>
+      <div className={styles.criteriaGrid}>{criteria.map(([key, label]) => { const item = feedback[key]; const title = sentence ? ({ task_response: "Task and target expression", coherence: "Clarity", vocabulary: "Word use", grammar: "Grammar" } as const)[key] : label; return <article className={styles.criterionCard} key={key}><div><strong>{title}</strong><b>{item.score.toFixed(1)}<small>/10</small></b></div><p>{item.explanation_en}</p><p lang="vi">{item.explanation_vi}</p></article>; })}</div>
       <div className={styles.resultColumns}>
         <div className={styles.card}>
           <div className={styles.sectionHeading}><div><p className={styles.eyebrow}>INLINE REVIEW</p><h3>What is working and what to improve</h3></div>

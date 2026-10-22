@@ -23,7 +23,7 @@ export function WritingHistory() {
 
   return (
     <main className={styles.page}>
-      <div className={styles.pageHeading}><div><p className={styles.eyebrow}>YOUR PROGRESS</p><h1>Writing history</h1><p>Open any saved draft or review to continue learning from it.</p></div><Link className={styles.historyLink} href="/writing">← Browse topics</Link></div>
+      <div className={styles.pageHeading}><div><p className={styles.eyebrow}>YOUR PROGRESS</p><h1>Writing &amp; sentence history</h1><p>Open any saved draft or review to continue learning from it.</p></div><Link className={styles.historyLink} href="/ai-support?tab=sentences">← AI Support</Link></div>
       {error && <div className={styles.errorNotice} role="alert">{error}</div>}
       {isAuthLoading || (isAuthenticated && isLoading) ? <div className={styles.loadingCard} role="status">Loading your writing history…</div> : !isAuthenticated ? <div className={styles.emptyCard}><h2>Sign in to view your writing</h2><p>Your writing history is private to your account.</p></div> : history?.items.length ? <>
         <div className={styles.historyList}>{history.items.map((item) => <Link href={`/writing/attempts/${item.id}`} className={styles.historyRow} key={item.id}>

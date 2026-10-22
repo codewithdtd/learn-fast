@@ -20,7 +20,7 @@ const modes: { value: ExerciseMode; title: string; description: string; icon: "c
 
 type Round = { id: number; settings: ExerciseSettings; questions: ExerciseQuestion[] };
 
-export function PracticeExerciseSession({ sheet, cards }: { sheet: SheetDetail; cards: FlashcardListItem[] }) {
+export function PracticeExerciseSession({ sheet, cards, backHref }: { sheet: SheetDetail; cards: FlashcardListItem[]; backHref?: string }) {
   const [settings, setSettings] = useState<ExerciseSettings>(() => {
     const initial: ExerciseSettings = { mode: "multiple_choice", direction: "en_to_vi", filter: "all", count: "10" };
     return createExercisePool(cards, initial).length ? initial : { ...initial, mode: "translation" };
@@ -44,7 +44,7 @@ export function PracticeExerciseSession({ sheet, cards }: { sheet: SheetDetail; 
 
   return <section className={styles.root}>
     <header className={styles.header}>
-      <Link href={`/sheets/${sheet.id}`} className={styles.back}><Icon name="back" size={18} /> Back to {sheet.name}</Link>
+      <Link href={backHref ?? `/sheets/${sheet.id}`} className={styles.back}><Icon name="back" size={18} /> Back to {sheet.name}</Link>
       <p className={styles.eyebrow}>Put your vocabulary to work</p>
       <h1 ref={pageHeadingRef} tabIndex={-1}>Practice Exercises</h1>
       <p>Find out what you remember, one question at a time.</p>

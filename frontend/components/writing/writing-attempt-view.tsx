@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ApiRequestError, createWritingAttempt, getWritingAttempt, getWritingUsage, gradeWritingAttempt, saveWritingAttempt } from "@/services/api";
+import { ApiRequestError, createWritingAttempt, generateSentenceWritingAttempt, getWritingAttempt, getWritingUsage, gradeWritingAttempt, saveWritingAttempt } from "@/services/api";
+import { SentenceHints } from "@/components/sentences/sentence-hints";
 import type { WritingAttempt, WritingUsage } from "@/types/writing";
 import { useAuth } from "@/context/auth-context";
 import { AuthModal } from "@/components/auth/auth-modal";
@@ -21,13 +22,21 @@ export function WritingAttemptView({ attemptId }: { attemptId: number }) {
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const [isLoading, setIsLoading] = useState(true);
   const [isGrading, setIsGrading] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const creating = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const [pollingError, setPollingError] = useState<string | null>(null);
   const [authOpen, setAuthOpen] = useState(false);
   const lastSavedText = useRef("");
   const reviewRequest = useRef<AbortController | null>(null);
+  const feedbackStarting = useRef(false);
+  const taskRequest = useRef<AbortController | null>(null);
+  const activeView = useRef(true);
 
-  useEffect(() => () => { reviewRequest.current?.abort(); }, [attemptId]);
+  useEffect(() => {
+    activeView.current = true;
+    return () => { activeView.current = false; reviewRequest.current?.abort(); taskRequest.current?.abort(); };
+  }, [attemptId]);
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -57,10 +66,10 @@ export function WritingAttemptView({ attemptId }: { attemptId: number }) {
   }, [attempt]);
 
   useEffect(() => {
-    if (!attempt || (attempt.status !== "draft" && attempt.status !== "failed") || draft === lastSavedText.current) return;
+    if (!attempt || isGrading || (attempt.status !== "draft" && attempt.status !== "failed") || draft === lastSavedText.current) return;
     const timer = window.setTimeout(() => { void persistDraft(draft); }, 700);
     return () => window.clearTimeout(timer);
-  }, [attempt, draft, persistDraft]);
+  }, [attempt, draft, persistDraft, isGrading]);
 
   const acceptReviewStatus = useCallback((updated: WritingAttempt) => {
     setAttempt(updated);
@@ -113,16 +122,18 @@ export function WritingAttemptView({ attemptId }: { attemptId: number }) {
   }
 
   async function submitForFeedback() {
-    if (!attempt || isGrading) return;
+    if (!attempt || isGrading || feedbackStarting.current) return;
+    feedbackStarting.current = true;
+    // Dừng timer autosave trước khi lưu/chấm để hai request không tranh cùng version nháp.
+    setIsGrading(true);
     setError(null);
     setPollingError(null);
     let current = attempt;
     if ((current.status === "draft" || current.status === "failed") && draft !== lastSavedText.current) {
       const saved = await persistDraft(draft);
-      if (!saved) return;
+      if (!saved) { feedbackStarting.current = false; setIsGrading(false); return; }
       current = saved;
     }
-    setIsGrading(true);
     const controller = new AbortController();
     reviewRequest.current = controller;
     setAttempt({ ...current, status: "grading" });
@@ -139,17 +150,35 @@ export function WritingAttemptView({ attemptId }: { attemptId: number }) {
       setUsage(await getWritingUsage().catch(() => usage));
       setError(cause instanceof Error ? cause.message : "Feedback could not be generated. Your draft is saved.");
     } finally {
+      feedbackStarting.current = false;
       if (reviewRequest.current === controller) reviewRequest.current = null;
       setIsGrading(false);
     }
   }
 
   async function startRewrite() {
-    if (!attempt) return;
+    if (!attempt || creating.current) return;
+    creating.current = true; setIsCreating(true);
+    let navigating = false;
     try {
       const fresh = await createWritingAttempt(attempt.prompt_id, attempt.id);
-      router.push(`/writing/attempts/${fresh.id}`);
-    } catch (cause) { setError(cause instanceof Error ? cause.message : "A rewrite could not be started."); }
+      if (activeView.current) { router.push(`/writing/attempts/${fresh.id}`); navigating = true; }
+    } catch (cause) { if (activeView.current) setError(cause instanceof Error ? cause.message : "A rewrite could not be started."); }
+    finally { if (!navigating) { creating.current = false; if (activeView.current) setIsCreating(false); } }
+  }
+
+  async function startNewSituation() {
+    const target = attempt?.prompt_snapshot.paragraph_hints.sentence_practice;
+    if (!target || creating.current) return;
+    creating.current = true; setIsCreating(true); setError(null);
+    const controller = new AbortController();
+    taskRequest.current = controller;
+    let navigating = false;
+    try {
+      const fresh = await generateSentenceWritingAttempt(target.flashcard_id, controller.signal);
+      if (activeView.current) { router.push(`/writing/attempts/${fresh.id}`); navigating = true; }
+    } catch (cause) { if (activeView.current && !controller.signal.aborted) setError(cause instanceof Error ? cause.message : "A new situation could not be created."); }
+    finally { taskRequest.current = null; if (!navigating) { creating.current = false; if (activeView.current) setIsCreating(false); } }
   }
 
   if (isAuthLoading || (isAuthenticated && isLoading)) return <main className={styles.page}><div className={styles.loadingCard} role="status">Loading your writing…</div></main>;
@@ -157,24 +186,27 @@ export function WritingAttemptView({ attemptId }: { attemptId: number }) {
   if (!attempt) return <main className={styles.page}><div className={styles.errorNotice} role="alert">{error || "This writing attempt could not be found."}</div><Link href="/writing" className={styles.secondaryButton}>Back to topics</Link><AuthModal isOpen={authOpen} onClose={() => setAuthOpen(false)} initialMode="login" /></main>;
 
   const prompt = attempt.prompt_snapshot;
+  const sentenceContext = prompt.paragraph_hints.sentence_practice;
+  const isSentence = prompt.format === "sentence";
   const locked = attempt.status === "graded" || attempt.status === "grading" || isGrading;
   const canGrade = (attempt.status === "draft" || attempt.status === "failed") && !isGrading && usage?.remaining !== 0;
   return (
-    <main className={styles.page}>
-      <div className={styles.pageHeading}><div><Link href="/ai-support?tab=writing" className={styles.backLink}>← All topics</Link><p className={styles.eyebrow}>{prompt.difficulty} WRITING PRACTICE</p><h1>{prompt.title_en}</h1><p lang="vi">{prompt.title_vi}</p></div><Link className={styles.historyLink} href="/writing/history">Writing history</Link></div>
-      <div className={styles.assignmentCard}><p className={styles.eyebrow}>YOUR TASK</p><h2>{prompt.prompt_en}</h2><p lang="vi">{prompt.prompt_vi}</p><div className={styles.assignmentMeta}><span>Suggested length: {prompt.target_word_count} words</span><span>Maximum: 300 words</span>{usage && <span>{usage.remaining} of {usage.daily_limit} feedback reviews left today</span>}</div></div>
+    <main className={`${styles.page} ${isSentence ? styles.sentencePage : ""}`}>
+      <div className={styles.pageHeading}><div><Link href={isSentence ? `/ai-support?tab=sentences${sentenceContext ? `&sheet=${sentenceContext.sheet_id}` : ""}` : "/ai-support?tab=writing"} className={styles.backLink}>{isSentence ? "← Choose another word" : "← All topics"}</Link><p className={styles.eyebrow}>{isSentence ? "ACTIVE VOCABULARY PRACTICE" : `${prompt.difficulty} WRITING PRACTICE`}</p><h1>{prompt.title_en}</h1><p lang="vi">{prompt.title_vi}</p></div><Link className={styles.historyLink} href="/writing/history">Practice history</Link></div>
+      <div className={styles.assignmentCard}><p className={styles.eyebrow}>YOUR TASK</p><h2>{prompt.prompt_en}</h2><p lang="vi">{prompt.prompt_vi}</p>{sentenceContext && <p><strong>Target expression: {sentenceContext.phrase}</strong> · <span lang="vi">{sentenceContext.meaning}</span></p>}<div className={styles.assignmentMeta}><span>{isSentence ? "One original sentence" : `Suggested length: ${prompt.target_word_count} words`}</span><span>Maximum: {isSentence ? "60 words / 600 characters" : "300 words"}</span>{usage && <span>{usage.remaining} of {usage.daily_limit} feedback reviews left today</span>}</div></div>
       {error && <div className={styles.errorNotice} role="alert">{error}</div>}
+      {isSentence && attempt.revision_of_id && <div className={styles.warningNotice} role="status">Write an improved sentence from memory. Your previous answer and feedback remain in history.</div>}
       {pollingError && <div className={styles.errorNotice} role="alert"><span>{pollingError}</span><button className={styles.secondaryButton} onClick={() => void refreshReviewStatus()}>Refresh review status</button></div>}
       {attempt.status === "failed" && <div className={styles.warningNotice} role="status">{attempt.error_code === "grading_timeout" ? "The previous review was interrupted or timed out. Your draft is saved; request feedback again when ready." : "Feedback could not be saved last time. Your writing is safe; try again when the service is available."}</div>}
       {attempt.status === "grading" && !pollingError && <div className={styles.progressNotice} role="status" aria-live="polite"><span className={styles.spinner} /> Your writing is being reviewed. This can take a little while.</div>}
       <div className={styles.writingLayout}>
-        <div className={styles.writingMain}><WritingEditor value={draft} onChange={setDraft} disabled={locked} targetWords={prompt.target_word_count} saveState={saveState} onSave={() => { void persistDraft(draft); }} />
-          {attempt.status !== "graded" && <div className={styles.submitBar}><div><strong>Ready to review?</strong><span>Your saved paragraph will be sent to the configured AI provider.</span></div><button className={styles.primaryButton} disabled={!canGrade || saveState === "saving" || !draft.trim()} onClick={() => void submitForFeedback()}>{isGrading || attempt.status === "grading" ? pollingError ? "Review status unavailable" : "Reviewing…" : attempt.status === "failed" ? "Try feedback again" : "Submit for feedback"}</button></div>}
-          {attempt.status === "graded" && attempt.feedback && <><WritingFeedbackView feedback={attempt.feedback} sourceText={attempt.submitted_text ?? ""} /><div className={styles.rewriteBar}><div><strong>Ready for another try?</strong><span>Your current score and feedback will stay in history.</span></div><button className={styles.primaryButton} onClick={() => void startRewrite()}>Start a rewrite</button></div></>}
+        <div className={styles.writingMain}><WritingEditor sentence={isSentence} value={draft} onChange={setDraft} disabled={locked} targetWords={prompt.target_word_count} saveState={saveState} onSave={() => { void persistDraft(draft); }} />
+          {attempt.status !== "graded" && <div className={styles.submitBar}><div><strong>Ready to review?</strong><span>Your saved {isSentence ? "sentence" : "paragraph"} will be sent to the configured AI provider.</span></div><button className={styles.primaryButton} disabled={!canGrade || saveState === "saving" || !draft.trim() || (isSentence && draft.trim().split(/\s+/).length > 60)} onClick={() => void submitForFeedback()}>{isGrading || attempt.status === "grading" ? pollingError ? "Review status unavailable" : "Reviewing…" : attempt.status === "failed" ? "Try feedback again" : "Submit for feedback"}</button></div>}
+          {attempt.status === "graded" && attempt.feedback && <><WritingFeedbackView sentence={isSentence} feedback={attempt.feedback} sourceText={attempt.submitted_text ?? ""} /><div className={styles.rewriteBar}><div><strong>{isSentence ? "Now write it again from memory" : "Ready for another try?"}</strong><span>Your current score and feedback will stay in history. Each new review uses a feedback turn.</span></div><button className={styles.primaryButton} disabled={isCreating} onClick={() => void startRewrite()}>{isCreating ? "Creating…" : "Start a rewrite"}</button>{isSentence && <button className={styles.secondaryButton} disabled={isCreating} onClick={() => void startNewSituation()}>Try a new situation</button>}</div></>}
           {attempt.status === "graded" && !attempt.feedback && <div className={styles.errorNotice}>Saved feedback is unavailable for this attempt.</div>}
           {usage?.remaining === 0 && attempt.status !== "graded" && <p className={styles.quotaNotice}>You have used today&apos;s feedback limit. You can still save your draft and return tomorrow.</p>}
         </div>
-        <div className={styles.hintsColumn}><WritingHints prompt={prompt} /></div>
+        <div className={styles.hintsColumn}>{isSentence && sentenceContext ? <SentenceHints key={attempt.id} context={sentenceContext} /> : <WritingHints prompt={prompt} />}</div>
       </div>
       <AuthModal isOpen={authOpen} onClose={() => setAuthOpen(false)} initialMode="login" />
     </main>

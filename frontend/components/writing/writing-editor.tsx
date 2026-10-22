@@ -11,6 +11,7 @@ export function WritingEditor({
   targetWords,
   saveState,
   onSave,
+  sentence = false,
 }: {
   value: string;
   onChange: (value: string) => void;
@@ -18,6 +19,7 @@ export function WritingEditor({
   targetWords: number;
   saveState: SaveState;
   onSave: () => void;
+  sentence?: boolean;
 }) {
   const words = value.trim() ? value.trim().split(/\s+/).length : 0;
   const statusText: Record<SaveState, string> = {
@@ -29,13 +31,13 @@ export function WritingEditor({
   return (
     <section className={styles.card} aria-labelledby="your-writing-title">
       <div className={styles.sectionHeading}>
-        <div><p className={styles.eyebrow}>YOUR PRACTICE</p><h2 id="your-writing-title">Your paragraph</h2></div>
+        <div><p className={styles.eyebrow}>YOUR PRACTICE</p><h2 id="your-writing-title">{sentence ? "Your sentence" : "Your paragraph"}</h2></div>
         <span className={saveState === "error" ? styles.saveError : styles.saveStatus} role="status">{statusText[saveState]}</span>
       </div>
-      <label className={styles.srOnly} htmlFor="writing-draft">Write your English paragraph</label>
-      <textarea id="writing-draft" className={styles.editor} value={value} disabled={disabled} maxLength={4000} onChange={(event) => onChange(event.target.value)} placeholder="Start with one simple sentence. You can add more details as you go." />
+      <label className={styles.srOnly} htmlFor="writing-draft">{sentence ? "Write your own English sentence using the target expression" : "Write your English paragraph"}</label>
+      <textarea id="writing-draft" className={`${styles.editor} ${sentence ? styles.sentenceEditor : ""}`} value={value} disabled={disabled} maxLength={sentence ? 600 : 4000} autoCorrect={sentence ? "off" : undefined} spellCheck={!sentence} onChange={(event) => onChange(event.target.value)} placeholder={sentence ? "Use the target expression in one sentence of your own." : "Start with one simple sentence. You can add more details as you go."} />
       <div className={styles.editorFooter}>
-        <span>{words} words <span aria-hidden="true">·</span> suggested {targetWords} words</span>
+        <span>{words} words <span aria-hidden="true">·</span> {sentence ? "one sentence, maximum 60 words" : `suggested ${targetWords} words`}</span>
         {saveState === "error" && <button className={styles.textButton} type="button" onClick={onSave}>Try saving again</button>}
       </div>
     </section>

@@ -4,7 +4,7 @@ import type { WritingIssue } from "@/types/writing";
 import styles from "./writing.module.css";
 
 export function WritingErrorDetails({ issue }: { issue: WritingIssue | null }) {
-  if (!issue) return <aside className={styles.detailPanel}><p className={styles.eyebrow}>FEEDBACK GUIDE</p><h3>Select a marked phrase</h3><p>Choose an issue in the paragraph or the table to see why it needs attention and how to improve it.</p></aside>;
+  if (!issue) return <aside className={styles.detailPanel}><p className={styles.eyebrow}>FEEDBACK GUIDE</p><h3>Select a marked phrase</h3><p>Choose an issue in your writing or the table to see why it needs attention and how to improve it.</p></aside>;
   return (
     <aside className={styles.detailPanel} aria-live="polite">
       <div className={styles.issueTitle}><span className={issue.kind === "error" ? styles.errorBadge : styles.suggestionBadge}>{issue.id} · {issue.kind === "error" ? "Error" : "Suggestion"}</span><span className={styles.category}>{issue.category.replaceAll("_", " ")}</span></div>

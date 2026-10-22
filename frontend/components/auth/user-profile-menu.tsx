@@ -8,7 +8,6 @@ export function UserProfileMenu() {
   const { user, isAuthenticated, isLoading, logout } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [authMode, setAuthMode] = useState<"login" | "register">("login");
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Close menu on click outside
@@ -22,7 +21,7 @@ export function UserProfileMenu() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  if (isLoading) {
+  if (isLoading && !isAuthModalOpen) {
     return (
       <div className="h-9 w-9 animate-pulse rounded-full bg-muted" />
     );
@@ -34,30 +33,19 @@ export function UserProfileMenu() {
         <div className="auth-header-cta-group">
           <button
             onClick={() => {
-              setAuthMode("login");
               setIsAuthModalOpen(true);
             }}
             className="auth-btn-signin"
             type="button"
           >
-            Sign In
-          </button>
-          <button
-            onClick={() => {
-              setAuthMode("register");
-              setIsAuthModalOpen(true);
-            }}
-            className="auth-btn-signup"
-            type="button"
-          >
-            Sign Up
+            Admin sign in
           </button>
         </div>
 
         <AuthModal
           isOpen={isAuthModalOpen}
           onClose={() => setIsAuthModalOpen(false)}
-          initialMode={authMode}
+          initialMode="login"
         />
       </>
     );
