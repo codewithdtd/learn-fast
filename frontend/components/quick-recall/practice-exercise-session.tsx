@@ -206,7 +206,7 @@ function ExerciseRound({ round, onRestart, onConfigure }: { round: Round; onRest
 
       <div className={styles.questionActions}>
         <button ref={submitRef} className={styles.primary} type="submit" disabled={!hasAnswered && !draft.trim()}>
-          {hasAnswered ? response.is_correct && remainingQuestions.length === 1 ? "See results" : "Next question" : "Check answer"}
+          {hasAnswered ? response?.is_correct === true && remainingQuestions.length === 1 ? "See results" : "Next question" : "Check answer"}
           <Icon name={hasAnswered ? "arrow" : "check"} size={18} />
         </button>
         <span className={styles.hint}>Press Enter to {hasAnswered ? "continue" : "check"}.</span>
