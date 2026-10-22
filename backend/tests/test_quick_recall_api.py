@@ -1,3 +1,4 @@
+import pytest
 from datetime import datetime, timezone
 
 from fastapi.testclient import TestClient
@@ -6,6 +7,11 @@ from sqlalchemy.orm import Session
 from app.models import Flashcard
 from tests.test_management_api import create_workbook
 
+
+@pytest.fixture(name="api_client")
+def privileged_scenario_client(admin_api_client):
+    """These learning/data scenarios now run with a verified administrator."""
+    return admin_api_client
 
 def create_sheet_cards(db_session: Session):
     workbook = create_workbook(db_session, "Quick Recall", datetime.now(timezone.utc))

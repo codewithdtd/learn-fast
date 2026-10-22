@@ -63,9 +63,23 @@ def grade_writing(prompt: dict, essay: str) -> tuple[object, str]:
         },
         "learner_essay_untrusted_text": essay,
     }
+    system = SYSTEM_PROMPT
+    if prompt.get("format") == "sentence":
+        # Chấm cách dùng từ theo nghĩa/ngữ cảnh, không so khớp máy móc với câu ví dụ.
+        system += """\nThis is ONE sentence vocabulary practice, not an essay.
+Assess task_response as using the target expression meaningfully in the requested situation;
+coherence means sentence clarity, vocabulary means accurate natural target usage/collocation,
+and grammar means grammatical accuracy. Accept valid inflections and many different correct answers.
+Never require an introduction, conclusion, paragraph length, or copying a model answer.
+If the target is missing or used with the wrong meaning, explain it in task_response/vocabulary;
+do not invent a grammatical error or silently insert the expression into an otherwise correct sentence.
+Mark genuine strengths with exact quotes. Optional naturalness improvements must be suggestions.
+Give bilingual next steps and preserve the learner's intended meaning."""
+        user_data["assignment"]["sentence_target"] = prompt.get("paragraph_hints", {}).get("sentence_practice", {})
+        user_data["assignment"]["format"] = "sentence"
     raw = call_9router_chat(
         messages=[
-            {"role": "system", "content": SYSTEM_PROMPT + "\nJSON schema:\n" + json.dumps(schema)},
+            {"role": "system", "content": system + "\nJSON schema:\n" + json.dumps(schema)},
             {"role": "user", "content": json.dumps(user_data, ensure_ascii=False)},
         ],
         temperature=0.2,

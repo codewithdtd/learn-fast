@@ -2,7 +2,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_user
+from app.api.deps import get_current_admin, get_current_user
 from app.core.database import get_db
 from app.core.security import get_password_hash, verify_password
 from app.models.user import User
@@ -19,13 +19,13 @@ from app.services.auth import (
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-@router.post("/register", response_model=UserRead, status_code=status.HTTP_201_CREATED)
+@router.post("/register", response_model=UserRead, status_code=status.HTTP_201_CREATED, dependencies=[Depends(get_current_admin)])
 def register(
     user_in: UserCreate,
     db: Annotated[Session, Depends(get_db)],
 ) -> UserRead:
     """
-    Register a new user account.
+    Create an account as an authenticated administrator. Public registration is disabled.
     
     Python & FastAPI Concepts:
     - Automatically parses JSON request body into `UserCreate` Pydantic model.
@@ -79,7 +79,7 @@ def get_me(
 @router.put("/me", response_model=UserRead)
 def update_profile(
     user_update: UserUpdate,
-    current_user: Annotated[User, Depends(get_current_user)],
+    current_user: Annotated[User, Depends(get_current_admin)],
     db: Annotated[Session, Depends(get_db)],
 ) -> UserRead:
     """
@@ -107,7 +107,7 @@ def update_profile(
 @router.post("/change-password", status_code=status.HTTP_200_OK)
 def change_password(
     pwd_data: PasswordChangeRequest,
-    current_user: Annotated[User, Depends(get_current_user)],
+    current_user: Annotated[User, Depends(get_current_admin)],
     db: Annotated[Session, Depends(get_db)],
 ) -> dict[str, str]:
     """

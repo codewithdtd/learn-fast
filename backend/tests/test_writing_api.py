@@ -245,13 +245,15 @@ def test_rewrite_creates_linked_attempt_without_changing_original(api_client: Te
     assert db_session.get(WritingAttempt, first["id"]).status == "graded"
 
 
-def test_demo_mode_blocks_attempt_mutations(api_client: TestClient, db_session, monkeypatch):
+def test_demo_policy_allows_admin_attempts_and_blocks_guests(api_client: TestClient, db_session, monkeypatch):
     from app.core.config import settings
 
     _owner, headers = make_user(db_session, "demo")
     monkeypatch.setattr(settings, "demo_mode", True)
     response = api_client.post("/api/v1/writing/attempts", headers=headers, json={"prompt_id": 1})
-    assert response.status_code == 403
+    assert response.status_code == 201
+    guest = api_client.post("/api/v1/writing/attempts", json={"prompt_id": 1})
+    assert guest.status_code == 401
 
 
 def test_read_recovers_interrupted_grading_and_rejects_late_result(api_client, db_session, monkeypatch):

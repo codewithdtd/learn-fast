@@ -90,6 +90,24 @@ def api_client(db_session: Session) -> Generator[TestClient, None, None]:
 
 
 @pytest.fixture()
+def admin_api_client(db_session: Session, admin_headers: dict[str, str]) -> Generator[TestClient, None, None]:
+    """Explicit administrator client for scenarios that now require privileged access."""
+    def override_get_db() -> Generator[Session, None, None]:
+        yield db_session
+
+    previous = api_app.dependency_overrides.get(get_db)
+    api_app.dependency_overrides[get_db] = override_get_db
+    try:
+        with TestClient(app, headers=admin_headers) as client:
+            yield client
+    finally:
+        if previous is None:
+            api_app.dependency_overrides.pop(get_db, None)
+        else:
+            api_app.dependency_overrides[get_db] = previous
+
+
+@pytest.fixture()
 def admin_headers(db_session: Session) -> dict[str, str]:
     """Provides authorization headers for an active admin (is_superuser=True) user."""
     from app.core.security import create_access_token, get_password_hash

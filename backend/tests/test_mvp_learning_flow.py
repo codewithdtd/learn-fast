@@ -1,3 +1,4 @@
+import pytest
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -11,6 +12,11 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 SAMPLE_WORKBOOK = PROJECT_ROOT / "samples" / "english-srs-sample.xlsx"
 XLSX_MIME_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
+
+@pytest.fixture(name="api_client")
+def privileged_scenario_client(admin_api_client):
+    """These learning/data scenarios now run with a verified administrator."""
+    return admin_api_client
 
 def answer_all_cards_and_complete(api_client: TestClient, session_id: int, cards: list[dict]) -> dict:
     session = api_client.get(f"/api/v1/study-sessions/{session_id}").json()

@@ -1,5 +1,7 @@
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy import select
+from app.models.user import User
 
 from app.core.security import create_access_token, decode_access_token, get_password_hash, verify_password
 
@@ -35,7 +37,7 @@ def test_jwt_token_creation_and_decoding():
     assert decode_access_token("invalid.token.signature") is None
 
 
-def test_auth_register_and_login_flow(api_client: TestClient):
+def test_auth_register_and_login_flow(api_client: TestClient, admin_headers):
     """Integration test: Register account -> Login -> Get /me profile."""
     # 1. Register
     reg_payload = {
@@ -44,7 +46,7 @@ def test_auth_register_and_login_flow(api_client: TestClient):
         "full_name": "Python Developer",
         "password": "strongPassword123",
     }
-    reg_res = api_client.post("/api/v1/auth/register", json=reg_payload)
+    reg_res = api_client.post("/api/v1/auth/register", json=reg_payload, headers=admin_headers)
     assert reg_res.status_code == 201
     user_data = reg_res.json()
     assert user_data["email"] == "learner@example.com"
@@ -52,7 +54,7 @@ def test_auth_register_and_login_flow(api_client: TestClient):
     assert "hashed_password" not in user_data
 
     # 2. Duplicate registration fails (HTTP 400)
-    dup_res = api_client.post("/api/v1/auth/register", json=reg_payload)
+    dup_res = api_client.post("/api/v1/auth/register", json=reg_payload, headers=admin_headers)
     assert dup_res.status_code == 400
     assert "already exists" in dup_res.json()["detail"]
 
@@ -87,13 +89,17 @@ def test_auth_register_and_login_flow(api_client: TestClient):
     assert unauth_res.status_code == 401
 
 
-def test_auth_change_password(api_client: TestClient):
+def test_auth_change_password(api_client: TestClient, db_session, admin_headers):
     """Test authenticated user updating their password."""
     # Register & Login
     api_client.post(
         "/api/v1/auth/register",
         json={"email": "pwd_test@example.com", "username": "pwd_user", "password": "OldPassword123"},
+        headers=admin_headers,
     )
+    # Provision an admin in the isolated test DB; the public API cannot grant this role.
+    db_session.scalar(select(User).where(User.username == "pwd_user")).is_superuser = True
+    db_session.commit()
     login_res = api_client.post(
         "/api/v1/auth/login",
         json={"username_or_email": "pwd_user", "password": "OldPassword123"},

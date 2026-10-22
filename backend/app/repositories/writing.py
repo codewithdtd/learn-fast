@@ -20,10 +20,11 @@ class WritingRepository:
             select(WritingPrompt).where(WritingPrompt.is_active.is_(True)).order_by(WritingPrompt.id)
         ))
 
-    def get_prompt(self, prompt_id: int) -> WritingPrompt | None:
-        return self.db.scalar(
-            select(WritingPrompt).where(WritingPrompt.id == prompt_id, WritingPrompt.is_active.is_(True))
-        )
+    def get_prompt(self, prompt_id: int, *, include_inactive: bool = False) -> WritingPrompt | None:
+        statement = select(WritingPrompt).where(WritingPrompt.id == prompt_id)
+        if not include_inactive:
+            statement = statement.where(WritingPrompt.is_active.is_(True))
+        return self.db.scalar(statement)
 
     def get_attempt(self, attempt_id: int, user_id: int) -> WritingAttempt | None:
         return self.db.scalar(

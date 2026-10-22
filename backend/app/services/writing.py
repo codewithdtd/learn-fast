@@ -96,16 +96,19 @@ def get_prompt(db: Session, prompt_id: int) -> WritingPromptRead:
 
 def create_attempt(db: Session, user_id: int, prompt_id: int, revision_of_id: int | None) -> WritingAttemptRead:
     repo = WritingRepository(db)
-    prompt = repo.get_prompt(prompt_id)
-    if prompt is None:
-        raise HTTPException(status_code=404, detail="Writing topic not found.")
+    previous = None
     if revision_of_id is not None:
         previous = repo.get_attempt(revision_of_id, user_id)
         if previous is None:
             raise HTTPException(status_code=404, detail="Previous writing attempt not found.")
         if previous.prompt_id != prompt_id or previous.status != "graded":
             raise HTTPException(status_code=409, detail="Only a graded attempt for the same topic can be rewritten.")
-    attempt = repo.create_attempt(user_id, prompt, _prompt_snapshot(prompt), revision_of_id)
+    # Đề AI bị ẩn khỏi thư viện; chỉ cho dùng lại sau khi xác minh bài gốc thuộc user hiện tại.
+    prompt = repo.get_prompt(prompt_id, include_inactive=previous is not None)
+    if prompt is None:
+        raise HTTPException(status_code=404, detail="Writing topic not found.")
+    snapshot = previous.prompt_snapshot if previous is not None else _prompt_snapshot(prompt)
+    attempt = repo.create_attempt(user_id, prompt, snapshot, revision_of_id)
     return read_attempt(attempt)
 
 
@@ -141,6 +144,8 @@ def save_attempt(
     attempt = WritingRepository(db).get_attempt(attempt_id, user_id)
     if attempt is None:
         raise HTTPException(status_code=404, detail="Writing attempt not found.")
+    if attempt.prompt_snapshot.get("format") == "sentence" and (len(normalized) > 600 or len(normalized.split()) > 60):
+        raise HTTPException(status_code=422, detail="Keep your sentence within 60 words and 600 characters.")
     repo = WritingRepository(db)
     saved = repo.save_draft(attempt_id, user_id, version, normalized, len(normalized.split()))
     if not saved:
@@ -250,9 +255,17 @@ def grade_attempt(
         raise HTTPException(status_code=409, detail="Save the latest draft before requesting feedback.")
     source = attempt.draft_text.replace("\r\n", "\n").replace("\r", "\n")
     if not source.strip():
-        raise HTTPException(status_code=422, detail="Write a short paragraph before requesting feedback.")
+        raise HTTPException(status_code=422, detail="Write your answer before requesting feedback.")
     if len(source) > settings.writing_max_characters or len(source.split()) > settings.writing_max_words:
         raise HTTPException(status_code=422, detail="The draft exceeds the writing limit.")
+    if attempt.prompt_snapshot.get("format") == "sentence":
+        if len(source) > 600 or len(source.split()) > 60:
+            raise HTTPException(status_code=422, detail="Keep your sentence within 60 words and 600 characters.")
+        if attempt.revision_of_id is not None:
+            previous = repo.get_attempt(attempt.revision_of_id, user_id)
+            # Không tốn quota cho việc gửi lại nguyên câu cũ trong một lượt tự viết lại.
+            if previous and " ".join(source.lower().split()) == " ".join((previous.submitted_text or "").lower().split()):
+                raise HTTPException(status_code=422, detail="Revise your previous sentence or write a new one before submitting.")
 
     now = datetime.now(timezone.utc)
     token = str(uuid4())

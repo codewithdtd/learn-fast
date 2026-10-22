@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.ai import router as ai_router
@@ -15,28 +15,21 @@ from app.api.study_sessions import router as study_sessions_router
 from app.api.workbooks import router as workbooks_router
 from app.api.writing import router as writing_router
 from app.core.config import settings
-from app.core.demo_guard import DemoReadOnlyMiddleware
+from app.api.deps import get_current_admin
 
 
 api_app = FastAPI(title="English SRS & Mastery Learning API")
 
-# Demo Read-Only Guard
-api_app.add_middleware(DemoReadOnlyMiddleware)
-
-
 api_app.include_router(health_router, prefix="/api/v1")
 api_app.include_router(auth_router, prefix="/api/v1")
-api_app.include_router(dashboard_router, prefix="/api/v1")
-api_app.include_router(calendar_router, prefix="/api/v1")
-api_app.include_router(notifications_router, prefix="/api/v1")
-api_app.include_router(workbooks_router, prefix="/api/v1")
-api_app.include_router(sheets_router, prefix="/api/v1")
-api_app.include_router(flashcards_router, prefix="/api/v1")
-api_app.include_router(quick_recall_router, prefix="/api/v1")
-api_app.include_router(study_sessions_router, prefix="/api/v1")
-api_app.include_router(ai_router, prefix="/api/v1")
-api_app.include_router(writing_router, prefix="/api/v1")
-api_app.include_router(speaking_router, prefix="/api/v1")
+# Mọi dữ liệu thật đều cần admin, kể cả GET và route thêm sau trong các router này.
+# Khách trải nghiệm một sheet tĩnh ở frontend; không mở dữ liệu DB theo ID cho khách.
+for private_router in (
+    dashboard_router, calendar_router, notifications_router, workbooks_router,
+    sheets_router, flashcards_router, quick_recall_router, study_sessions_router,
+    ai_router, writing_router, speaking_router,
+):
+    api_app.include_router(private_router, prefix="/api/v1", dependencies=[Depends(get_current_admin)])
 
 # Keep CORS outside FastAPI's exception middleware so the browser can read
 # server-error responses and reveal the API failure instead of masking it as CORS.
