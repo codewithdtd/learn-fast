@@ -6,7 +6,18 @@ export type WritingHint = {
 
 export type BilingualItem = { vi: string; en: string };
 
+export type SentencePracticeContext = {
+  flashcard_id: number;
+  sheet_id: number;
+  phrase: string;
+  meaning: string;
+  idea: BilingualItem;
+  frame: BilingualItem;
+  example: BilingualItem;
+};
+
 export type WritingParagraphHints = {
+  sentence_practice?: SentencePracticeContext;
   opening_vi: string;
   opening_en: string;
   details_vi: string;

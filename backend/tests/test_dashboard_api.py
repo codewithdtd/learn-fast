@@ -1,3 +1,4 @@
+import pytest
 from datetime import datetime, timedelta, timezone
 
 from fastapi.testclient import TestClient
@@ -14,6 +15,11 @@ from app.models import (
     Workbook,
 )
 
+
+@pytest.fixture(name="api_client")
+def privileged_scenario_client(admin_api_client):
+    """These learning/data scenarios now run with a verified administrator."""
+    return admin_api_client
 
 def create_dashboard_sheet(
     db_session: Session,

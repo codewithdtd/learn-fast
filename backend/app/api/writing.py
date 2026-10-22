@@ -17,6 +17,8 @@ from app.schemas.writing import (
     WritingUsageRead,
 )
 from app.services import writing as writing_service
+from app.services.sentence_practice import create_sentence_attempt
+from app.schemas.sentence_practice import SentenceAttemptCreate
 
 
 # Bảo vệ toàn router để route đọc dữ liệu và route mới cũng luôn yêu cầu quyền admin.
@@ -42,6 +44,19 @@ def create_attempt(
     return writing_service.create_attempt(
         db, current_user.id, payload.prompt_id, payload.revision_of_id
     )
+
+
+@router.post(
+    "/attempts/sentence",
+    response_model=WritingAttemptRead,
+    status_code=status.HTTP_201_CREATED,
+)
+def sentence_attempt(
+    payload: SentenceAttemptCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> WritingAttemptRead:
+    return create_sentence_attempt(db, current_user.id, payload.flashcard_id)
 
 
 @router.post(

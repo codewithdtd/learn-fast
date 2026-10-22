@@ -1,3 +1,4 @@
+import pytest
 from datetime import datetime, timedelta, timezone
 
 from fastapi.testclient import TestClient
@@ -13,6 +14,11 @@ from app.models import (
     Workbook,
 )
 
+
+@pytest.fixture(name="api_client")
+def privileged_scenario_client(admin_api_client):
+    """These learning/data scenarios now run with a verified administrator."""
+    return admin_api_client
 
 def create_workbook(db: Session, name: str, imported_at: datetime) -> Workbook:
     workbook = Workbook(
@@ -67,7 +73,7 @@ def test_patch_workbook_name_persists_without_changing_sheets(
     workbook = create_workbook(db_session, "Vocabulary", datetime.now(timezone.utc))
 
     # Unauthorized request without admin headers returns 401 or 403
-    unauth = api_client.patch(f"/api/v1/workbooks/{workbook.id}", json={"name": "Hacker Name"})
+    unauth = api_client.patch(f"/api/v1/workbooks/{workbook.id}", json={"name": "Hacker Name"}, headers={"Authorization": ""})
     assert unauth.status_code == 401
 
     response = api_client.patch(
@@ -188,6 +194,7 @@ def test_admin_can_move_sheets_and_preserve_learning_data(
     denied = api_client.post(
         f"/api/v1/workbooks/{source.id}/sheets/move",
         json={"target_workbook_id": target.id, "sheet_ids": [moved_sheet.id, second_moved_sheet.id]},
+        headers={"Authorization": ""},
     )
     response = api_client.post(
         f"/api/v1/workbooks/{source.id}/sheets/move",
@@ -274,7 +281,7 @@ def test_delete_workbook_removes_child_sheets_and_cards(
     workbook = create_workbook(db_session, "Delete me", datetime.now(timezone.utc))
 
     # Unauthenticated delete blocked
-    unauth = api_client.delete(f"/api/v1/workbooks/{workbook.id}")
+    unauth = api_client.delete(f"/api/v1/workbooks/{workbook.id}", headers={"Authorization": ""})
     assert unauth.status_code == 401
 
     response = api_client.delete(f"/api/v1/workbooks/{workbook.id}", headers=admin_headers)

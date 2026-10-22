@@ -1,40 +1,26 @@
+import pytest
 from fastapi.testclient import TestClient
+
 from app.core.config import settings
+from app.models import Workbook
 
 
-def test_demo_mode_blocks_destructive_mutations(api_client: TestClient):
-    """Ensure DemoReadOnlyMiddleware rejects mutating endpoints when demo_mode=True."""
-    # 1. Turn on Demo Mode
-    original_setting = settings.demo_mode
-    settings.demo_mode = True
+@pytest.mark.parametrize("legacy_demo_flag", [False, True])
+def test_public_access_never_reads_or_changes_real_library(api_client: TestClient, monkeypatch, legacy_demo_flag):
+    monkeypatch.setattr(settings, "demo_mode", legacy_demo_flag)
+    assert api_client.get("/api/v1/workbooks").status_code == 401
+    assert api_client.post("/api/v1/workbooks/import").status_code == 401
+    assert api_client.delete("/api/v1/workbooks/1").status_code == 401
+    response = api_client.get("/api/v1/health")
+    assert response.status_code == 200 and response.text == "ok"
 
-    try:
-        # Import workbook is blocked (HTTP 403)
-        res_import = api_client.post(
-            "/api/v1/workbooks/import",
-            files={"file": ("test.xlsx", b"dummy content", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")},
-        )
-        assert res_import.status_code == 403
-        assert "Demo Mode is enabled" in res_import.json()["detail"]
 
-        # Delete workbook is blocked (HTTP 403)
-        res_del = api_client.delete("/api/v1/workbooks/1")
-        assert res_del.status_code == 403
-        assert "Demo Mode is enabled" in res_del.json()["detail"]
-
-        # Rename workbook is blocked (HTTP 403)
-        res_patch = api_client.patch("/api/v1/workbooks/1", json={"name": "New Name"})
-        assert res_patch.status_code == 403
-
-        # Read operations still succeed (HTTP 200)
-        res_get = api_client.get("/api/v1/workbooks")
-        assert res_get.status_code == 200
-
-        # Health checks stay minimal even when demo mode is enabled.
-        res_health = api_client.get("/api/v1/health")
-        assert res_health.status_code == 200
-        assert res_health.text == "ok"
-
-    finally:
-        # Restore setting
-        settings.demo_mode = original_setting
+def test_admin_can_manage_library_even_with_legacy_demo_flag(admin_api_client, db_session, monkeypatch):
+    monkeypatch.setattr(settings, "demo_mode", True)
+    workbook = Workbook(name="Private workbook", original_filename="private.xlsx")
+    db_session.add(workbook)
+    db_session.commit()
+    response = admin_api_client.patch(f"/api/v1/workbooks/{workbook.id}", json={"name": "Updated workbook"})
+    assert response.status_code == 200
+    assert response.json()["name"] == "Updated workbook"
+    assert admin_api_client.get("/api/v1/workbooks").json()[0]["name"] == "Updated workbook"

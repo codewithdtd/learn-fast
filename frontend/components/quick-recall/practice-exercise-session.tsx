@@ -20,7 +20,7 @@ const modes: { value: ExerciseMode; title: string; description: string; icon: "c
 
 type Round = { id: number; settings: ExerciseSettings; questions: ExerciseQuestion[] };
 
-export function PracticeExerciseSession({ sheet, cards }: { sheet: SheetDetail; cards: FlashcardListItem[] }) {
+export function PracticeExerciseSession({ sheet, cards, backHref }: { sheet: SheetDetail; cards: FlashcardListItem[]; backHref?: string }) {
   const [settings, setSettings] = useState<ExerciseSettings>(() => {
     const initial: ExerciseSettings = { mode: "multiple_choice", direction: "en_to_vi", filter: "all", count: "10" };
     return createExercisePool(cards, initial).length ? initial : { ...initial, mode: "translation" };
@@ -44,7 +44,7 @@ export function PracticeExerciseSession({ sheet, cards }: { sheet: SheetDetail; 
 
   return <section className={styles.root}>
     <header className={styles.header}>
-      <Link href={`/sheets/${sheet.id}`} className={styles.back}><Icon name="back" size={18} /> Back to {sheet.name}</Link>
+      <Link href={backHref ?? `/sheets/${sheet.id}`} className={styles.back}><Icon name="back" size={18} /> Back to {sheet.name}</Link>
       <p className={styles.eyebrow}>Put your vocabulary to work</p>
       <h1 ref={pageHeadingRef} tabIndex={-1}>Practice Exercises</h1>
       <p>Find out what you remember, one question at a time.</p>
@@ -113,44 +113,58 @@ export function PracticeExerciseSession({ sheet, cards }: { sheet: SheetDetail; 
 
 function ExerciseRound({ round, onRestart, onConfigure }: { round: Round; onRestart: () => void; onConfigure: () => void }) {
   const [responses, setResponses] = useState<ExerciseResponse[]>([]);
-  const [index, setIndex] = useState(0);
+  const [remainingQuestions, setRemainingQuestions] = useState(round.questions);
   const [draft, setDraft] = useState("");
+  const [response, setResponse] = useState<ExerciseResponse | null>(null);
   const [isComplete, setIsComplete] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const submitRef = useRef<HTMLButtonElement>(null);
-  const question = round.questions[index];
-  const response = responses[index];
+  const question = remainingQuestions[0];
   const hasAnswered = Boolean(response);
   const isMultipleChoice = round.settings.mode === "multiple_choice";
   const mode = modes.find((item) => item.value === round.settings.mode);
 
   useEffect(() => {
-    if (isComplete) return;
+    if (isComplete || !question) return;
     if (hasAnswered) submitRef.current?.focus();
     else if (isMultipleChoice) headingRef.current?.focus();
     else inputRef.current?.focus();
-  }, [index, hasAnswered, isMultipleChoice, isComplete]);
+  }, [question, hasAnswered, isMultipleChoice, isComplete]);
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!question) return;
     if (response) {
-      if (index + 1 === round.questions.length) setIsComplete(true);
-      else { setIndex(index + 1); setDraft(""); }
+      const retryTranslation = round.settings.mode === "translation" && !response.is_correct;
+      if (retryTranslation) {
+        // Câu sai phải quay lại sau các câu còn lại để người học truy hồi lại đáp án;
+        // vì vậy nó chỉ rời hàng đợi khi được chấm đúng.
+        setRemainingQuestions((current) => [...current.slice(1), question]);
+      } else {
+        const nextQuestions = remainingQuestions.slice(1);
+        setRemainingQuestions(nextQuestions);
+        if (nextQuestions.length === 0) setIsComplete(true);
+      }
+      setResponse(null);
+      setDraft("");
       return;
     }
     if (!draft.trim()) return;
     const graded = gradeExerciseAnswer(question, draft);
-    // A question is locked after the first submit. Repeated Enter/clicks never
-    // add another answer or change the score for this question.
-    setResponses((current) => current.length === index ? [...current, graded] : current);
+    // Giữ kết quả đầu tiên cho điểm số; các lần thử sau chỉ quyết định câu đã
+    // được gỡ khỏi hàng đợi hay còn phải luyện lại.
+    setResponses((current) => current.some((item) => item.question.cardId === question.cardId)
+      ? current : [...current, graded]);
+    setResponse(graded);
   }
 
-  if (isComplete) return <ExerciseResults responses={responses} onRestart={onRestart} onConfigure={onConfigure} />;
+  if (isComplete) return <ExerciseResults responses={responses} retryUntilCorrect={round.settings.mode === "translation"} onRestart={onRestart} onConfigure={onConfigure} />;
+  if (!question) return null;
 
   return <div className={styles.round}>
-    <div className={styles.roundMeta}><span>{mode?.title}</span><span>Question {index + 1} of {round.questions.length}</span></div>
-    <progress className={styles.progress} value={responses.length} max={round.questions.length} aria-label="Answered questions" />
+    <div className={styles.roundMeta}><span>{mode?.title}</span><span>Mastered {round.questions.length - remainingQuestions.length} of {round.questions.length}</span></div>
+    <progress className={styles.progress} value={round.questions.length - remainingQuestions.length} max={round.questions.length} aria-label="Questions answered correctly" />
     <form className={styles.questionCard} onSubmit={submit}>
       <p className={styles.eyebrow}>{round.settings.mode === "cloze" ? "Complete the English example"
         : round.settings.direction === "en_to_vi" ? "Translate into Vietnamese" : "Translate into English"}</p>
@@ -186,12 +200,13 @@ function ExerciseRound({ round, onRestart, onConfigure }: { round: Round; onRest
         <Icon name={response.is_correct ? "check" : "refresh"} size={22} />
         <div><strong>{response.is_correct ? "Correct!" : "Not quite. Here is the expected answer:"}</strong>
           <p>{question.answer}</p>
+          {!response.is_correct && round.settings.mode === "translation" && <p>This question is moving to the end of the queue. You will need to answer it correctly to finish.</p>}
         </div>
       </div>}
 
       <div className={styles.questionActions}>
         <button ref={submitRef} className={styles.primary} type="submit" disabled={!hasAnswered && !draft.trim()}>
-          {hasAnswered ? index + 1 === round.questions.length ? "See results" : "Next question" : "Check answer"}
+          {hasAnswered ? response.is_correct && remainingQuestions.length === 1 ? "See results" : "Next question" : "Check answer"}
           <Icon name={hasAnswered ? "arrow" : "check"} size={18} />
         </button>
         <span className={styles.hint}>Press Enter to {hasAnswered ? "continue" : "check"}.</span>
@@ -201,7 +216,7 @@ function ExerciseRound({ round, onRestart, onConfigure }: { round: Round; onRest
   </div>;
 }
 
-function ExerciseResults({ responses, onRestart, onConfigure }: { responses: ExerciseResponse[]; onRestart: () => void; onConfigure: () => void }) {
+function ExerciseResults({ responses, retryUntilCorrect, onRestart, onConfigure }: { responses: ExerciseResponse[]; retryUntilCorrect: boolean; onRestart: () => void; onConfigure: () => void }) {
   const headingRef = useRef<HTMLHeadingElement>(null);
   useEffect(() => { headingRef.current?.focus(); }, []);
   const summary = summarizeExercise(responses);
@@ -209,18 +224,18 @@ function ExerciseResults({ responses, onRestart, onConfigure }: { responses: Exe
 
   return <section className={styles.results}>
     <div className={styles.scoreCard}>
-      <p className={styles.eyebrow}>Round complete</p>
+      <p className={styles.eyebrow}>You completed every question</p>
       <h2 ref={headingRef} tabIndex={-1}>Here is how you did</h2>
       <strong className={styles.score}>{summary.percentage}%</strong>
-      <p>{summary.correct} of {summary.total} answers correct</p>
+      <p>{summary.correct} of {summary.total} answers correct on the first try</p>
       <div className={styles.actions}>
         <button type="button" className={styles.primary} onClick={onRestart}><Icon name="refresh" size={18} /> Try another round</button>
         <button type="button" className={styles.secondary} onClick={onConfigure}>Change exercise</button>
       </div>
     </div>
     {incorrect.length ? <section className={styles.review} aria-labelledby="exercise-review-heading">
-      <h2 id="exercise-review-heading">Learn from your answers</h2>
-      <p>{incorrect.length} question{incorrect.length === 1 ? "" : "s"} to revisit.</p>
+      <h2 id="exercise-review-heading">{retryUntilCorrect ? "Questions that needed another try" : "Learn from your answers"}</h2>
+      <p>{retryUntilCorrect ? "You answered each one correctly before finishing." : `${incorrect.length} question${incorrect.length === 1 ? "" : "s"} to revisit.`}</p>
       <ol className={styles.reviewList}>
         {incorrect.map((response) => <li key={response.question.cardId}>
           <h3>{response.question.prompt}</h3>

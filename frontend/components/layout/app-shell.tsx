@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { UserProfileMenu } from "@/components/auth/user-profile-menu";
 import { DemoBadge } from "@/components/layout/demo-badge";
-import { NotificationBell } from "@/components/notifications/notification-bell";
+import { AccessGate, AdminNotifications } from "@/components/layout/access-gate";
 import { ThemeToggle } from "./theme-toggle";
 
 
@@ -73,7 +73,7 @@ export function AppShell({
         <div className="mobile-header-actions flex items-center gap-2">
           <DemoBadge />
           <ThemeToggle compact />
-          <NotificationBell />
+          <AdminNotifications />
           <UserProfileMenu />
         </div>
       </header>
@@ -81,10 +81,10 @@ export function AppShell({
       <div className="app-content">
         <div className="desktop-top-bar flex items-center justify-end gap-3">
           <DemoBadge />
-          <NotificationBell />
+          <AdminNotifications />
           <UserProfileMenu />
         </div>
-        {children}
+        <AccessGate>{children}</AccessGate>
       </div>
 
 

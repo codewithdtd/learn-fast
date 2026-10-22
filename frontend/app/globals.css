@@ -8144,6 +8144,125 @@ a {
   background: #dfceb8;
 }
 
+.daily-practice-card {
+  gap: 14px;
+  border-color: var(--outline);
+  background: var(--surface);
+  box-shadow: var(--shadow-soft);
+}
+
+.daily-practice-card .hero-pill-badge {
+  color: var(--primary);
+  background: var(--primary-soft);
+  box-shadow: none;
+}
+
+.daily-practice-card .hero-title {
+  color: var(--foreground);
+}
+
+.daily-practice-card .hero-subtitle {
+  max-width: 56ch;
+  color: var(--muted);
+}
+
+.daily-practice-flow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 14px;
+  color: var(--muted);
+}
+
+.daily-practice-flow > span {
+  display: inline-flex;
+  min-height: 36px;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid var(--outline);
+  border-radius: 999px;
+  padding: 0 12px;
+  background: var(--surface-low);
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.daily-practice-flow > span[data-current="true"] {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--primary-soft);
+}
+
+.daily-practice-flow b {
+  font-size: 11px;
+}
+
+.daily-practice-weak-note,
+.daily-practice-footer {
+  margin: 0 0 14px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.daily-practice-error {
+  margin: 0 0 14px;
+  border: 1px solid var(--error);
+  border-radius: 10px;
+  padding: 10px 12px;
+  color: var(--error);
+  background: var(--error-soft);
+  font-size: 13px;
+}
+
+.daily-practice-cta:focus-visible {
+  outline: 3px solid var(--foreground);
+  outline-offset: 3px;
+}
+
+.daily-practice-cta:disabled {
+  cursor: progress;
+  opacity: 0.65;
+  transform: none;
+}
+
+.daily-practice-footer {
+  margin: 0;
+  border-top: 1px solid var(--outline);
+  padding-top: 12px;
+}
+
+@media (max-width: 639px) {
+  .daily-practice-card {
+    border-radius: 18px;
+    padding: 18px;
+  }
+
+  .daily-practice-card .hero-content-wrap {
+    align-items: flex-start;
+  }
+
+  .daily-practice-card .hero-mascot-badge {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+  }
+
+  .daily-practice-flow {
+    gap: 6px;
+  }
+
+  .daily-practice-flow > span {
+    min-height: 40px;
+    padding: 0 10px;
+  }
+
+  .daily-practice-cta {
+    width: 100%;
+  }
+}
+
 
 /* "Let's Explore" Pastel Squircle Grid */
 .explore-section {

@@ -8,6 +8,14 @@
   color: var(--foreground);
 }
 
+.editor.sentenceEditor { min-height: 150px; }
+.sentencePage .editor { font-size: 16px; }
+.sentencePage h1 { overflow-wrap: anywhere; }
+.sentencePage .primaryButton { background: var(--foreground); color: var(--surface); box-shadow: none; }
+.sentencePage .rewriteBar { flex-wrap: wrap; }
+.sentencePage .scoreCard > span, .sentencePage .scoreCard > strong, .sentencePage .criterionCard > div b,
+.sentencePage .errorMark, .sentencePage .errorBadge, .sentencePage .errorChip { color: var(--foreground); }
+
 .pageHeading,
 .sectionHeading,
 .resultHeader,

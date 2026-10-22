@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { DashboardCheckinBanner } from "@/components/dashboard/dashboard-checkin-banner";
@@ -9,6 +10,7 @@ import { Icon } from "@/components/layout/app-shell";
 import { useAuth } from "@/context/auth-context";
 import { formatDate, formatLabel } from "@/lib/format";
 import {
+  createStudySession,
   getCalendarMonth,
   getDashboard,
   type DashboardActiveSessionItem,
@@ -327,59 +329,82 @@ function DashboardGamifiedStatsBar({
 }
 
 function FeaturedHeroCard({ dashboard }: { dashboard: DashboardSummary }) {
+  const router = useRouter();
+  const [isStarting, setIsStarting] = useState(false);
+  const [startError, setStartError] = useState<string | null>(null);
   const activeSession = dashboard.active_sessions[0];
   const dueSheet = dashboard.due_sheets[0];
   const newSheet = dashboard.new_sheets[0];
+  const selectedSheet = dueSheet ?? newSheet;
 
-  let pill = "Featured Lesson";
-  let title = "Your English Decks";
-  let subtitle = "Start studying flashcards to build long-term memory.";
-  let href = "/workbooks";
-  let ctaText = "Explore Decks";
-  let mascot = "⭐";
+  const planTitle = activeSession ? activeSession.sheet.name : selectedSheet?.name ?? "Your queue is clear";
+  const planDescription = activeSession
+    ? `${activeSession.sheet.workbook_name} · Continue your ${activeSession.total_cards}-card session.`
+    : dueSheet
+      ? `${dueSheet.workbook_name} · ${dueSheet.card_count} cards are ready for scheduled review.`
+      : newSheet
+        ? `${newSheet.workbook_name} · Start with ${newSheet.card_count} new cards.`
+        : "No cards are due right now. Browse your workbooks to choose what to study.";
 
-  if (activeSession) {
-    pill = "Continue Session";
-    title = activeSession.sheet.name;
-    subtitle = `${activeSession.sheet.workbook_name} · ${activeSession.total_cards} cards`;
-    href = `/study-sessions/${activeSession.id}`;
-    ctaText = "Continue Learning";
-    mascot = "🚀";
-  } else if (dueSheet) {
-    pill = "Due for Review";
-    title = dueSheet.name;
-    subtitle = `${dueSheet.workbook_name} · Due now · ${formatLabel(dueSheet.priority)} priority`;
-    href = `/sheets/${dueSheet.id}/study?mode=review`;
-    ctaText = "Review Now";
-    mascot = "🎯";
-  } else if (newSheet) {
-    pill = "Start New Sheet";
-    title = newSheet.name;
-    subtitle = `${newSheet.workbook_name} · ${newSheet.card_count} new cards ready`;
-    href = `/sheets/${newSheet.id}/study`;
-    ctaText = "Start Learning";
-    mascot = "📚";
+  async function startDailyPractice() {
+    if (isStarting) return;
+    setStartError(null);
+    if (activeSession) {
+      router.push(`/study-sessions/${activeSession.id}`);
+      return;
+    }
+    if (!selectedSheet) {
+      router.push("/workbooks");
+      return;
+    }
+
+    setIsStarting(true);
+    try {
+      // Ưu tiên lượt ôn đến hạn trước để người học không bỏ lỡ lịch SRS; chỉ học sheet mới khi không còn lượt ôn.
+      const session = await createStudySession({
+        sheet_id: selectedSheet.id,
+        session_type: dueSheet ? "srs_review" : "new_learning",
+        direction: "en_to_vi",
+      });
+      router.push(`/study-sessions/${session.id}`);
+    } catch (caughtError) {
+      setStartError(caughtError instanceof Error ? caughtError.message : "Could not start today's practice. Please try again.");
+    } finally {
+      setIsStarting(false);
+    }
   }
 
   return (
-    <section className="featured-hero-card" aria-label="Featured learning activity">
-      <span className="hero-pill-badge">{pill}</span>
+    <section className="featured-hero-card daily-practice-card" aria-label="Daily practice plan">
+      <span className="hero-pill-badge">Daily Practice</span>
       <div className="hero-content-wrap">
         <div className="hero-text-block">
-          <h2 className="hero-title">{title}</h2>
-          <p className="hero-subtitle">{subtitle}</p>
-          <Link href={href} className="hero-cta-btn">
-            {ctaText} <Icon name="arrow" size={18} />
-          </Link>
+          <h2 className="hero-title">{planTitle}</h2>
+          <p className="hero-subtitle">{planDescription}</p>
+          {(activeSession || selectedSheet) && <div className="daily-practice-flow" aria-label="Today's practice steps">
+            <span data-current="true"><b>1</b> Flashcards</span>
+            <Icon name="arrow" size={16} />
+            <span><b>2</b> Practice Exercises</span>
+          </div>}
+          {dashboard.weak_card_count > 0 && <p className="daily-practice-weak-note">
+            {dashboard.weak_card_count} weak {dashboard.weak_card_count === 1 ? "card" : "cards"} need extra attention. Choose a sheet&apos;s Weak cards option for focused review.
+          </p>}
+          {startError && <p className="daily-practice-error" role="alert">{startError}</p>}
+          {selectedSheet || activeSession ? <button type="button" className="hero-cta-btn daily-practice-cta" onClick={() => void startDailyPractice()} disabled={isStarting} aria-busy={isStarting}>
+            {isStarting ? "Starting practice…" : activeSession ? "Continue today's practice" : dueSheet ? "Start review" : "Start today's practice"}
+            <Icon name={isStarting ? "clock" : "arrow"} size={18} />
+          </button> : <Link href="/workbooks" className="hero-cta-btn daily-practice-cta">
+            Browse Workbooks <Icon name="arrow" size={18} />
+          </Link>}
         </div>
         <div className="hero-mascot-badge" aria-hidden="true">
-          {mascot}
+          <Icon name="study" size={32} />
         </div>
       </div>
+      <p className="daily-practice-footer">After the flashcards, check what stayed in memory with Practice Exercises.</p>
     </section>
   );
 }
-
 function ExplorePastelGrid({ dashboard }: { dashboard: DashboardSummary }) {
   return (
     <section className="explore-section" aria-label="Explore learning modules">

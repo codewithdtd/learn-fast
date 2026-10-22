@@ -17,8 +17,8 @@ class Settings(BaseSettings):
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 60 * 24 * 7  # 7 days for development ease
 
-    # Demo Showcase Read-Only Mode
-    # When enabled, database mutations (workbook import, delete, rename, register) are blocked.
+    # Cờ tương thích cấu hình cũ. Quyền admin luôn được kiểm tra, không phụ thuộc cờ này;
+    # sheet public demo nằm riêng ở frontend để admin không bị khóa thao tác nhầm.
     demo_mode: bool = False
 
     # 9Router Local AI Configuration

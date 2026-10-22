@@ -344,12 +344,9 @@ export async function moveSheetsToWorkbook(
 }
 
 export async function deleteWorkbook(id: string): Promise<void> {
-  const response = await fetch(`${apiBaseUrl}/api/v1/workbooks/${encodeURIComponent(id)}`, {
+  await requestNoContent(`/api/v1/workbooks/${encodeURIComponent(id)}`, {
     method: "DELETE",
   });
-  if (!response.ok) {
-    throw await toApiRequestError(response);
-  }
 }
 
 export async function getSheet(id: string): Promise<SheetDetail> {
@@ -811,6 +808,22 @@ export async function generateRandomWritingAttempt(): Promise<WritingAttempt> {
   });
 }
 
+export async function generateSentenceWritingAttempt(flashcardId: number, signal?: AbortSignal): Promise<WritingAttempt> {
+  try {
+    return await requestWritingJson<WritingAttempt>("/api/v1/writing/attempts/sentence", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ flashcard_id: flashcardId }),
+      signal,
+    }, 180_000);
+  } catch (cause) {
+    if (cause instanceof ApiRequestError && cause.status === 408) {
+      throw new ApiRequestError("Creating the situation timed out. Check Practice history before trying again.", 408);
+    }
+    throw cause;
+  }
+}
+
 export async function saveWritingAttempt(
   attemptId: number,
   version: number,
@@ -952,6 +965,23 @@ async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
     throw await toApiRequestError(response);
   }
   return (await response.json()) as T;
+}
+
+async function requestNoContent(path: string, init?: RequestInit): Promise<void> {
+  // Các lệnh DELETE admin cần JWT như requestJson, nhưng phản hồi 204 không có JSON để parse.
+  const token = getStoredAuthToken();
+  const headers = new Headers(init?.headers || {});
+  if (token && !headers.has("Authorization")) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
+
+  const response = await fetch(`${apiBaseUrl}${path}`, {
+    ...init,
+    headers,
+  });
+  if (!response.ok) {
+    throw await toApiRequestError(response);
+  }
 }
 
 
