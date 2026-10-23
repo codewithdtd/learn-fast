@@ -70,21 +70,57 @@ function AuthDialog({ onClose, initialMode }: Pick<AuthModalProps, "onClose" | "
   }
 
   if (!mounted) return null;
-  return createPortal(<div className="auth-modal-backdrop" onClick={(event) => { if (event.target === event.currentTarget && !isSubmitting) onClose(); }}>
-    <div className="auth-modal-container" role="dialog" aria-modal="true" aria-labelledby="auth-dialog-title" ref={dialogRef}>
-      <button type="button" className="auth-modal-close" aria-label="Close sign in" disabled={isSubmitting} onClick={onClose}>×</button>
-      <header className="auth-modal-header"><h2 id="auth-dialog-title">{mode === "login" ? "Sign in" : "Create your account"}</h2><p>{mode === "login" ? "Sign in to access your account." : "Create a learner account. The public sample is available without signing in."}</p></header>
-      {error && <div className="auth-error-alert" role="alert">{error}</div>}
-      <form className="auth-form-body" onSubmit={submit}>
-        {mode === "register" && <>
-          <div className="auth-input-group"><label htmlFor="auth-full-name">Full name</label><input id="auth-full-name" type="text" required autoComplete="name" value={fullName} disabled={isSubmitting} onChange={(event) => setFullName(event.target.value)} /></div>
-          <div className="auth-input-group"><label htmlFor="auth-email">Email</label><input id="auth-email" type="email" required autoComplete="email" value={email} disabled={isSubmitting} onChange={(event) => setEmail(event.target.value)} /></div>
-        </>}
-        <div className="auth-input-group"><label htmlFor="auth-login-identifier">Username{mode === "login" ? " or email" : ""}</label><div className="auth-input-wrapper"><input id="auth-login-identifier" type="text" required autoComplete="username" value={usernameOrEmail} disabled={isSubmitting} onChange={(event) => setUsernameOrEmail(event.target.value)} /></div></div>
-        <div className="auth-input-group"><label htmlFor="auth-login-password">Password</label><div className="auth-input-wrapper"><input id="auth-login-password" type={showPassword ? "text" : "password"} required minLength={8} autoComplete={mode === "login" ? "current-password" : "new-password"} value={password} disabled={isSubmitting} onChange={(event) => setPassword(event.target.value)} /><button type="button" className="auth-password-toggle" aria-label={showPassword ? "Hide password" : "Show password"} disabled={isSubmitting} onClick={() => setShowPassword(!showPassword)}>{showPassword ? "Hide" : "Show"}</button></div></div>
-        <button type="submit" className="auth-submit-btn" disabled={isSubmitting} aria-busy={isSubmitting}>{isSubmitting ? (mode === "login" ? "Signing in…" : "Creating account…") : mode === "login" ? "Sign in" : "Sign up"}</button>
-      </form>
-      <div className="auth-modal-footer"><p>{mode === "login" ? "New to Learn Fast?" : "Already have an account?"} <button className="auth-toggle-link" type="button" disabled={isSubmitting} onClick={() => { setMode(mode === "login" ? "register" : "login"); setError(null); }}>{mode === "login" ? "Sign up" : "Sign in"}</button></p></div>
-    </div>
-  </div>, document.body);
+  return createPortal(
+    <div className="auth-modal-backdrop" onClick={(event) => { if (event.target === event.currentTarget && !isSubmitting) onClose(); }}>
+      <div className="auth-modal-container" role="dialog" aria-modal="true" aria-labelledby="auth-dialog-title" ref={dialogRef}>
+        <button type="button" className="auth-modal-close" aria-label="Close sign in" disabled={isSubmitting} onClick={onClose}>×</button>
+        <aside className="auth-modal-aside" aria-label="Learn Fast introduction">
+          <a className="auth-modal-brand" href="/" aria-label="Learn Fast home">
+            <span className="auth-brand-mark" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4.5 5.5c2.8-.8 5.3-.4 7.5 1.2v12c-2.2-1.6-4.7-2-7.5-1.2z" />
+                <path d="M19.5 5.5c-2.8-.8-5.3-.4-7.5 1.2v12c2.2-1.6 4.7-2 7.5-1.2z" />
+              </svg>
+            </span>
+            <span>Learn Fast</span>
+          </a>
+          <div className="auth-aside-copy">
+            <span className="auth-eyebrow">A little practice, every day</span>
+            <h2>Make English part of your everyday.</h2>
+            <p>Build a steady learning habit with focused practice that fits your day.</p>
+          </div>
+          <div className="auth-preview-card" aria-hidden="true">
+            <div className="auth-preview-topline"><span className="auth-preview-dot" /><span>Today’s progress</span></div>
+            <div className="auth-preview-progress"><span /></div>
+            <div className="auth-preview-bottomline"><strong>Small steps add up.</strong><span>12 min</span></div>
+          </div>
+          <p className="auth-aside-caption">Your personal space to learn, remember, and grow.</p>
+        </aside>
+
+        <section className="auth-modal-content">
+          <header className="auth-modal-header">
+            <span className="auth-form-kicker">{mode === "login" ? "WELCOME BACK" : "GET STARTED"}</span>
+            <h1 id="auth-dialog-title">{mode === "login" ? "Sign in" : "Create your account"}</h1>
+            <p>{mode === "login" ? "Pick up where your learning left off." : "Set up your account and start building your English."}</p>
+          </header>
+          {error && <div className="auth-error-alert" role="alert">{error}</div>}
+          <form className="auth-form-body" onSubmit={submit}>
+            {mode === "register" && <>
+              <div className="auth-input-group"><label htmlFor="auth-full-name">Full name</label><input id="auth-full-name" type="text" placeholder="Your name" required autoComplete="name" value={fullName} disabled={isSubmitting} onChange={(event) => setFullName(event.target.value)} /></div>
+              <div className="auth-input-group"><label htmlFor="auth-email">Email address</label><input id="auth-email" type="email" placeholder="you@example.com" required autoComplete="email" value={email} disabled={isSubmitting} onChange={(event) => setEmail(event.target.value)} /></div>
+            </>}
+            <div className="auth-input-group"><label htmlFor="auth-login-identifier">{mode === "login" ? "Username or email" : "Username"}</label><input id="auth-login-identifier" type="text" placeholder={mode === "login" ? "Your username or email" : "Choose a username"} required autoComplete="username" value={usernameOrEmail} disabled={isSubmitting} onChange={(event) => setUsernameOrEmail(event.target.value)} /></div>
+            <div className="auth-input-group"><label htmlFor="auth-login-password">Password</label><div className="auth-input-wrapper"><input id="auth-login-password" type={showPassword ? "text" : "password"} placeholder={mode === "login" ? "Enter your password" : "At least 8 characters"} required minLength={8} autoComplete={mode === "login" ? "current-password" : "new-password"} value={password} disabled={isSubmitting} onChange={(event) => setPassword(event.target.value)} /><button type="button" className="auth-password-toggle" aria-label={showPassword ? "Hide password" : "Show password"} disabled={isSubmitting} onClick={() => setShowPassword(!showPassword)}>{showPassword ? "Hide" : "Show"}</button></div></div>
+            <button type="submit" className="auth-submit-btn" disabled={isSubmitting} aria-busy={isSubmitting}>
+              <span>{isSubmitting ? (mode === "login" ? "Signing in…" : "Creating account…") : mode === "login" ? "Sign in" : "Create account"}</span>
+              {!isSubmitting && <span aria-hidden="true">→</span>}
+            </button>
+          </form>
+          <div className="auth-modal-footer"><p>{mode === "login" ? "New to Learn Fast?" : "Already have an account?"} <button className="auth-toggle-link" type="button" disabled={isSubmitting} onClick={() => { setMode(mode === "login" ? "register" : "login"); setError(null); }}>{mode === "login" ? "Create an account" : "Sign in"}</button></p></div>
+          <p className="auth-guest-note">Just exploring? <a href="/workbooks">Browse the public sample</a></p>
+        </section>
+      </div>
+    </div>,
+    document.body,
+  );
 }

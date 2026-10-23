@@ -31,12 +31,30 @@ export function normalizeExerciseAnswer(value: string): string {
   return value.normalize("NFKC").toLowerCase().replace(/\p{P}/gu, "").trim().replace(/\s+/gu, " ");
 }
 
-export function gradeExerciseAnswer(question: ExerciseQuestion, answer: string): ExerciseResponse {
+export function gradeExerciseAnswer(
+  question: ExerciseQuestion,
+  answer: string,
+  settings?: Pick<ExerciseSettings, "mode" | "direction">,
+): ExerciseResponse {
   const normalized = normalizeExerciseAnswer(answer);
-  const isCorrect = normalized.length > 0 && normalized === normalizeExerciseAnswer(question.answer);
+  const expected = normalizeExerciseAnswer(question.answer);
+  // Nghĩa tiếng Việt đôi khi có giải thích dài, nên đáp án gõ EN → VI chỉ cần có trên 60% từ
+  // khác nhau xuất hiện trong nghĩa mẫu. Chiều dịch và dạng bài còn lại giữ so khớp chính xác.
+  const matchesVietnameseMeaning = settings?.mode === "translation" && settings.direction === "en_to_vi"
+    ? hasAnswerWordCoverage(expected, normalized)
+    : normalized.length > 0 && normalized === expected;
+  const isCorrect = normalized.length > 0 && matchesVietnameseMeaning;
   // Ánh xạ cùng chuẩn Again/Good của bài học, nhưng kết quả này chỉ ở bộ nhớ,
   // tuyệt đối không gửi rating hay đáp án sang API cập nhật SRS.
   return { question, answer, is_correct: isCorrect, confidence_rating: isCorrect ? 3 : 1 };
+}
+
+function hasAnswerWordCoverage(expected: string, answer: string): boolean {
+  if (!expected || !answer) return false;
+  const expectedWords = new Set(expected.split(/\s+/u));
+  const answerWords = [...new Set(answer.split(/\s+/u))];
+  const matchedWords = answerWords.filter((word) => expectedWords.has(word)).length;
+  return matchedWords / answerWords.length > 0.6;
 }
 
 function shuffle<T>(items: readonly T[], random: () => number): T[] {

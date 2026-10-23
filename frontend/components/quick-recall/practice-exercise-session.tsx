@@ -96,7 +96,9 @@ export function PracticeExerciseSession({ sheet, cards, backHref }: { sheet: She
           </label>
         </div>
         {settings.mode === "cloze" && <p className={styles.hint} id="cloze-direction-note">Fill in the missing English phrase. Only cards with a matching English example are included.</p>}
-        {settings.mode === "translation" && <p className={styles.hint}>Use the translation on your flashcard. Capitalization, punctuation and extra spaces are ignored; Vietnamese accents still matter.</p>}
+        {settings.mode === "translation" && <p className={styles.hint}>{settings.direction === "en_to_vi"
+          ? "For English to Vietnamese, over 60% of the words in your answer must match the flashcard meaning. Punctuation and extra spaces are ignored; Vietnamese accents still matter."
+          : "For Vietnamese to English, match the flashcard phrase. Capitalization, punctuation and extra spaces are ignored."}</p>}
 
         <div className={styles.startRow}>
           <div><strong>{actualCount ? `${actualCount} question${actualCount === 1 ? "" : "s"} in this round` : "No eligible questions"}</strong>
@@ -151,7 +153,7 @@ function ExerciseRound({ round, onRestart, onConfigure }: { round: Round; onRest
       return;
     }
     if (!draft.trim()) return;
-    const graded = gradeExerciseAnswer(question, draft);
+    const graded = gradeExerciseAnswer(question, draft, round.settings);
     // Giữ kết quả đầu tiên cho điểm số; các lần thử sau chỉ quyết định câu đã
     // được gỡ khỏi hàng đợi hay còn phải luyện lại.
     setResponses((current) => current.some((item) => item.question.cardId === question.cardId)
@@ -174,7 +176,7 @@ function ExerciseRound({ round, onRestart, onConfigure }: { round: Round; onRest
       {isMultipleChoice ? <fieldset className={styles.answers} disabled={hasAnswered}>
         <legend className={styles.answerLabel}>Choose the correct translation</legend>
         {question.options.map((option, optionIndex) => {
-          const state = response ? gradeExerciseAnswer(question, option).is_correct ? "correct" : draft === option ? "incorrect" : "idle" : "idle";
+          const state = response ? gradeExerciseAnswer(question, option, round.settings).is_correct ? "correct" : draft === option ? "incorrect" : "idle" : "idle";
           return <label key={option} className={styles.answerOption} data-selected={draft === option} data-state={state}>
             <input type="radio" name="answer" value={option} checked={draft === option} onChange={() => setDraft(option)} />
             <span className={styles.optionNumber} aria-hidden="true">{String.fromCharCode(65 + optionIndex)}</span>
@@ -193,8 +195,9 @@ function ExerciseRound({ round, onRestart, onConfigure }: { round: Round; onRest
           onChange={(event) => setDraft(event.target.value)}
           onKeyDown={(event) => { if (event.key === "Enter" && event.nativeEvent.isComposing) event.preventDefault(); }} />
       </label>}
-      {!response && !isMultipleChoice && <p className={styles.hint} id="exercise-answer-help">{round.settings.mode !== "cloze" && round.settings.direction === "en_to_vi"
-        ? "Match the answer on your flashcard. Vietnamese accents are required." : "Match the English phrase on your flashcard."}</p>}
+      {!response && !isMultipleChoice && <p className={styles.hint} id="exercise-answer-help">{round.settings.mode === "translation" && round.settings.direction === "en_to_vi"
+        ? "Over 60% of the words in your answer must match the card meaning. Punctuation and extra spaces are ignored; accents still matter."
+        : round.settings.mode === "cloze" ? "Type the missing phrase exactly as it appears in the example." : "Match the English phrase on your flashcard."}</p>}
 
       {response && <div className={styles.feedback} data-correct={response.is_correct} id="exercise-feedback" role="status">
         <Icon name={response.is_correct ? "check" : "refresh"} size={22} />

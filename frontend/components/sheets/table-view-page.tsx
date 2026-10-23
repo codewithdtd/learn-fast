@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 import { FlashcardFlagButtons } from "@/components/sheets/flashcard-flag-buttons";
-import { ApiRequestError, getSheet, getSheetCards, updateFlashcardBookmark, updateFlashcardWeak, type FlashcardListItem, type SheetDetail } from "@/services/api";
+import { ApiRequestError, getSheet, getSheetCards, updateFlashcardBookmark, updateFlashcardContent, updateFlashcardWeak, type FlashcardListItem, type SheetDetail } from "@/services/api";
 import { Icon } from "@/components/layout/app-shell";
 import { useAuth } from "@/context/auth-context";
 
@@ -141,6 +141,19 @@ export function ResponsiveSheetTableView({ sheetId }: ResponsiveSheetTableViewPr
     }
   }
 
+  async function persistCardContent(cardId: number, phrase: string, meaning: string): Promise<boolean> {
+    if (!isAdmin) return false;
+    setError(null);
+    try {
+      const updatedCard = await updateFlashcardContent(String(cardId), { phrase, meaning });
+      setCards((currentCards) => currentCards.map((card) => card.id === cardId ? updatedCard : card));
+      return true;
+    } catch (caughtError) {
+      setError(caughtError instanceof Error ? caughtError.message : "Could not save this flashcard.");
+      return false;
+    }
+  }
+
   function toggleExamplesVisibility() {
     setAreExamplesVisible((currentValue) => {
       const nextValue = !currentValue;
@@ -231,7 +244,9 @@ export function ResponsiveSheetTableView({ sheetId }: ResponsiveSheetTableViewPr
                 card={card}
                 areExamplesVisible={areExamplesVisible}
                 isExampleExpanded={expandedExamples.has(card.id)}
+                canEdit={isAdmin}
                 onToggleExamples={() => toggleCardExamples(card.id)}
+                onContentSave={(phrase, meaning) => persistCardContent(card.id, phrase, meaning)}
                 onWeakChange={(nextValue) => persistFlag(card.id, "is_weak", nextValue)}
                 onBookmarkChange={(nextValue) => persistFlag(card.id, "is_bookmarked", nextValue)}
               />
@@ -269,21 +284,53 @@ type VocabularyRowProps = {
   card: FlashcardListItem;
   areExamplesVisible: boolean;
   isExampleExpanded: boolean;
+  canEdit: boolean;
   onToggleExamples: () => void;
+  onContentSave: (phrase: string, meaning: string) => Promise<boolean>;
   onWeakChange: (nextValue: boolean) => Promise<void>;
   onBookmarkChange: (nextValue: boolean) => Promise<void>;
 };
 
-function VocabularyRow({ card, areExamplesVisible, isExampleExpanded, onToggleExamples, onWeakChange, onBookmarkChange }: VocabularyRowProps) {
+function VocabularyRow({ card, areExamplesVisible, isExampleExpanded, canEdit, onToggleExamples, onContentSave, onWeakChange, onBookmarkChange }: VocabularyRowProps) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [phraseDraft, setPhraseDraft] = useState(card.phrase);
+  const [meaningDraft, setMeaningDraft] = useState(card.meaning);
+  const [isSaving, setIsSaving] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
   const hasExamples = Boolean(card.example_en || card.example_vi);
+  const formId = `flashcard-edit-${card.id}`;
+
+  function startEditing() {
+    setPhraseDraft(card.phrase);
+    setMeaningDraft(card.meaning);
+    setEditError(null);
+    setIsEditing(true);
+  }
+
+  async function saveContent() {
+    const phrase = phraseDraft.trim();
+    const meaning = meaningDraft.trim();
+    if (!phrase || !meaning) {
+      setEditError("Phrase and meaning are required.");
+      return;
+    }
+    setIsSaving(true);
+    setEditError(null);
+    try {
+      if (await onContentSave(phrase, meaning)) setIsEditing(false);
+      else setEditError("The changes could not be saved. Please try again.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
 
   return (
     <div className="vocabulary-table-row" role="row">
       <div className="vocabulary-cell phrase-cell" role="cell">
         <span className="vocabulary-position">#{card.position}</span>
-        <strong>{card.phrase}</strong>
+        {isEditing ? <input form={formId} className="vocabulary-edit-phrase" aria-label={`Phrase for card ${card.position}`} maxLength={200} value={phraseDraft} disabled={isSaving} onChange={(event) => setPhraseDraft(event.target.value)} /> : <strong>{card.phrase}</strong>}
       </div>
-      <div className="vocabulary-cell meaning-cell" role="cell">{card.meaning}</div>
+      <div className="vocabulary-cell meaning-cell" role="cell">{isEditing ? <textarea form={formId} className="vocabulary-edit-meaning" aria-label={`Meaning for ${card.phrase}`} maxLength={600} rows={3} value={meaningDraft} disabled={isSaving} onChange={(event) => setMeaningDraft(event.target.value)} /> : card.meaning}</div>
       <div className="vocabulary-cell examples-cell" role="cell">
         {!areExamplesVisible ? (
           <span className="examples-muted">Examples hidden</span>
@@ -302,12 +349,24 @@ function VocabularyRow({ card, areExamplesVisible, isExampleExpanded, onToggleEx
         )}
       </div>
       <div className="vocabulary-cell actions-cell" role="cell">
-        <FlashcardFlagButtons
-          isWeak={card.is_weak}
-          isBookmarked={card.is_bookmarked}
-          onWeakChange={onWeakChange}
-          onBookmarkChange={onBookmarkChange}
-        />
+        {isEditing ? <>
+          <form id={formId} className="sr-only" onSubmit={(event) => { event.preventDefault(); void saveContent(); }} />
+          <div className="vocabulary-edit-actions">
+            <button type="button" className="vocabulary-edit-button" aria-label="Cancel editing" title="Cancel editing" disabled={isSaving} onClick={() => { setIsEditing(false); setEditError(null); }}>×</button>
+            <button type="submit" form={formId} className="vocabulary-edit-button save" aria-label={isSaving ? "Saving changes" : "Save changes"} aria-busy={isSaving} title={isSaving ? "Saving…" : "Save changes"} disabled={isSaving}>
+              {isSaving ? <span className="vocabulary-save-spinner" aria-hidden="true" /> : <Icon name="check" size={19} />}
+            </button>
+          </div>
+          {editError && <p className="vocabulary-edit-error" role="alert">{editError}</p>}
+        </> : <>
+          {canEdit && <button type="button" className="vocabulary-edit-button" aria-label={`Edit ${card.phrase}`} title="Edit phrase and meaning" onClick={startEditing}><Icon name="writing" size={18} /></button>}
+          <FlashcardFlagButtons
+            isWeak={card.is_weak}
+            isBookmarked={card.is_bookmarked}
+            onWeakChange={onWeakChange}
+            onBookmarkChange={onBookmarkChange}
+          />
+        </>}
       </div>
     </div>
   );
