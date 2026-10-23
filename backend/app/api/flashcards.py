@@ -10,8 +10,13 @@ from app.core.database import get_db
 from app.models import Flashcard, User
 from app.schemas.flashcard import (
     FlashcardBookmarkUpdate,
+    FlashcardContentUpdate,
     FlashcardListItem,
     FlashcardWeakUpdate,
+)
+from app.services.flashcards import (
+    FlashcardPersistenceError,
+    update_flashcard_content as update_flashcard_content_service,
 )
 
 
@@ -42,6 +47,25 @@ def persist_flashcard_flag(db: Session, flashcard: Flashcard) -> FlashcardListIt
             detail="Flashcard could not be updated. Please try again.",
         ) from error
 
+    return FlashcardListItem.model_validate(flashcard)
+
+
+@router.patch("/flashcards/{card_id}", response_model=FlashcardListItem)
+def update_flashcard_content(
+    card_id: int,
+    update: FlashcardContentUpdate,
+    db: Session = Depends(get_db),
+    admin_user: User = Depends(get_current_admin),
+) -> FlashcardListItem:
+    try:
+        flashcard = update_flashcard_content_service(db, card_id, update.phrase, update.meaning)
+    except FlashcardPersistenceError as error:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Flashcard could not be updated. Please try again.",
+        ) from error
+    if flashcard is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Flashcard not found.")
     return FlashcardListItem.model_validate(flashcard)
 
 
