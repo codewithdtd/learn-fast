@@ -3,7 +3,7 @@ from typing import Annotated, Literal
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_admin, get_current_user
+from app.api.deps import get_current_user
 from app.core.database import get_db
 from app.models.user import User
 from app.schemas.writing import (
@@ -21,8 +21,7 @@ from app.services.sentence_practice import create_sentence_attempt
 from app.schemas.sentence_practice import SentenceAttemptCreate
 
 
-# Bảo vệ toàn router để route đọc dữ liệu và route mới cũng luôn yêu cầu quyền admin.
-router = APIRouter(prefix="/writing", tags=["writing"], dependencies=[Depends(get_current_admin)])
+router = APIRouter(prefix="/writing", tags=["writing"])
 
 
 @router.get("/prompts", response_model=WritingPromptList)

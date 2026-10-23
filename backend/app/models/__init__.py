@@ -13,6 +13,7 @@ from app.models.enums import (
     StudySessionType,
 )
 from app.models.flashcard import Flashcard
+from app.models.guest_ai_usage import GuestAIUsage
 from app.models.notification import Notification
 from app.models.study_sheet import StudySheet
 from app.models.study_session import StudySession
@@ -30,6 +31,7 @@ from app.models.writing_usage import WritingAIUsage
 
 __all__ = [
     "Flashcard",
+    "GuestAIUsage",
     "Notification",
     "NotificationType",
     "SheetPriority",

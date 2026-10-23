@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_admin, get_current_user
+from app.api.deps import get_current_user
 from app.core.config import settings
 from app.core.database import get_db
 from app.models.user import User
@@ -18,7 +18,7 @@ from app.schemas.speaking import (
 )
 from app.services import speaking as speaking_service
 
-router = APIRouter(prefix="/speaking", tags=["speaking"], dependencies=[Depends(get_current_admin)])
+router = APIRouter(prefix="/speaking", tags=["speaking"])
 
 
 @router.get("/prompts", response_model=SpeakingPromptList)
