@@ -16,11 +16,12 @@ function getThemeSnapshot(): Theme {
   if (storedTheme === "light" || storedTheme === "dark" || storedTheme === "retro" || storedTheme === "playful") {
     return storedTheme;
   }
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  // Keep first-time visitors on the app's intended default, independent of their OS theme.
+  return "playful";
 }
 
 function getServerThemeSnapshot(): Theme {
-  return "light";
+  return "playful";
 }
 
 export function ThemeToggle({ compact = false }: { compact?: boolean }) {
