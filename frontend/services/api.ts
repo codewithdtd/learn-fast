@@ -423,6 +423,17 @@ export async function updateFlashcardBookmark(
   );
 }
 
+export async function updateFlashcardContent(
+  id: string,
+  content: Pick<FlashcardListItem, "phrase" | "meaning">,
+): Promise<FlashcardListItem> {
+  return requestJson<FlashcardListItem>(`/api/v1/flashcards/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(content),
+  });
+}
+
 export async function completeQuickRecall(
   sheetId: string,
   results: QuickRecallCardResultInput[],
