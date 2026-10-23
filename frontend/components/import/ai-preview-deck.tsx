@@ -17,6 +17,7 @@ type AIPreviewDeckProps = {
   workbookId?: number;
   newWorkbookName?: string;
   targetSheetId?: number;
+  previewOnly?: boolean;
   onBackToConfig: () => void;
 };
 
@@ -27,6 +28,7 @@ export function AIPreviewDeck({
   workbookId,
   newWorkbookName,
   targetSheetId,
+  previewOnly = false,
   onBackToConfig,
 }: AIPreviewDeckProps) {
   const [sheetName, setSheetName] = useState(initialSheetName);
@@ -55,6 +57,7 @@ export function AIPreviewDeck({
   }
 
   async function handleSave() {
+    if (previewOnly) return;
     if (!sheetName.trim()) {
       setError("Enter a name for the study sheet.");
       return;
@@ -137,7 +140,8 @@ export function AIPreviewDeck({
             />
           </div>
           <p className="ai-destination-hint">
-            Destination:{" "}
+            {previewOnly ? "Guest preview only. This deck is not saved to a workbook or account." : <>Destination:{" "}</>}
+            {!previewOnly && <>
             <strong>
               {mode === "append"
                 ? "Append to an existing sheet"
@@ -145,6 +149,7 @@ export function AIPreviewDeck({
                 ? "Add a new sheet to the selected workbook"
                 : `Create a new workbook: "${newWorkbookName || "AI Vocabulary Collection"}"`}
             </strong>
+            </>}
           </p>
         </div>
 
@@ -157,7 +162,7 @@ export function AIPreviewDeck({
           >
             ← Back to settings
           </button>
-          <button
+          {!previewOnly && <button
             type="button"
             onClick={handleSave}
             className="ai-btn-primary"
@@ -165,7 +170,7 @@ export function AIPreviewDeck({
           >
             <Icon name="check" size={18} />
             <span>{isSaving ? "Saving to your library..." : `Save ${cards.length} cards to your library`}</span>
-          </button>
+          </button>}
         </div>
       </header>
 
@@ -250,7 +255,7 @@ export function AIPreviewDeck({
           ➕ Add a card manually
         </button>
 
-        <button
+        {!previewOnly && <button
           type="button"
           onClick={handleSave}
           className="ai-btn-primary ai-btn-save-bottom"
@@ -258,7 +263,7 @@ export function AIPreviewDeck({
         >
           <Icon name="check" size={20} />
           <span>{isSaving ? "Saving to your library..." : `Save all ${cards.length} cards`}</span>
-        </button>
+        </button>}
       </div>
     </div>
   );

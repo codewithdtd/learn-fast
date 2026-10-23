@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { FlashcardFlagButtons } from "@/components/sheets/flashcard-flag-buttons";
 import { ApiRequestError, getSheet, getSheetCards, updateFlashcardBookmark, updateFlashcardWeak, type FlashcardListItem, type SheetDetail } from "@/services/api";
 import { Icon } from "@/components/layout/app-shell";
+import { useAuth } from "@/context/auth-context";
 
 type ResponsiveSheetTableViewProps = {
   sheetId: string;
@@ -15,6 +16,8 @@ type CardFilter = "all" | "weak" | "bookmarked";
 type FlagName = "is_weak" | "is_bookmarked";
 
 export function ResponsiveSheetTableView({ sheetId }: ResponsiveSheetTableViewProps) {
+  const { user, isAuthenticated } = useAuth();
+  const isAdmin = isAuthenticated && user?.is_superuser === true;
   const [sheet, setSheet] = useState<SheetDetail | null>(null);
   const [cards, setCards] = useState<FlashcardListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -114,6 +117,9 @@ export function ResponsiveSheetTableView({ sheetId }: ResponsiveSheetTableViewPr
     );
     setError(null);
 
+    // Guest and member previews may test the controls locally, but shared admin card flags must remain untouched.
+    if (!isAdmin) return;
+
     try {
       const updatedCard =
         flag === "is_weak"
@@ -201,6 +207,8 @@ export function ResponsiveSheetTableView({ sheetId }: ResponsiveSheetTableViewPr
           </button>
         </div>
       </section>
+
+      {!isAdmin && <p className="table-view-inline-note" role="note">Preview mode: Weak and Bookmarked changes stay in this page and reset when you leave.</p>}
 
       {error && <p role="alert" className="table-view-inline-error">{error}</p>}
 

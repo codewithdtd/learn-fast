@@ -1,11 +1,13 @@
 import type {
   WritingAttempt,
   WritingAttemptList,
+  WritingFeedback,
+  GuestWritingTopic,
   WritingPrompt,
   WritingPromptList,
   WritingUsage,
 } from "@/types/writing";
-import type { SpeakingAttempt, SpeakingAttemptList, SpeakingPromptList, SpeakingUsage } from "@/types/speaking";
+import type { SpeakingAttempt, SpeakingAttemptList, SpeakingFeedback, SpeakingPrompt, SpeakingPromptList, SpeakingUsage } from "@/types/speaking";
 
 export type HealthResponse = {
   status: "ok";
@@ -649,10 +651,26 @@ export type PasswordChangeRequest = {
 };
 
 export const AUTH_TOKEN_KEY = "learn_fast_token";
+const GUEST_TRIAL_TOKEN_KEY = "learn_fast_guest_ai_token";
 
 export function getStoredAuthToken(): string | null {
   if (typeof window === "undefined") return null;
   return localStorage.getItem(AUTH_TOKEN_KEY);
+}
+
+function getGuestTrialToken(): string | null {
+  if (typeof window === "undefined") return null;
+  const existing = localStorage.getItem(GUEST_TRIAL_TOKEN_KEY);
+  if (existing) return existing;
+  const bytes = window.crypto.getRandomValues(new Uint8Array(32));
+  const token = Array.from(bytes, (value) => value.toString(16).padStart(2, "0")).join("");
+  localStorage.setItem(GUEST_TRIAL_TOKEN_KEY, token);
+  return token;
+}
+
+function guestTrialHeaders(): Record<string, string> {
+  const token = getGuestTrialToken();
+  return token ? { "X-Guest-Token": token } : {};
 }
 
 export function setStoredAuthToken(token: string | null): void {
@@ -765,7 +783,7 @@ export type AISaveSheetResponse = {
 export async function generateAICards(data: AIGenerateRequest): Promise<AIGeneratedSheetResponse> {
   return requestJson<AIGeneratedSheetResponse>("/api/v1/ai/generate", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { ...guestTrialHeaders(), "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
 }
@@ -773,7 +791,7 @@ export async function generateAICards(data: AIGenerateRequest): Promise<AIGenera
 export async function mineAICards(data: AIMineRequest): Promise<AIGeneratedSheetResponse> {
   return requestJson<AIGeneratedSheetResponse>("/api/v1/ai/mine", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { ...guestTrialHeaders(), "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
 }
@@ -792,6 +810,17 @@ export async function getWritingPrompts(): Promise<WritingPromptList> {
 
 export async function getWritingPrompt(promptId: number): Promise<WritingPrompt> {
   return requestJson<WritingPrompt>(`/api/v1/writing/prompts/${promptId}`);
+}
+
+export async function generateGuestWritingTopic(): Promise<GuestWritingTopic> {
+  return requestJson<GuestWritingTopic>("/api/v1/guest/ai/writing/topic", { method: "POST", headers: guestTrialHeaders() });
+}
+
+export async function gradeGuestWriting(promptId: number, draftText: string): Promise<WritingFeedback> {
+  return requestJson<WritingFeedback>("/api/v1/guest/ai/writing/grade", {
+    method: "POST", headers: { ...guestTrialHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify({ prompt_id: promptId, draft_text: draftText }),
+  });
 }
 
 export async function createWritingAttempt(promptId: number, revisionOfId?: number): Promise<WritingAttempt> {
@@ -859,6 +888,25 @@ export async function getWritingUsage(): Promise<WritingUsage> {
 
 export async function getSpeakingPrompts(): Promise<SpeakingPromptList> {
   return requestJson<SpeakingPromptList>("/api/v1/speaking/prompts");
+}
+
+export async function generateGuestSpeakingTopic(): Promise<Omit<SpeakingPrompt, "id" | "slug">> {
+  return requestJson<Omit<SpeakingPrompt, "id" | "slug">>("/api/v1/guest/ai/speaking/topic", { method: "POST", headers: guestTrialHeaders() });
+}
+
+export async function gradeGuestSpeaking(promptId: number, transcript: string): Promise<SpeakingFeedback> {
+  return requestJson<SpeakingFeedback>("/api/v1/guest/ai/speaking/grade", {
+    method: "POST", headers: { ...guestTrialHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify({ prompt_id: promptId, transcript }),
+  });
+}
+
+export async function gradeGuestSentence(data: {
+  phrase: string; meaning: string; situation_en: string; situation_vi: string; sentence: string;
+}): Promise<WritingFeedback> {
+  return requestJson<WritingFeedback>("/api/v1/guest/ai/sentence/grade", {
+    method: "POST", headers: { ...guestTrialHeaders(), "Content-Type": "application/json" }, body: JSON.stringify(data),
+  });
 }
 
 export async function createSpeakingAttempt(promptId: number): Promise<SpeakingAttempt> {
@@ -955,6 +1003,9 @@ async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
   const headers = new Headers(init?.headers || {});
   if (token && !headers.has("Authorization")) {
     headers.set("Authorization", `Bearer ${token}`);
+  } else if (!token && !headers.has("X-Guest-Token")) {
+    const guestToken = getGuestTrialToken();
+    if (guestToken) headers.set("X-Guest-Token", guestToken);
   }
 
   const response = await fetch(`${apiBaseUrl}${path}`, {
@@ -973,6 +1024,9 @@ async function requestNoContent(path: string, init?: RequestInit): Promise<void>
   const headers = new Headers(init?.headers || {});
   if (token && !headers.has("Authorization")) {
     headers.set("Authorization", `Bearer ${token}`);
+  } else if (!token && !headers.has("X-Guest-Token")) {
+    const guestToken = getGuestTrialToken();
+    if (guestToken) headers.set("X-Guest-Token", guestToken);
   }
 
   const response = await fetch(`${apiBaseUrl}${path}`, {

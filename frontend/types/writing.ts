@@ -44,6 +44,8 @@ export type WritingPrompt = {
   is_daily_suggestion?: boolean;
 };
 
+export type GuestWritingTopic = Omit<WritingPrompt, "id" | "slug" | "content_version" | "is_daily_suggestion">;
+
 export type WritingAttemptStatus = "draft" | "grading" | "graded" | "failed";
 
 export type WritingCriterionScore = {

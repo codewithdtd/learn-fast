@@ -8,6 +8,7 @@ export function UserProfileMenu() {
   const { user, isAuthenticated, isLoading, logout } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<"login" | "register">("login");
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Close menu on click outside
@@ -31,21 +32,14 @@ export function UserProfileMenu() {
     return (
       <>
         <div className="auth-header-cta-group">
-          <button
-            onClick={() => {
-              setIsAuthModalOpen(true);
-            }}
-            className="auth-btn-signin"
-            type="button"
-          >
-            Admin sign in
-          </button>
+          <button onClick={() => { setAuthMode("login"); setIsAuthModalOpen(true); }} className="auth-btn-signin" type="button">Sign in</button>
+          <button onClick={() => { setAuthMode("register"); setIsAuthModalOpen(true); }} className="auth-btn-signin" type="button">Sign up</button>
         </div>
 
         <AuthModal
           isOpen={isAuthModalOpen}
           onClose={() => setIsAuthModalOpen(false)}
-          initialMode="login"
+          initialMode={authMode}
         />
       </>
     );

@@ -21,7 +21,10 @@ export function PrioritySelector({ sheetId, priority, onSaved }: PrioritySelecto
 
   async function handleChange(nextPriority: SheetPriority) {
     if (!isAdmin) {
-      setError("Only administrators can change a sheet's study priority.");
+      // Let visitors explore this control while keeping the admin-owned preview workbook unchanged.
+      setSelectedPriority(nextPriority);
+      onSaved(nextPriority);
+      setError(null);
       return;
     }
     if (nextPriority === selectedPriority || isSaving) {
@@ -62,6 +65,8 @@ export function PrioritySelector({ sheetId, priority, onSaved }: PrioritySelecto
         <option value="low">Low</option>
       </select>
       {isSaving && <p className="mt-1 text-xs text-slate-500">Saving…</p>}
+      {!isAdmin && <p className="mt-1 text-xs text-slate-500">Preview only; this choice is not saved.</p>}
+      {!isAdmin && <p className="mt-1 text-xs text-slate-500">Preview only; this choice is not saved.</p>}
       {error && <p role="alert" className="mt-1 text-xs text-rose-700">{error}</p>}
     </div>
   );

@@ -2526,6 +2526,16 @@ a {
   min-width: 0;
 }
 
+.table-view-inline-note {
+  margin: 0;
+  border: 1px solid var(--outline);
+  border-radius: 12px;
+  padding: 12px 16px;
+  color: var(--muted);
+  background: var(--surface-low);
+  font-size: 14px;
+}
+
 .table-view-header {
   display: grid;
   gap: 22px;

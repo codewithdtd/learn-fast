@@ -26,4 +26,17 @@
 .tableWrap table { width: 100%; border-collapse: collapse; font-size: .9rem; text-align: left; }
 .tableWrap th,.tableWrap td { min-width: 10rem; border-bottom: 1px solid var(--outline); padding: .8rem; vertical-align: top; line-height: 1.6; }
 .tableWrap p { color: var(--muted); margin-top: .4rem; }
+.aiTabs { display: flex; gap: .35rem; overflow-x: auto; padding: .35rem; border: 1px solid var(--outline); border-radius: var(--radius-md); background: var(--surface-low); }
+.aiTabs button { min-height: 42px; flex: 1; border: 0; border-radius: var(--radius-md); padding: .55rem .8rem; background: transparent; color: var(--foreground); font: inherit; font-weight: 700; white-space: nowrap; cursor: pointer; }
+.aiTabs button[aria-selected="true"] { background: var(--surface); box-shadow: 0 1px 4px color-mix(in srgb, var(--foreground) 12%, transparent); }
+.aiPanel { display: grid; gap: 1rem; }
+.aiPanel label { display: grid; gap: .45rem; font-weight: 700; }
+.aiPanel select,.aiPanel textarea { width: 100%; min-height: 44px; border: 1px solid var(--outline); border-radius: var(--radius-md); padding: .7rem .8rem; background: var(--surface-low); color: var(--foreground); font: inherit; }
+.aiPanel textarea { resize: vertical; line-height: 1.6; }
+.prompt,.feedback { display: grid; gap: .6rem; border: 1px solid var(--outline); border-radius: var(--radius-md); padding: 1rem; background: var(--surface-low); line-height: 1.6; }
+.prompt p,.feedback p { margin: 0; }
+.feedback { border-color: color-mix(in srgb, var(--primary) 45%, var(--outline)); background: var(--primary-soft); }
+.feedback ul,.prompt ul { display: grid; gap: .45rem; margin: 0; padding-left: 1.2rem; }
+.error { margin: 0; border: 1px solid #d77; border-radius: var(--radius-md); padding: .8rem 1rem; color: #9b1c1c; background: #fff1f0; }
+.previewWords > p { border-top: 1px solid var(--outline); padding-top: .7rem; }
 @media (min-width: 760px) { .page { width: min(calc(100% - 64px), 1120px); padding-top: 2rem; } .card { padding: 1.75rem; } .previewWords { grid-template-columns: repeat(2,minmax(0,1fr)); } }

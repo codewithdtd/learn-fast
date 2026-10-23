@@ -19,5 +19,5 @@ export const DEMO_SHEET: SheetDetail = {
   workbook: { id: 0, name: "Public preview" },
 };
 
-export const DEMO_VIEWS = ["overview", "flashcards", "table", "exercises"] as const;
+export const DEMO_VIEWS = ["overview", "flashcards", "table", "exercises", "calendar", "import", "ai"] as const;
 export type DemoView = typeof DEMO_VIEWS[number];

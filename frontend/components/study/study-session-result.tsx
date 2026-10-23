@@ -4,12 +4,15 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { Icon } from "@/components/layout/app-shell";
+import { useAuth } from "@/context/auth-context";
 import { formatDate, formatLabel } from "@/lib/format";
 import { ApiRequestError, getSheet, getStudySession, rateStudySession, type SheetDetail, type StudySession, type SrsRating } from "@/services/api";
 
 type StudySessionResultProps = { sessionId: string };
 
 export function StudySessionResult({ sessionId }: StudySessionResultProps) {
+  const { user, isAuthenticated } = useAuth();
+  const isAdmin = isAuthenticated && user?.is_superuser === true;
   const [session, setSession] = useState<StudySession | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRating, setIsRating] = useState(false);
@@ -29,14 +32,14 @@ export function StudySessionResult({ sessionId }: StudySessionResultProps) {
   }, [sessionId]);
 
   useEffect(() => {
-    if (!session?.sheet_id) return;
+    if (!isAdmin || !session?.sheet_id) return;
     let isCurrent = true;
     void getSheet(String(session.sheet_id)).then((sheet) => { if (isCurrent) setScheduledSheet(sheet); }).catch((caughtError: unknown) => {
       if (!isCurrent) return;
       setRatingError(caughtError instanceof Error ? `Review schedule could not be loaded: ${caughtError.message}` : "Review schedule could not be loaded.");
     });
     return () => { isCurrent = false; };
-  }, [session?.id, session?.sheet_id, session?.sheet_rating]);
+  }, [isAdmin, session?.id, session?.sheet_id, session?.sheet_rating]);
 
   useEffect(() => {
     let isCurrent = true;
@@ -73,10 +76,10 @@ export function StudySessionResult({ sessionId }: StudySessionResultProps) {
   if (session.status === "abandoned") return <AbandonedSession sheetId={session.sheet_id} />;
   if (session.status === "active") return <IncompleteSession sessionId={session.id} remainingCards={remainingCards} />;
 
-  return <CompletedResult session={session} weakCards={weakCards} scheduledSheet={scheduledSheet} isRating={isRating} ratingError={ratingError} onRate={rateCompletedSession} />;
+  return <CompletedResult session={session} weakCards={weakCards} scheduledSheet={scheduledSheet} isAdmin={isAdmin} isRating={isRating} ratingError={ratingError} onRate={rateCompletedSession} />;
 }
 
-function CompletedResult({ session, weakCards, scheduledSheet, isRating, ratingError, onRate }: { session: StudySession; weakCards: StudySession["session_cards"]; scheduledSheet: SheetDetail | null; isRating: boolean; ratingError: string | null; onRate: (rating: SrsRating) => Promise<void> }) {
+function CompletedResult({ session, weakCards, scheduledSheet, isAdmin, isRating, ratingError, onRate }: { session: StudySession; weakCards: StudySession["session_cards"]; scheduledSheet: SheetDetail | null; isAdmin: boolean; isRating: boolean; ratingError: string | null; onRate: (rating: SrsRating) => Promise<void> }) {
   const supportsSrsRating = session.session_type === "new_learning" || session.session_type === "srs_review";
   const masteryScore = session.mastery_score ?? 0;
   const completedRounds = session.round_summaries;
@@ -90,7 +93,7 @@ function CompletedResult({ session, weakCards, scheduledSheet, isRating, ratingE
         <section className="study-result-panel"><div className="study-result-section-heading"><div><p className="eyebrow">Session snapshot</p><h2>What you practiced</h2></div></div><dl className="study-result-stats"><Stat label="Rounds" value={String(completedRounds.length)} tone="lavender" /><Stat label="First-round recall" value={`${firstRoundRecall}%`} tone="gold" /><Stat label="Final-round recall" value={`${finalRoundRecall}%`} tone="mint" /><Stat label="Confirmed answers" value={String(session.total_attempts)} tone="neutral" /><Stat label="Again" value={String(session.again_count)} tone="rose" /></dl></section>
         <WeakCardPanel weakCards={weakCards} sheetId={session.sheet_id} />
       </div>
-      <aside className="study-result-side"><SrsRatingPanel session={session} scheduledSheet={scheduledSheet} isRating={isRating} error={ratingError} supportsSrsRating={supportsSrsRating} onRate={onRate} /><div className="study-result-actions"><Link href={`/sheets/${session.sheet_id}/quick-recall`} className="study-result-primary-action"><Icon name="study" size={18} /> Test your recall</Link><Link href={`/sheets/${session.sheet_id}`} className="study-result-secondary-action"><Icon name="back" size={18} /> Back to sheet</Link><Link href={`/sheets/${session.sheet_id}/table`} className="study-result-secondary-action"><Icon name="books" size={18} /> Open Table View</Link><Link href={`/sheets/${session.sheet_id}/study`} className="study-result-secondary-action"><Icon name="refresh" size={18} /> Start another study</Link></div></aside>
+      <aside className="study-result-side">{isAdmin ? <SrsRatingPanel session={session} scheduledSheet={scheduledSheet} isRating={isRating} error={ratingError} supportsSrsRating={supportsSrsRating} onRate={onRate} /> : <section className="study-result-panel study-srs-panel"><p className="eyebrow">Preview session</p><h2>Review schedule unchanged</h2><p className="study-result-muted">This practice result is isolated from the administrator&apos;s learning history and does not update the shared SRS schedule.</p></section>}<div className="study-result-actions"><Link href={`/sheets/${session.sheet_id}/quick-recall`} className="study-result-primary-action"><Icon name="study" size={18} /> Test your recall</Link><Link href={`/sheets/${session.sheet_id}`} className="study-result-secondary-action"><Icon name="back" size={18} /> Back to sheet</Link><Link href={`/sheets/${session.sheet_id}/table`} className="study-result-secondary-action"><Icon name="books" size={18} /> Open Table View</Link><Link href={`/sheets/${session.sheet_id}/study`} className="study-result-secondary-action"><Icon name="refresh" size={18} /> Start another study</Link></div></aside>
     </div>
   </section>;
 }
