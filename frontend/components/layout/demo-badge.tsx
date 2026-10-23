@@ -7,7 +7,7 @@ export function DemoBadge() {
   if (isLoading || user?.is_superuser) return null;
 
   return (
-    <div className="demo-showcase-badge" title="One public sample sheet. Full access requires an administrator account.">
+    <div className="demo-showcase-badge" title="Explore the public sample. Guest AI tools include one trial each.">
       <span className="demo-badge-dot" />
       <span className="demo-badge-text">Public preview</span>
       <span className="demo-badge-text-compact">Demo</span>

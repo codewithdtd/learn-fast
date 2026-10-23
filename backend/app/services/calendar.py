@@ -25,7 +25,7 @@ class CalendarPersistenceError(RuntimeError):
     """Bắn ra khi việc truy vấn dữ liệu lịch hoặc tính streak gặp lỗi."""
 
 
-def calculate_user_streaks(db: Session, target_date: date) -> tuple[int, int]:
+def calculate_user_streaks(db: Session, target_date: date, user_id: int | None = None) -> tuple[int, int]:
     """
     Tính toán streak hiện tại (current_streak) và streak dài nhất (longest_streak).
     
@@ -35,14 +35,13 @@ def calculate_user_streaks(db: Session, target_date: date) -> tuple[int, int]:
     - Longest streak là chuỗi ngày liên tục dài nhất trong toàn bộ lịch sử học tập.
     """
     # Lấy danh sách completed_at của các session hoàn thành
-    sessions_completed = db.scalars(
-        select(StudySession.completed_at)
-        .where(
+    statement = select(StudySession.completed_at).where(
             StudySession.status == StudySessionStatus.COMPLETED,
             StudySession.completed_at.is_not(None),
         )
-        .order_by(StudySession.completed_at.asc())
-    ).all()
+    if user_id is not None:
+        statement = statement.where(StudySession.user_id == user_id)
+    sessions_completed = db.scalars(statement.order_by(StudySession.completed_at.asc())).all()
 
     if not sessions_completed:
         return 0, 0
@@ -90,6 +89,10 @@ def get_month_calendar_summary(
     month: int,
     *,
     now: datetime | None = None,
+    user_id: int | None = None,
+    workbook_id: int | None = None,
+    sync_due: bool = True,
+    include_sessions: bool = True,
 ) -> CalendarMonthSummary:
     """
     Lấy dữ liệu tổng hợp theo tháng cho giao diện Check-in Calendar:
@@ -101,8 +104,9 @@ def get_month_calendar_summary(
     today = current_dt.date()
 
     try:
-        # Đồng bộ trạng thái các sheet due hôm nay
-        list_due_sheets(db, now=current_dt)
+        # Admin views keep the existing due-state synchronization; preview/member reads are strictly read-only.
+        if sync_due:
+            list_due_sheets(db, now=current_dt)
 
         # Xác định khoảng thời gian đầu tháng - cuối tháng
         _, num_days = calendar.monthrange(year, month)
@@ -113,14 +117,18 @@ def get_month_calendar_summary(
         end_dt = datetime.combine(end_date, time.max, tzinfo=timezone.utc)
 
         # 1. Truy vấn các sessions hoàn thành trong tháng
-        sessions_in_month = db.scalars(
-            select(StudySession)
-            .where(
+        sessions_statement = select(StudySession).where(
                 StudySession.status == StudySessionStatus.COMPLETED,
                 StudySession.completed_at >= start_dt,
                 StudySession.completed_at <= end_dt,
             )
-        ).all()
+        if user_id is not None:
+            sessions_statement = sessions_statement.where(StudySession.user_id == user_id)
+        if workbook_id is not None:
+            sessions_statement = sessions_statement.where(
+                StudySession.sheet_id.in_(select(StudySheet.id).where(StudySheet.workbook_id == workbook_id))
+            )
+        sessions_in_month = db.scalars(sessions_statement).all() if include_sessions else []
 
         # Nhóm theo ngày (date)
         sessions_by_date: dict[date, list[StudySession]] = defaultdict(list)
@@ -130,12 +138,13 @@ def get_month_calendar_summary(
                 sessions_by_date[s_date].append(s)
 
         # 2. Truy vấn các sheets có lịch ôn tập (next_review_at) trong tháng
-        due_sheets_in_month = db.scalars(
-            select(StudySheet).where(
+        due_statement = select(StudySheet).where(
                 StudySheet.next_review_at >= start_dt,
                 StudySheet.next_review_at <= end_dt,
             )
-        ).all()
+        if workbook_id is not None:
+            due_statement = due_statement.where(StudySheet.workbook_id == workbook_id)
+        due_sheets_in_month = db.scalars(due_statement).all()
 
         due_sheets_by_date: dict[date, list[StudySheet]] = defaultdict(list)
         for sheet in due_sheets_in_month:
@@ -144,7 +153,7 @@ def get_month_calendar_summary(
                 due_sheets_by_date[sh_date].append(sheet)
 
         # 3. Tính streaks
-        current_streak, longest_streak = calculate_user_streaks(db, today)
+        current_streak, longest_streak = calculate_user_streaks(db, today, user_id) if include_sessions else (0, 0)
 
         # 4. Xây dựng dữ liệu từng ngày trong tháng
         days_summary: list[CalendarDaySummary] = []
@@ -202,6 +211,9 @@ def get_calendar_day_detail(
     target_date: date,
     *,
     now: datetime | None = None,
+    user_id: int | None = None,
+    workbook_id: int | None = None,
+    include_sessions: bool = True,
 ) -> CalendarDayDetail:
     """
     Lấy thông tin chi tiết các buổi học và các sheet đến hạn ôn của 1 ngày cụ thể.
@@ -214,25 +226,31 @@ def get_calendar_day_detail(
 
     try:
         # Lấy completed sessions trong ngày
-        sessions = db.scalars(
-            select(StudySession)
-            .where(
+        sessions_statement = select(StudySession).where(
                 StudySession.status == StudySessionStatus.COMPLETED,
                 StudySession.completed_at >= start_dt,
                 StudySession.completed_at <= end_dt,
             )
-            .options(selectinload(StudySession.sheet).selectinload(StudySheet.workbook))
+        if user_id is not None:
+            sessions_statement = sessions_statement.where(StudySession.user_id == user_id)
+        if workbook_id is not None:
+            sessions_statement = sessions_statement.where(
+                StudySession.sheet_id.in_(select(StudySheet.id).where(StudySheet.workbook_id == workbook_id))
+            )
+        sessions = db.scalars(
+            sessions_statement.options(selectinload(StudySession.sheet).selectinload(StudySheet.workbook))
             .order_by(StudySession.completed_at.desc())
-        ).all()
+        ).all() if include_sessions else []
 
         # Lấy due sheets trong ngày
-        due_sheets = db.scalars(
-            select(StudySheet)
-            .where(
+        due_statement = select(StudySheet).where(
                 StudySheet.next_review_at >= start_dt,
                 StudySheet.next_review_at <= end_dt,
             )
-            .options(selectinload(StudySheet.workbook))
+        if workbook_id is not None:
+            due_statement = due_statement.where(StudySheet.workbook_id == workbook_id)
+        due_sheets = db.scalars(
+            due_statement.options(selectinload(StudySheet.workbook))
             .order_by(StudySheet.priority.desc(), StudySheet.id.asc())
         ).all()
 

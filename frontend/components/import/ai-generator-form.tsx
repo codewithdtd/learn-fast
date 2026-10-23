@@ -123,8 +123,8 @@ export function AIGeneratorForm() {
 
   async function handleGenerate(e: React.FormEvent) {
     e.preventDefault();
-    if (!isAdmin) {
-      setError("Only administrators can use AI card generation.");
+    if (isAuthenticated && !isAdmin) {
+      setError("AI previews are available to guests, while saving AI content requires an administrator.");
       return;
     }
 
@@ -142,9 +142,9 @@ export function AIGeneratorForm() {
         const resp = await mineAICards({
           text: miningText.trim(),
           target_sheet_id:
-          sheetMode === "append" && activeSelectedSheetId ? activeSelectedSheetId : undefined,
+          isAdmin && sheetMode === "append" && activeSelectedSheetId ? activeSelectedSheetId : undefined,
           target_workbook_id:
-            workbookMode === "existing" && selectedWorkbookId
+            isAdmin && workbookMode === "existing" && selectedWorkbookId
               ? selectedWorkbookId
               : undefined,
         });
@@ -175,9 +175,9 @@ export function AIGeneratorForm() {
         count: cardCount,
         level,
         target_sheet_id:
-          sheetMode === "append" && activeSelectedSheetId ? activeSelectedSheetId : undefined,
+          isAdmin && sheetMode === "append" && activeSelectedSheetId ? activeSelectedSheetId : undefined,
         target_workbook_id:
-          workbookMode === "existing" && selectedWorkbookId
+          isAdmin && workbookMode === "existing" && selectedWorkbookId
             ? selectedWorkbookId
             : undefined,
       });
@@ -208,13 +208,14 @@ export function AIGeneratorForm() {
         workbookId={workbookMode === "existing" ? selectedWorkbookId ?? undefined : undefined}
         newWorkbookName={workbookMode === "new" ? newWorkbookName : undefined}
         targetSheetId={sheetMode === "append" ? activeSelectedSheetId ?? undefined : undefined}
+        previewOnly={!isAdmin}
         onBackToConfig={handleBackToConfig}
       />
     );
   }
   return (
     <div className="ai-generator-container">
-      {!isAdmin && (
+      {!isAdmin && !isAuthenticated && (
         <div className="admin-restriction-banner" role="alert">
           <div className="admin-restriction-icon">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -223,8 +224,8 @@ export function AIGeneratorForm() {
             </svg>
           </div>
           <div className="admin-restriction-text">
-            <strong>Administrator access required</strong>
-            <p>Only administrators can create AI-generated study content.</p>
+              <strong>Guest AI preview</strong>
+              <p>You can try AI generation once. Results stay in this preview; saving to a workbook requires an administrator.</p>
           </div>
         </div>
       )}
@@ -490,7 +491,7 @@ export function AIGeneratorForm() {
     <div className="ai-action-bar">
       <button
         type="submit"
-        disabled={isGenerating || !isAdmin}
+        disabled={isGenerating || (isAuthenticated && !isAdmin)}
         className="ai-generate-submit-btn"
       >
         {isGenerating ? (

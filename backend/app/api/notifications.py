@@ -1,7 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
+from app.api.deps import get_current_admin, get_current_user_optional
 from app.core.database import get_db
+from app.models import User
 from app.schemas.notification import MarkReadResponse, NotificationListResponse
 from app.services.notification import (
     NotificationPersistenceError,
@@ -19,10 +21,13 @@ def list_notifications(
     unread_only: bool = Query(False, description="Filter for unread notifications only"),
     limit: int = Query(30, ge=1, le=100, description="Max notifications to retrieve"),
     db: Session = Depends(get_db),
+    current_user: User | None = Depends(get_current_user_optional),
 ) -> NotificationListResponse:
     """
     List notifications and unread count.
     """
+    if current_user is None or not current_user.is_superuser:
+        return NotificationListResponse(items=[], unread_count=0, total_count=0)
     try:
         return get_user_notifications(db, unread_only=unread_only, limit=limit)
     except NotificationPersistenceError as error:
@@ -36,6 +41,7 @@ def list_notifications(
 def mark_read(
     notification_id: int,
     db: Session = Depends(get_db),
+    admin_user: User = Depends(get_current_admin),
 ) -> dict[str, bool]:
     """
     Mark a specific notification as read.
@@ -58,6 +64,7 @@ def mark_read(
 @router.post("/notifications/read-all", response_model=MarkReadResponse)
 def mark_all_read(
     db: Session = Depends(get_db),
+    admin_user: User = Depends(get_current_admin),
 ) -> MarkReadResponse:
     """
     Mark all notifications as read.

@@ -28,6 +28,8 @@ class StudySession(TimestampMixin, Base):
     user_id: Mapped[Optional[int]] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True
     )
+    # Anonymous sessions retain a private ownership key while user_id stays NULL, so guest practice never lands on an admin account.
+    guest_key_hash: Mapped[Optional[str]] = mapped_column(String(64), nullable=True, index=True)
     sheet_id: Mapped[int] = mapped_column(
         ForeignKey("study_sheets.id", ondelete="CASCADE"), nullable=False, index=True
     )

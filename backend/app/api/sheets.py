@@ -1,16 +1,19 @@
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from datetime import datetime, timezone
+
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, selectinload
 
-from app.api.deps import get_current_admin
+from app.api.deps import get_current_admin, get_current_user_optional
 from app.core.database import get_db
-from app.models import Flashcard, SheetStatus, StudySheet, User
+from app.models import Flashcard, SheetStatus, StudySheet, User, Workbook
 from app.schemas.flashcard import FlashcardListItem
 from app.schemas.sheet import SheetDetail, SheetUpdate
 from app.schemas.workbook import SheetSummary
+from app.services.public_preview import get_guest_preview_workbook
 from app.services.srs import SrsPersistenceError, list_due_sheets
 
 
@@ -29,8 +32,28 @@ def get_sheet_or_404(db: Session, sheet_id: int) -> StudySheet:
     return sheet
 
 
+def ensure_sheet_visible(db: Session, sheet: StudySheet, current_user: User | None) -> None:
+    # Non-admins can inspect only one admin-owned preview; workbook data stays read-only to protect shared SRS state.
+    if current_user is not None and current_user.is_superuser:
+        return
+    preview = get_guest_preview_workbook(db)
+    if preview is None or sheet.workbook_id != preview.id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Study sheet not found.")
+
+
 @router.get("/sheets/due", response_model=list[SheetSummary])
-def list_due_sheets_api(db: Session = Depends(get_db)) -> list[SheetSummary]:
+def list_due_sheets_api(db: Session = Depends(get_db), current_user: User | None = Depends(get_current_user_optional)) -> list[SheetSummary]:
+    if current_user is None or not current_user.is_superuser:
+        preview = get_guest_preview_workbook(db)
+        if preview is None:
+            return []
+        now = datetime.now(timezone.utc)
+        sheets = db.scalars(
+            select(StudySheet)
+            .where(StudySheet.workbook_id == preview.id, StudySheet.next_review_at.is_not(None), StudySheet.next_review_at <= now)
+            .order_by(StudySheet.next_review_at, StudySheet.position)
+        ).all()
+        return [SheetSummary.model_validate(sheet) for sheet in sheets]
     try:
         return [SheetSummary.model_validate(sheet) for sheet in list_due_sheets(db)]
     except SrsPersistenceError as error:
@@ -41,23 +64,30 @@ def list_due_sheets_api(db: Session = Depends(get_db)) -> list[SheetSummary]:
 
 
 @router.get("/sheets/not-started", response_model=list[SheetSummary])
-def list_not_started_sheets(db: Session = Depends(get_db)) -> list[SheetSummary]:
+def list_not_started_sheets(db: Session = Depends(get_db), current_user: User | None = Depends(get_current_user_optional)) -> list[SheetSummary]:
+    statement = select(StudySheet).join(Workbook).where(StudySheet.status == SheetStatus.NOT_STARTED)
+    if current_user is None or not current_user.is_superuser:
+        preview = get_guest_preview_workbook(db)
+        if preview is None:
+            return []
+        statement = statement.where(StudySheet.workbook_id == preview.id)
     sheets = db.scalars(
-        select(StudySheet)
-        .where(StudySheet.status == SheetStatus.NOT_STARTED)
+        statement
         .order_by(StudySheet.workbook_id, StudySheet.position)
     ).all()
     return [SheetSummary.model_validate(sheet) for sheet in sheets]
 
 
 @router.get("/sheets/{sheet_id}", response_model=SheetDetail)
-def get_sheet(sheet_id: int, db: Session = Depends(get_db)) -> SheetDetail:
-    return SheetDetail.model_validate(get_sheet_or_404(db, sheet_id))
+def get_sheet(sheet_id: int, db: Session = Depends(get_db), current_user: User | None = Depends(get_current_user_optional)) -> SheetDetail:
+    sheet = get_sheet_or_404(db, sheet_id)
+    ensure_sheet_visible(db, sheet, current_user)
+    return SheetDetail.model_validate(sheet)
 
 
 @router.get("/sheets/{sheet_id}/cards", response_model=list[FlashcardListItem])
-def list_sheet_cards(sheet_id: int, db: Session = Depends(get_db)) -> list[FlashcardListItem]:
-    get_sheet_or_404(db, sheet_id)
+def list_sheet_cards(sheet_id: int, db: Session = Depends(get_db), current_user: User | None = Depends(get_current_user_optional)) -> list[FlashcardListItem]:
+    ensure_sheet_visible(db, get_sheet_or_404(db, sheet_id), current_user)
     cards = db.scalars(
         select(Flashcard).where(Flashcard.sheet_id == sheet_id).order_by(Flashcard.position)
     ).all()

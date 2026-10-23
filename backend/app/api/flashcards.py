@@ -1,12 +1,13 @@
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from app.api.deps import get_current_admin
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.models import Flashcard
+from app.models import Flashcard, User
 from app.schemas.flashcard import (
     FlashcardBookmarkUpdate,
     FlashcardListItem,
@@ -49,6 +50,7 @@ def update_flashcard_weak(
     card_id: int,
     update: FlashcardWeakUpdate,
     db: Session = Depends(get_db),
+    admin_user: User = Depends(get_current_admin),
 ) -> FlashcardListItem:
     flashcard = get_flashcard_or_404(db, card_id)
     # An explicit boolean makes retries idempotent: a repeated request leaves
@@ -62,6 +64,7 @@ def update_flashcard_bookmark(
     card_id: int,
     update: FlashcardBookmarkUpdate,
     db: Session = Depends(get_db),
+    admin_user: User = Depends(get_current_admin),
 ) -> FlashcardListItem:
     flashcard = get_flashcard_or_404(db, card_id)
     # See the weak endpoint: setting a value, rather than toggling, preserves

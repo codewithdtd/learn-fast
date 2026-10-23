@@ -3,7 +3,7 @@ import logging
 from typing import Optional
 
 from fastapi import APIRouter, Depends, File, HTTPException, Response, UploadFile, status
-from sqlalchemy import or_, select
+from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, selectinload
 
@@ -33,6 +33,7 @@ from app.services.sheet_management import (
     WorkbookNotFoundError,
     move_sheets,
 )
+from app.services.public_preview import get_guest_preview_workbook
 
 
 logger = logging.getLogger(__name__)
@@ -69,7 +70,13 @@ def list_workbooks(
     List all available workbooks for learning.
     Both guest learners and registered users can view the curated study library.
     """
-    statement = select(Workbook).order_by(Workbook.imported_at.desc(), Workbook.id.desc())
+    statement = select(Workbook)
+    if current_user is None or not current_user.is_superuser:
+        preview = get_guest_preview_workbook(db)
+        if preview is None:
+            return []
+        statement = statement.where(Workbook.id == preview.id)
+    statement = statement.order_by(Workbook.imported_at.desc(), Workbook.id.desc())
     workbooks = db.scalars(statement).all()
     return [WorkbookListItem.model_validate(workbook) for workbook in workbooks]
 
@@ -81,6 +88,10 @@ def get_workbook(
     current_user: Optional[User] = Depends(get_current_user_optional),
 ) -> WorkbookDetail:
     workbook = get_workbook_or_404(db, workbook_id, include_sheets=True, current_user=current_user)
+    if current_user is None or not current_user.is_superuser:
+        preview = get_guest_preview_workbook(db)
+        if preview is None or workbook.id != preview.id:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Workbook not found.")
     return WorkbookDetail.model_validate(workbook)
 
 

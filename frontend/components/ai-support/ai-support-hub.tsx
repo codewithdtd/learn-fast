@@ -4,12 +4,15 @@ import { useState } from "react";
 import { WritingTopicList } from "@/components/writing/writing-topic-list";
 import { SpeakingPractice } from "@/components/speaking/speaking-practice";
 import { SentencePractice } from "@/components/sentences/sentence-practice";
+import { GuestAIPractice } from "@/components/demo/guest-ai-practice";
+import { useAuth } from "@/context/auth-context";
 import styles from "./ai-support.module.css";
 
 type AITab = "writing" | "speaking" | "sentences";
 const tabOrder: AITab[] = ["sentences", "writing", "speaking"];
 
 export function AISupportHub({ initialTab, initialSheetId }: { initialTab: AITab; initialSheetId?: string }) {
+  const { isAuthenticated, isLoading } = useAuth();
   const [tab, setTab] = useState<AITab>(initialTab);
   function selectTab(nextTab: AITab) {
     setTab(nextTab);
@@ -25,6 +28,10 @@ export function AISupportHub({ initialTab, initialSheetId }: { initialTab: AITab
     selectTab(nextTab);
     document.getElementById(`${nextTab}-tab`)?.focus();
   }
+  if (!isLoading && !isAuthenticated) return <div className={styles.hub}>
+    <header className={styles.header}><p className={styles.eyebrow}>PRACTICE WITH AI</p><h1>AI Support</h1><p>Try the AI tools with one free guest use per feature. Guest practice is not saved to an account.</p></header>
+    <GuestAIPractice />
+  </div>;
   return <div className={styles.hub}>
     <header className={styles.header}>
       <p className={styles.eyebrow}>PRACTICE WITH AI</p>

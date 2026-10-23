@@ -104,7 +104,13 @@ def _create_round(
     return study_round
 
 
-def create_study_session(db: Session, payload: StudySessionCreate) -> StudySessionDetail:
+def create_study_session(
+    db: Session,
+    payload: StudySessionCreate,
+    *,
+    user_id: int | None = None,
+    guest_key_hash: str | None = None,
+) -> StudySessionDetail:
     sheet = db.get(StudySheet, payload.sheet_id)
     if sheet is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Study sheet not found.")
@@ -121,6 +127,8 @@ def create_study_session(db: Session, payload: StudySessionCreate) -> StudySessi
 
     fixed_direction = payload.direction if payload.direction is not StudyDirection.MIXED else None
     session = StudySession(
+        user_id=user_id,
+        guest_key_hash=guest_key_hash,
         sheet_id=sheet.id,
         session_type=payload.session_type,
         direction=payload.direction,
@@ -271,8 +279,13 @@ def _complete_session_if_mastered(session: StudySession) -> bool:
         sum(item.recall_percentage or 0 for item in completed_rounds) / len(completed_rounds), 2
     )
 
-    # Tự động tính toán lịch SRS cho sheet dựa trên kết quả khách quan nếu phiên học là new_learning hoặc srs_review
-    if session.session_type in {StudySessionType.NEW_LEARNING, StudySessionType.SRS_REVIEW}:
+    # The preview sheet is shared admin content, so only its admin owner's session may advance its persistent SRS schedule.
+    if (
+        session.user_id is not None
+        and session.user is not None
+        and session.user.is_superuser
+        and session.session_type in {StudySessionType.NEW_LEARNING, StudySessionType.SRS_REVIEW}
+    ):
         if session.sheet_rating is None and session.sheet is not None:
             auto_rating = derive_rating_from_session_metrics(
                 session.mastery_score,

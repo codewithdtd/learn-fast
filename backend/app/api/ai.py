@@ -1,8 +1,8 @@
 import logging
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_admin
+from app.api.deps import get_current_admin, get_current_user_optional
 from app.core.database import get_db
 from app.models.user import User
 from app.schemas.ai import (
@@ -14,6 +14,7 @@ from app.schemas.ai import (
 )
 from app.services.ai_client import extract_chunks_from_text, generate_ai_cards
 from app.services.ai_sheet_service import get_exclusion_phrases, save_ai_generated_sheet
+from app.services.guest_ai_quota import consume_guest_ai_trial
 
 logger = logging.getLogger(__name__)
 
@@ -27,16 +28,24 @@ router = APIRouter(prefix="/ai", tags=["ai"])
 )
 def generate_cards_endpoint(
     request: AIGenerateRequest,
+    http_request: Request,
     db: Session = Depends(get_db),
-    admin_user: User = Depends(get_current_admin),
+    current_user: User | None = Depends(get_current_user_optional),
 ) -> AIGeneratedSheetResponse:
     """Gọi Local AI để sinh các cụm từ giao tiếp/công sở thực tế, loại trừ các từ đã tồn tại nếu có."""
-    exclusion_phrases = get_exclusion_phrases(
-        db=db,
-        user=admin_user,
-        sheet_id=request.target_sheet_id,
-        workbook_id=request.target_workbook_id,
-    )
+    # Unprivileged previews receive stateless output and cannot read or change saved library content.
+    if current_user is None or not current_user.is_superuser:
+        if request.target_sheet_id is not None or request.target_workbook_id is not None:
+            raise HTTPException(status_code=400, detail="Guest previews cannot target a saved workbook or sheet.")
+        consume_guest_ai_trial(db, http_request, "flashcard_generation")
+        exclusion_phrases: set[str] = set()
+    else:
+        exclusion_phrases = get_exclusion_phrases(
+            db=db,
+            user=current_user,
+            sheet_id=request.target_sheet_id,
+            workbook_id=request.target_workbook_id,
+        )
     return generate_ai_cards(
         topic=request.topic,
         total_count=request.count,
@@ -52,16 +61,24 @@ def generate_cards_endpoint(
 )
 def mine_chunks_endpoint(
     request: AIMineRequest,
+    http_request: Request,
     db: Session = Depends(get_db),
-    admin_user: User = Depends(get_current_admin),
+    current_user: User | None = Depends(get_current_user_optional),
 ) -> AIGeneratedSheetResponse:
     """Phân tích đoạn văn bản, bóc tách các collocations/chunks và giữ nguyên câu văn ngữ cảnh gốc."""
-    exclusion_phrases = get_exclusion_phrases(
-        db=db,
-        user=admin_user,
-        sheet_id=request.target_sheet_id,
-        workbook_id=request.target_workbook_id,
-    )
+    # Share this quota across both AI routes so changing endpoints cannot bypass the guest trial.
+    if current_user is None or not current_user.is_superuser:
+        if request.target_sheet_id is not None or request.target_workbook_id is not None:
+            raise HTTPException(status_code=400, detail="Guest previews cannot target a saved workbook or sheet.")
+        consume_guest_ai_trial(db, http_request, "flashcard_generation")
+        exclusion_phrases: set[str] = set()
+    else:
+        exclusion_phrases = get_exclusion_phrases(
+            db=db,
+            user=current_user,
+            sheet_id=request.target_sheet_id,
+            workbook_id=request.target_workbook_id,
+        )
     sheet_name, cards = extract_chunks_from_text(
         text=request.text,
         existing_phrases=exclusion_phrases,
