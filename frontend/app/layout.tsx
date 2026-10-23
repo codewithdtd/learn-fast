@@ -55,9 +55,10 @@ const retroDisplay = Playfair_Display({
 const themeScript = `(() => {
   try {
     const storedTheme = localStorage.getItem("learn-fast-theme");
-    const theme = storedTheme === "light" || storedTheme === "dark" || storedTheme === "retro"
+    // Use Playful for first-time visitors while honoring any previously saved choice.
+    const theme = storedTheme === "light" || storedTheme === "dark" || storedTheme === "retro" || storedTheme === "playful"
       ? storedTheme
-      : (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      : "playful";
     document.documentElement.dataset.theme = theme;
   } catch {}
 })();`;
