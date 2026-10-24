@@ -2660,8 +2660,7 @@ a {
   gap: 8px;
 }
 
-.table-view-filter,
-.table-view-examples-toggle {
+.table-view-filter {
   display: inline-flex;
   min-height: 44px;
   align-items: center;
@@ -2679,8 +2678,7 @@ a {
   cursor: pointer;
 }
 
-.table-view-filter:hover,
-.table-view-examples-toggle:hover {
+.table-view-filter:hover {
   border-color: var(--primary);
   background: var(--surface-low);
 }
@@ -2704,50 +2702,6 @@ a {
   font-size: 12px;
 }
 
-.table-view-examples-toggle {
-  border: 0;
-  border-radius: 0;
-  padding: 0 0 0 16px;
-  color: var(--foreground);
-}
-
-.table-view-examples-toggle::before {
-  width: 1px;
-  height: 24px;
-  margin-right: 8px;
-  background: var(--outline);
-  content: "";
-}
-
-.table-view-switch {
-  position: relative;
-  display: inline-flex;
-  width: 42px;
-  height: 24px;
-  align-items: center;
-  border-radius: 999px;
-  background: var(--outline);
-  padding: 3px;
-}
-
-.table-view-switch span {
-  display: block;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: white;
-  box-shadow: 0 1px 3px rgb(27 27 36 / 18%);
-  transition: transform 160ms var(--ease-out, ease-out);
-}
-
-.table-view-examples-toggle.active .table-view-switch {
-  background: var(--primary-container);
-}
-
-.table-view-examples-toggle.active .table-view-switch span {
-  transform: translateX(18px);
-}
-
 .table-view-inline-error {
   margin: 0;
   border: 1px solid var(--error-soft);
@@ -2769,7 +2723,8 @@ a {
 .vocabulary-table-head,
 .vocabulary-table-row {
   display: grid;
-  grid-template-columns: minmax(180px, 1.05fr) minmax(240px, 1.65fr) minmax(200px, 1.35fr) 148px;
+  grid-template-columns: var(--vocabulary-columns, minmax(180px, 1.05fr) minmax(240px, 1.65fr) minmax(200px, 1.35fr) 148px);
+  grid-template-areas: var(--vocabulary-row-areas, "phrase meaning examples actions");
   gap: 24px;
 }
 
@@ -2782,6 +2737,52 @@ a {
   font-size: 14px;
   font-weight: 800;
 }
+
+.vocabulary-column-heading {
+  display: flex;
+  min-width: 0;
+  min-height: 44px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.vocabulary-column-heading[data-visible="false"] .vocabulary-column-label { display: none; }
+.vocabulary-column-controls { display: flex; align-items: center; gap: 5px; }
+.vocabulary-column-visibility {
+  display: grid;
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+.vocabulary-column-visibility:hover:not(:disabled) { border-color: var(--outline); background: var(--surface); color: var(--primary); }
+.vocabulary-column-visibility:focus-visible,
+.vocabulary-example-toggle:focus-visible { outline: 3px solid var(--foreground); outline-offset: 2px; }
+.vocabulary-column-visibility:disabled { cursor: not-allowed; opacity: .45; }
+.vocabulary-example-toggle {
+  min-height: 36px;
+  border: 1px solid var(--outline);
+  border-radius: 999px;
+  background: var(--surface);
+  padding: 0 10px;
+  color: var(--primary-container);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 750;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.vocabulary-example-toggle:hover:not(:disabled) { border-color: var(--primary); background: var(--primary-soft); }
+.vocabulary-example-toggle:disabled { color: var(--muted); opacity: .62; cursor: not-allowed; }
+.vocabulary-cell[data-column-hidden="true"] { overflow: hidden; }
+.vocabulary-mobile-field-label,
+.mobile-table-display { display: none; }
 
 .vocabulary-table-row {
   min-height: 126px;
@@ -3072,7 +3073,7 @@ a {
 
   .vocabulary-table-head,
   .vocabulary-table-row {
-    grid-template-columns: minmax(140px, 1fr) minmax(180px, 1.2fr) minmax(170px, 1.1fr) 112px;
+    grid-template-columns: var(--vocabulary-columns-compact, minmax(140px, 1fr) minmax(180px, 1.2fr) minmax(170px, 1.1fr) 112px);
     gap: 16px;
     padding-right: 20px;
     padding-left: 20px;
@@ -3112,8 +3113,9 @@ a {
   }
 
   .table-view-filter-row {
+    flex-wrap: wrap;
     gap: 8px;
-    overflow: hidden;
+    overflow: visible;
   }
 
   .table-view-filters {
@@ -3136,20 +3138,6 @@ a {
     display: none;
   }
 
-  .table-view-examples-toggle {
-    flex: 0 0 auto;
-    padding-left: 8px;
-    font-size: 13px;
-  }
-
-  .table-view-examples-toggle::before {
-    display: none;
-  }
-
-  .table-view-examples-toggle > span:first-child {
-    display: none;
-  }
-
   .vocabulary-table {
     overflow: visible;
     border: 0;
@@ -3157,22 +3145,70 @@ a {
     box-shadow: none;
   }
 
-  .vocabulary-table-head {
-    display: none;
+  .vocabulary-table-head { display: none; }
+
+  .mobile-table-display {
+    display: block;
+    border: 1px solid var(--outline);
+    border-radius: 16px;
+    background: var(--surface);
+    box-shadow: var(--shadow-soft);
   }
+
+  .mobile-table-display summary {
+    display: flex;
+    min-height: 52px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 0 15px;
+    color: var(--foreground);
+    font-size: 13px;
+    font-weight: 750;
+    list-style: none;
+    cursor: pointer;
+  }
+  .mobile-table-display summary::-webkit-details-marker { display: none; }
+  .mobile-table-display summary > span { display: inline-flex; align-items: center; gap: 9px; }
+  .mobile-table-display summary .icon { color: var(--primary); }
+  .mobile-table-display summary strong { color: var(--muted); font-size: 11px; font-weight: 650; }
+  .mobile-table-display summary::after { margin-left: 2px; color: var(--muted); content: "⌄"; font-size: 16px; transition: transform 150ms ease; }
+  .mobile-table-display[open] summary::after { transform: rotate(180deg); }
+  .mobile-table-display summary:focus-visible { outline: 3px solid var(--foreground); outline-offset: 2px; border-radius: 14px; }
+  .mobile-table-display[open] summary { border-bottom: 1px solid var(--outline); }
+  .mobile-table-display-panel { display: grid; gap: 0; padding: 7px 13px 10px; }
+  .mobile-table-display-label { margin: 5px 2px 3px; color: var(--muted); font-size: 10px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
+  .mobile-table-display-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 7px; min-height: 58px; border-bottom: 1px solid var(--outline); }
+  .mobile-table-display-row:last-child { border-bottom: 0; }
+  .mobile-table-display-row > div { display: grid; gap: 2px; }
+  .mobile-table-display-row > div strong { color: var(--foreground); font-size: 13px; }
+  .mobile-table-display-row > div small { color: var(--muted); font-size: 10px; }
+  .mobile-table-column-toggle { display: inline-flex; min-width: 76px; min-height: 44px; align-items: center; justify-content: flex-end; gap: 7px; border: 0; border-radius: 999px; background: transparent; padding: 0 5px; color: var(--muted); font: inherit; font-size: 11px; font-weight: 750; cursor: pointer; }
+  .mobile-table-column-toggle[aria-pressed="true"] { color: var(--primary-container); }
+  .mobile-table-column-toggle:disabled { opacity: .45; cursor: not-allowed; }
+  .mobile-table-switch { display: flex; width: 36px; height: 22px; align-items: center; border-radius: 99px; background: var(--outline); padding: 2px; transition: background 150ms ease; }
+  .mobile-table-switch span { width: 18px; height: 18px; border-radius: 50%; background: var(--surface); box-shadow: 0 1px 3px rgb(0 0 0 / 16%); transition: transform 150ms ease; }
+  .mobile-table-column-toggle[aria-pressed="true"] .mobile-table-switch { background: var(--primary); }
+  .mobile-table-column-toggle[aria-pressed="true"] .mobile-table-switch span { transform: translateX(14px); }
+  .mobile-table-example-toggle { min-height: 44px; border: 1px solid var(--outline); border-radius: 999px; background: var(--surface-low); padding: 0 10px; color: var(--primary-container); font: inherit; font-size: 10px; font-weight: 800; white-space: nowrap; cursor: pointer; }
+  .mobile-table-example-toggle:hover:not(:disabled) { border-color: var(--primary); }
+  .mobile-table-example-toggle:disabled { color: var(--muted); opacity: .58; cursor: not-allowed; }
 
   .vocabulary-table-body {
     display: grid;
     gap: 16px;
   }
 
+  .vocabulary-cell[data-column-hidden="true"] { display: none; }
+
   .vocabulary-table-row {
     grid-template-columns: minmax(0, 1fr) auto;
-    gap: 16px;
+    grid-template-areas: var(--vocabulary-row-areas-mobile, "phrase phrase" "actions actions" "meaning meaning" "examples examples");
+    gap: 14px;
     border: 1px solid var(--outline);
     border-radius: var(--radius-lg);
     background: var(--surface);
-    padding: 20px 16px 16px;
+    padding: 18px 16px 16px;
     box-shadow: var(--shadow-soft);
   }
 
@@ -3181,35 +3217,43 @@ a {
   }
 
   .phrase-cell {
-    grid-column: 1;
-    grid-row: 1;
-    gap: 4px;
+    gap: 6px;
   }
 
+  .vocabulary-mobile-field-label { display: flex; align-items: center; justify-content: space-between; color: var(--muted); font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+  .vocabulary-mobile-field-label > span { color: var(--muted); font-size: 10px; letter-spacing: 0; }
+  .vocabulary-position { display: none; }
+
   .phrase-cell strong {
-    font-size: 25px;
-    letter-spacing: -0.03em;
+    font-size: clamp(21px, 6vw, 25px);
+    letter-spacing: -0.025em;
   }
 
   .meaning-cell {
-    grid-column: 1 / -1;
-    grid-row: 2;
-    font-size: 17px;
-    line-height: 1.5;
+    font-size: 15px;
+    line-height: 1.58;
   }
+
+  .meaning-cell .vocabulary-mobile-field-label { margin-bottom: 5px; }
 
   .examples-cell {
-    grid-column: 1 / -1;
-    grid-row: 3;
     border-top: 1px solid var(--outline);
-    padding-top: 14px;
+    padding-top: 12px;
   }
 
+  .examples-cell > .vocabulary-mobile-field-label { margin-bottom: 7px; }
+
   .actions-cell {
-    grid-column: 2;
-    grid-row: 1;
-    align-self: start;
+    align-self: center;
+    justify-self: stretch;
+    justify-content: flex-end;
+    border-top: 1px solid var(--outline);
+    padding-top: 8px;
   }
+
+  .example-toggle-link { min-height: 44px; align-items: center; }
+  .example-content { gap: 10px; }
+  .example-content p { grid-template-columns: 30px minmax(0, 1fr); gap: 9px; }
 
   .flashcard-flag-actions {
     gap: 8px;

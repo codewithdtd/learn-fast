@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   title: "English SRS & Mastery Learning",
   description: "Personal English learning application",
   icons: {
-    icon: "/favicon.png",
+    icon: "/favicon.svg",
     apple: "/favicon.png",
   },
   // Hỗ trợ chế độ WebClip "Thêm vào màn hình chính" (Add to Home Screen) trên iPhone / iOS

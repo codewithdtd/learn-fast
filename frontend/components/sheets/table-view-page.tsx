@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 
 import { FlashcardFlagButtons } from "@/components/sheets/flashcard-flag-buttons";
 import { ApiRequestError, getSheet, getSheetCards, updateFlashcardBookmark, updateFlashcardContent, updateFlashcardWeak, type FlashcardListItem, type SheetDetail } from "@/services/api";
@@ -14,6 +14,44 @@ type ResponsiveSheetTableViewProps = {
 
 type CardFilter = "all" | "weak" | "bookmarked";
 type FlagName = "is_weak" | "is_bookmarked";
+type TableColumn = "phrase" | "meaning" | "examples" | "actions";
+type VisibleColumns = Record<TableColumn, boolean>;
+
+const tableColumns: { key: TableColumn; label: string }[] = [
+  { key: "phrase", label: "Phrase" },
+  { key: "meaning", label: "Meaning" },
+  { key: "examples", label: "Examples" },
+  { key: "actions", label: "Actions" },
+];
+
+function getTableGridStyle(visible: VisibleColumns): CSSProperties {
+  const desktopWidths: Record<TableColumn, string> = {
+    phrase: visible.phrase ? "minmax(180px, 1.05fr)" : "48px",
+    meaning: visible.meaning ? "minmax(240px, 1.65fr)" : "48px",
+    examples: visible.examples ? "minmax(240px, 1.35fr)" : "48px",
+    actions: visible.actions ? "148px" : "48px",
+  };
+  const compactWidths: Record<TableColumn, string> = {
+    phrase: visible.phrase ? "minmax(140px, 1fr)" : "44px",
+    meaning: visible.meaning ? "minmax(180px, 1.2fr)" : "44px",
+    examples: visible.examples ? "minmax(200px, 1.1fr)" : "44px",
+    actions: visible.actions ? "112px" : "44px",
+  };
+  const allKeys = tableColumns.map(({ key }) => key);
+  const mobileRows = [
+    ...(visible.phrase ? ["phrase phrase"] : []),
+    ...(visible.actions ? ["actions actions"] : []),
+    ...(visible.meaning ? ["meaning meaning"] : []),
+    ...(visible.examples ? ["examples examples"] : []),
+  ].filter((row): row is string => row !== null).map((row) => `"${row}"`).join(" ");
+
+  return {
+    "--vocabulary-columns": allKeys.map((key) => desktopWidths[key]).join(" "),
+    "--vocabulary-columns-compact": allKeys.map((key) => compactWidths[key]).join(" "),
+    "--vocabulary-row-areas": `"${allKeys.join(" ")}"`,
+    "--vocabulary-row-areas-mobile": mobileRows,
+  } as CSSProperties;
+}
 
 export function ResponsiveSheetTableView({ sheetId }: ResponsiveSheetTableViewProps) {
   const { user, isAuthenticated } = useAuth();
@@ -26,7 +64,7 @@ export function ResponsiveSheetTableView({ sheetId }: ResponsiveSheetTableViewPr
   const [notFound, setNotFound] = useState(false);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<CardFilter>("all");
-  const [areExamplesVisible, setAreExamplesVisible] = useState(true);
+  const [visibleColumns, setVisibleColumns] = useState<VisibleColumns>({ phrase: true, meaning: true, examples: true, actions: true });
   const [expandedExamples, setExpandedExamples] = useState<Set<number>>(new Set());
 
   async function loadTable() {
@@ -105,6 +143,10 @@ export function ResponsiveSheetTableView({ sheetId }: ResponsiveSheetTableViewPr
     }),
     [cards],
   );
+  const exampleCardIds = useMemo(() => cards.filter((card) => card.example_en || card.example_vi).map((card) => card.id), [cards]);
+  const areAllExamplesExpanded = exampleCardIds.length > 0 && exampleCardIds.every((cardId) => expandedExamples.has(cardId));
+  const visibleColumnCount = tableColumns.filter(({ key }) => visibleColumns[key]).length;
+  const tableGridStyle = getTableGridStyle(visibleColumns);
 
   async function persistFlag(cardId: number, flag: FlagName, nextValue: boolean) {
     const previousCard = cards.find((card) => card.id === cardId);
@@ -154,20 +196,25 @@ export function ResponsiveSheetTableView({ sheetId }: ResponsiveSheetTableViewPr
     }
   }
 
-  function toggleExamplesVisibility() {
-    setAreExamplesVisible((currentValue) => {
-      const nextValue = !currentValue;
-      if (!nextValue) setExpandedExamples(new Set());
-      return nextValue;
-    });
-  }
-
   function toggleCardExamples(cardId: number) {
     setExpandedExamples((currentIds) => {
       const nextIds = new Set(currentIds);
       if (nextIds.has(cardId)) nextIds.delete(cardId);
       else nextIds.add(cardId);
       return nextIds;
+    });
+  }
+
+  function toggleAllExamples(show: boolean) {
+    // Bulk expand only cards that have example text; empty cards should not count as expanded.
+    setExpandedExamples(show ? new Set(exampleCardIds) : new Set());
+  }
+
+  function toggleColumn(column: TableColumn) {
+    setVisibleColumns((current) => {
+      const currentCount = tableColumns.filter(({ key }) => current[key]).length;
+      if (current[column] && currentCount === 1) return current;
+      return { ...current, [column]: !current[column] };
     });
   }
 
@@ -209,15 +256,6 @@ export function ResponsiveSheetTableView({ sheetId }: ResponsiveSheetTableViewPr
               </button>
             ))}
           </div>
-          <button
-            type="button"
-            className={`table-view-examples-toggle ${areExamplesVisible ? "active" : ""}`}
-            aria-pressed={areExamplesVisible}
-            onClick={toggleExamplesVisibility}
-          >
-            <span>Examples</span>
-            <span className="table-view-switch" aria-hidden="true"><span /></span>
-          </button>
         </div>
       </section>
 
@@ -225,24 +263,48 @@ export function ResponsiveSheetTableView({ sheetId }: ResponsiveSheetTableViewPr
 
       {error && <p role="alert" className="table-view-inline-error">{error}</p>}
 
+      {cards.length > 0 && <details className="mobile-table-display">
+        <summary><span><Icon name="eye" size={18} /> Display options</span><strong>{visibleColumnCount} of {tableColumns.length} columns</strong></summary>
+        <div className="mobile-table-display-panel">
+          <p className="mobile-table-display-label">Columns</p>
+          {tableColumns.map(({ key, label }) => <div className="mobile-table-display-row" key={key}>
+            <div><strong>{label}</strong><small>{visibleColumns[key] ? "Shown in each card" : "Hidden from cards"}</small></div>
+            <button type="button" className="mobile-table-column-toggle" aria-pressed={visibleColumns[key]} aria-label={`${visibleColumns[key] ? "Hide" : "Show"} ${label} column`} disabled={visibleColumns[key] && visibleColumnCount === 1} onClick={() => toggleColumn(key)}>
+              <span>{visibleColumns[key] ? "On" : "Off"}</span><span className="mobile-table-switch" aria-hidden="true"><span /></span>
+            </button>
+            {key === "examples" && visibleColumns.examples && <button type="button" className="mobile-table-example-toggle" onClick={() => toggleAllExamples(!areAllExamplesExpanded)} disabled={exampleCardIds.length === 0}>
+              {areAllExamplesExpanded ? "Hide all" : "Show all"}
+            </button>}
+          </div>)}
+        </div>
+      </details>}
+
       {cards.length === 0 ? (
         <TableViewMessage title="No flashcards yet" message="This sheet does not contain any flashcards to display." />
       ) : filteredCards.length === 0 ? (
         <TableViewMessage title="No matching flashcards" message="Try a different search term or filter." />
       ) : (
         <div className="vocabulary-table" role="table" aria-label={`${sheet.name} vocabulary`}>
-          <div className="vocabulary-table-head" role="row">
-            <div role="columnheader">Phrase</div>
-            <div role="columnheader">Meaning</div>
-            <div role="columnheader">Examples</div>
-            <div role="columnheader">Actions</div>
+          <div className="vocabulary-table-head" role="row" style={tableGridStyle}>
+            {tableColumns.map(({ key, label }) => <div key={key} role="columnheader" className={`vocabulary-column-heading${key === "examples" ? " examples-column-heading" : key === "actions" ? " actions-column-heading" : ""}`} data-visible={visibleColumns[key]} style={{ gridArea: key }}>
+              <span className="vocabulary-column-label">{label}</span>
+              <div className="vocabulary-column-controls">
+                {key === "examples" && visibleColumns.examples && <button type="button" className="vocabulary-example-toggle" onClick={() => toggleAllExamples(!areAllExamplesExpanded)} disabled={exampleCardIds.length === 0} aria-controls="vocabulary-table-rows" aria-label={areAllExamplesExpanded ? "Hide all examples" : "Show all examples"}>
+                  {areAllExamplesExpanded ? "Hide all" : "Show all"}
+                </button>}
+                <button type="button" className="vocabulary-column-visibility" onClick={() => toggleColumn(key)} disabled={visibleColumns[key] && visibleColumnCount === 1} aria-label={`${visibleColumns[key] ? "Hide" : "Show"} ${label} column`} title={`${visibleColumns[key] ? "Hide" : "Show"} ${label} column`}>
+                  <Icon name={visibleColumns[key] ? "eye" : "eyeOff"} size={17} />
+                </button>
+              </div>
+            </div>)}
           </div>
-          <div className="vocabulary-table-body">
+          <div className="vocabulary-table-body" id="vocabulary-table-rows">
             {filteredCards.map((card) => (
               <VocabularyRow
                 key={card.id}
                 card={card}
-                areExamplesVisible={areExamplesVisible}
+                visibleColumns={visibleColumns}
+                gridStyle={tableGridStyle}
                 isExampleExpanded={expandedExamples.has(card.id)}
                 canEdit={isAdmin}
                 onToggleExamples={() => toggleCardExamples(card.id)}
@@ -282,7 +344,8 @@ function TableViewHeader({ sheet, cardCount, totalCards }: { sheet: SheetDetail;
 
 type VocabularyRowProps = {
   card: FlashcardListItem;
-  areExamplesVisible: boolean;
+  visibleColumns: VisibleColumns;
+  gridStyle: CSSProperties;
   isExampleExpanded: boolean;
   canEdit: boolean;
   onToggleExamples: () => void;
@@ -291,7 +354,7 @@ type VocabularyRowProps = {
   onBookmarkChange: (nextValue: boolean) => Promise<void>;
 };
 
-function VocabularyRow({ card, areExamplesVisible, isExampleExpanded, canEdit, onToggleExamples, onContentSave, onWeakChange, onBookmarkChange }: VocabularyRowProps) {
+function VocabularyRow({ card, visibleColumns, gridStyle, isExampleExpanded, canEdit, onToggleExamples, onContentSave, onWeakChange, onBookmarkChange }: VocabularyRowProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [phraseDraft, setPhraseDraft] = useState(card.phrase);
   const [meaningDraft, setMeaningDraft] = useState(card.meaning);
@@ -325,16 +388,14 @@ function VocabularyRow({ card, areExamplesVisible, isExampleExpanded, canEdit, o
   }
 
   return (
-    <div className="vocabulary-table-row" role="row">
-      <div className="vocabulary-cell phrase-cell" role="cell">
-        <span className="vocabulary-position">#{card.position}</span>
-        {isEditing ? <input form={formId} className="vocabulary-edit-phrase" aria-label={`Phrase for card ${card.position}`} maxLength={200} value={phraseDraft} disabled={isSaving} onChange={(event) => setPhraseDraft(event.target.value)} /> : <strong>{card.phrase}</strong>}
+    <div className="vocabulary-table-row" role="row" style={gridStyle}>
+      <div className="vocabulary-cell phrase-cell" role="cell" data-column-hidden={!visibleColumns.phrase} aria-hidden={!visibleColumns.phrase} style={{ gridArea: "phrase" }}>
+        {visibleColumns.phrase && <><span className="vocabulary-mobile-field-label">Phrase <span>#{card.position}</span></span><span className="vocabulary-position">#{card.position}</span>
+          {isEditing ? <input form={formId} className="vocabulary-edit-phrase" aria-label={`Phrase for card ${card.position}`} maxLength={200} value={phraseDraft} disabled={isSaving} onChange={(event) => setPhraseDraft(event.target.value)} /> : <strong>{card.phrase}</strong>}</>}
       </div>
-      <div className="vocabulary-cell meaning-cell" role="cell">{isEditing ? <textarea form={formId} className="vocabulary-edit-meaning" aria-label={`Meaning for ${card.phrase}`} maxLength={600} rows={3} value={meaningDraft} disabled={isSaving} onChange={(event) => setMeaningDraft(event.target.value)} /> : card.meaning}</div>
-      <div className="vocabulary-cell examples-cell" role="cell">
-        {!areExamplesVisible ? (
-          <span className="examples-muted">Examples hidden</span>
-        ) : !hasExamples ? (
+      <div className="vocabulary-cell meaning-cell" role="cell" data-column-hidden={!visibleColumns.meaning} aria-hidden={!visibleColumns.meaning} style={{ gridArea: "meaning" }}>{visibleColumns.meaning && <><span className="vocabulary-mobile-field-label">Meaning</span>{isEditing ? <textarea form={formId} className="vocabulary-edit-meaning" aria-label={`Meaning for ${card.phrase}`} maxLength={600} rows={3} value={meaningDraft} disabled={isSaving} onChange={(event) => setMeaningDraft(event.target.value)} /> : card.meaning}</>}</div>
+      <div className="vocabulary-cell examples-cell" role="cell" data-column-hidden={!visibleColumns.examples} aria-hidden={!visibleColumns.examples} style={{ gridArea: "examples" }}>
+        {visibleColumns.examples && <><span className="vocabulary-mobile-field-label">Examples</span>{!hasExamples ? (
           <span className="examples-muted">No examples</span>
         ) : isExampleExpanded ? (
           <div className="example-content">
@@ -346,9 +407,10 @@ function VocabularyRow({ card, areExamplesVisible, isExampleExpanded, canEdit, o
           <button type="button" className="example-toggle-link" onClick={onToggleExamples}>
             <Icon name="eye" size={18} /> Show examples
           </button>
-        )}
+        )}</>}
       </div>
-      <div className="vocabulary-cell actions-cell" role="cell">
+      <div className="vocabulary-cell actions-cell" role="cell" data-column-hidden={!visibleColumns.actions} aria-hidden={!visibleColumns.actions} style={{ gridArea: "actions" }}>
+        {visibleColumns.actions && <>
         {isEditing ? <>
           <form id={formId} className="sr-only" onSubmit={(event) => { event.preventDefault(); void saveContent(); }} />
           <div className="vocabulary-edit-actions">
@@ -366,6 +428,7 @@ function VocabularyRow({ card, areExamplesVisible, isExampleExpanded, canEdit, o
             onWeakChange={onWeakChange}
             onBookmarkChange={onBookmarkChange}
           />
+        </>}
         </>}
       </div>
     </div>
