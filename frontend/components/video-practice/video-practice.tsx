@@ -31,6 +31,7 @@ import styles from "./video-practice.module.css";
 type PracticeMode = "shadowing" | "dictation";
 type DictationMode = "full_sentence" | "fill_gaps";
 type SelectedWord = { term: string; context: string; canSaveToSheet: boolean };
+type InlineTranslationState = { translation?: string; loading?: boolean; error?: string; visible?: boolean };
 
 export function VideoPractice() {
   const { isAuthenticated, user } = useAuth();
@@ -62,6 +63,9 @@ export function VideoPractice() {
   const [lookupError, setLookupError] = useState<string | null>(null);
   const [lookupCache, setLookupCache] = useState<Map<string, WordLookup>>(() => new Map());
   const lookupRequestId = useRef(0);
+  const [inlineTranslationStates, setInlineTranslationStates] = useState<Record<number, InlineTranslationState>>({});
+  const inlineTranslationSession = useRef(0);
+  const inlineTranslationPending = useRef(new Set<number>());
   const [workbooks, setWorkbooks] = useState<WorkbookListItem[]>([]);
   const [workbooksError, setWorkbooksError] = useState<string | null>(null);
   const [selectedWorkbookId, setSelectedWorkbookId] = useState("");
@@ -146,6 +150,7 @@ export function VideoPractice() {
   useEffect(() => () => {
     // Lookup results live only in this mounted practice session and are discarded when the page is left.
     lookupRequestId.current += 1;
+    inlineTranslationSession.current += 1;
   }, []);
 
   async function loadTranscript(event: FormEvent<HTMLFormElement>) {
@@ -157,6 +162,9 @@ export function VideoPractice() {
     setPlayerController(null);
     setPlayerReady(false);
     setActiveSegment(-1);
+    inlineTranslationSession.current += 1;
+    inlineTranslationPending.current.clear();
+    setInlineTranslationStates({});
     resetDictation();
     closeLookup();
     try {
@@ -201,8 +209,52 @@ export function VideoPractice() {
 
   function handleSegmentCardClick(event: MouseEvent<HTMLDivElement>, index: number, segment: TranscriptSegment) {
     // Interactive controls inside a row keep their own action instead of starting playback as a side effect.
-    if (event.target instanceof Element && event.target.closest("button, a, input, textarea, select")) return;
+    if (event.target instanceof Element && event.target.closest("button, a, input, textarea, select, [data-no-line-playback]")) return;
     playSegment(index, segment);
+  }
+
+  async function toggleLineTranslation(index: number, segment: TranscriptSegment) {
+    const current = inlineTranslationStates[index];
+    if (current?.visible) {
+      setInlineTranslationStates((states) => ({ ...states, [index]: { ...states[index], visible: false } }));
+      return;
+    }
+    if (current?.translation) {
+      setInlineTranslationStates((states) => ({ ...states, [index]: { ...states[index], visible: true } }));
+      return;
+    }
+    if (inlineTranslationPending.current.has(index)) return;
+
+    const session = inlineTranslationSession.current;
+    inlineTranslationPending.current.add(index);
+    setInlineTranslationStates((states) => ({ ...states, [index]: { ...states[index], loading: true, error: undefined } }));
+    try {
+      const result = await lookupVideoWord(segment.text, segment.text);
+      if (session !== inlineTranslationSession.current) return;
+      const translation = result.translation_vi?.trim();
+      if (!translation) throw new Error("No Vietnamese translation was returned.");
+      setInlineTranslationStates((states) => ({
+        ...states,
+        [index]: { translation, loading: false, visible: true },
+      }));
+    } catch (cause) {
+      if (session !== inlineTranslationSession.current) return;
+      setInlineTranslationStates((states) => ({
+        ...states,
+        [index]: {
+          ...states[index],
+          loading: false,
+          error: cause instanceof Error ? cause.message : "This line could not be translated. Try again.",
+        },
+      }));
+    } finally {
+      if (session === inlineTranslationSession.current) {
+        inlineTranslationPending.current.delete(index);
+        setInlineTranslationStates((states) => states[index]?.loading
+          ? { ...states, [index]: { ...states[index], loading: false } }
+          : states);
+      }
+    }
   }
 
   async function selectWord(term: string, context: string, canSaveToSheet = true) {
@@ -382,8 +434,35 @@ export function VideoPractice() {
               <div className={styles.segmentLine}>
                 <span className={styles.timestamp}>{formatTimestamp(segment.start)}</span>
                 <p className={styles.segmentText}><TranscriptWords text={segment.text} onSelectWord={(term) => void selectWord(term, segment.text)} /></p>
-                <button type="button" className={styles.translateButton} onClick={() => void selectWord(segment.text, segment.text, false)} aria-label="Translate line" title="Translate line"><TranslateIcon /></button>
+                <button
+                  type="button"
+                  className={styles.translateButton}
+                  data-has-translation={Boolean(inlineTranslationStates[index]?.translation)}
+                  onClick={() => void toggleLineTranslation(index, segment)}
+                  disabled={inlineTranslationStates[index]?.loading}
+                  aria-expanded={Boolean(inlineTranslationStates[index]?.visible)}
+                  aria-label={inlineTranslationStates[index]?.loading
+                    ? "Translating line"
+                    : inlineTranslationStates[index]?.translation
+                      ? inlineTranslationStates[index]?.visible ? "Hide translation" : "Show translation"
+                      : inlineTranslationStates[index]?.error ? "Retry translation" : "Translate line"}
+                  title={inlineTranslationStates[index]?.translation
+                    ? inlineTranslationStates[index]?.visible ? "Hide translation" : "Show translation"
+                    : inlineTranslationStates[index]?.error ? "Retry translation" : "Translate line"}
+                >
+                  {inlineTranslationStates[index]?.loading
+                    ? <span className={styles.translationSpinner} aria-hidden="true" />
+                    : inlineTranslationStates[index]?.translation
+                      ? inlineTranslationStates[index]?.visible ? "Hide" : "Show"
+                      : <TranslateIcon />}
+                </button>
               </div>
+              {inlineTranslationStates[index]?.visible && <p className={styles.inlineTranslation} lang="vi" aria-live="polite" data-no-line-playback>
+                <span className={styles.inlineTranslationLabel}>Vietnamese</span>
+                {inlineTranslationStates[index]?.translation}
+              </p>}
+              {inlineTranslationStates[index]?.loading && <p className={styles.inlineTranslationStatus} role="status" data-no-line-playback>Translating…</p>}
+              {inlineTranslationStates[index]?.error && <p className={styles.inlineTranslationError} role="alert" data-no-line-playback>{inlineTranslationStates[index]?.error}</p>}
             </div>)}
           </div>
         </> : <>
