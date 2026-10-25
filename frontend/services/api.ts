@@ -91,6 +91,35 @@ export type FlashcardListItem = {
   is_bookmarked: boolean;
 };
 
+export type TranscriptSegment = {
+  start: number;
+  duration: number;
+  text: string;
+};
+
+export type VideoTranscript = {
+  video_id: string;
+  title: string | null;
+  author_name: string | null;
+  language_code: string | null;
+  caption_type: string | null;
+  segments: TranscriptSegment[];
+};
+
+export type WordDefinition = {
+  part_of_speech: string | null;
+  definition: string;
+  example: string | null;
+};
+
+export type WordLookup = {
+  term: string;
+  translation_vi: string | null;
+  phonetic: string | null;
+  audio_url: string | null;
+  definitions: WordDefinition[];
+};
+
 export type StudySessionType =
   | "new_learning"
   | "srs_review"
@@ -371,6 +400,33 @@ export async function getSheetCards(id: string): Promise<FlashcardListItem[]> {
   return requestJson<FlashcardListItem[]>(
     `/api/v1/sheets/${encodeURIComponent(id)}/cards`,
   );
+}
+
+export async function getVideoTranscript(videoUrl: string, language = "en"): Promise<VideoTranscript> {
+  return requestJson<VideoTranscript>("/api/v1/video-practice/transcript", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ video_url: videoUrl, language }),
+  });
+}
+
+export async function lookupVideoWord(term: string, context: string): Promise<WordLookup> {
+  return requestJson<WordLookup>("/api/v1/video-practice/lookup", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ term, context }),
+  });
+}
+
+export async function createFlashcardInSheet(
+  sheetId: string,
+  input: { phrase: string; meaning: string; example_en?: string },
+): Promise<FlashcardListItem> {
+  return requestJson<FlashcardListItem>(`/api/v1/sheets/${encodeURIComponent(sheetId)}/cards`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
 }
 
 export async function updateSheetPriority(

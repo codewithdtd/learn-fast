@@ -10,11 +10,12 @@ import {
 import type { WritingFeedback, WritingPrompt } from "@/types/writing";
 import type { SpeakingFeedback, SpeakingPrompt } from "@/types/speaking";
 import styles from "./public-demo.module.css";
+import { VideoPractice } from "@/components/video-practice/video-practice";
 
-type GuestAITab = "cards" | "writing" | "speaking" | "sentence";
+type GuestAITab = "cards" | "writing" | "speaking" | "sentence" | "video";
 
-export function GuestAIPractice() {
-  const [tab, setTab] = useState<GuestAITab>("cards");
+export function GuestAIPractice({ initialVideo = false }: { initialVideo?: boolean }) {
+  const [tab, setTab] = useState<GuestAITab>(initialVideo ? "video" : "cards");
   const [writingPrompts, setWritingPrompts] = useState<WritingPrompt[]>([]);
   const [speakingPrompts, setSpeakingPrompts] = useState<SpeakingPrompt[]>([]);
   const [writingPromptId, setWritingPromptId] = useState<number | null>(null);
@@ -54,7 +55,7 @@ export function GuestAIPractice() {
     <div><p className={styles.eyebrow}>AI FEATURES · GUEST TRIALS</p><h2 id="guest-ai-heading">Try the AI tools</h2>
       <p>Each AI tool has one guest trial. Your drafts and feedback stay in this page and are not saved to an account.</p></div>
     <div className={styles.aiTabs} role="tablist" aria-label="Guest AI tools">
-      {([ ["cards", "Flashcards"], ["writing", "Writing"], ["speaking", "Speaking"], ["sentence", "Sentences"] ] as const).map(([value, label]) =>
+      {([ ["cards", "Flashcards"], ["writing", "Writing"], ["speaking", "Speaking"], ["sentence", "Sentences"], ["video", "Video"] ] as const).map(([value, label]) =>
         <button key={value} type="button" role="tab" aria-selected={tab === value} onClick={() => { setTab(value); setError(null); }}>{label}</button>)}
     </div>
     {error && <p className={styles.error} role="alert">{error}</p>}
@@ -85,6 +86,7 @@ export function GuestAIPractice() {
       <button className={styles.primary} type="button" disabled={busy || !sentence.trim() || sentenceFeedback !== null} onClick={() => void run(() => gradeGuestSentence({ phrase: DEMO_CARDS[0].phrase, meaning: DEMO_CARDS[0].meaning, situation_en: "Write one sentence about making plans with a friend using the target phrase.", situation_vi: `Viết một câu về việc lên kế hoạch với bạn bè và dùng cụm từ “${DEMO_CARDS[0].phrase}”.`, sentence }), setSentenceFeedback)}>{busy ? "Reviewing…" : sentenceFeedback ? "Feedback trial used" : "Get AI sentence feedback"}</button>
       {sentenceFeedback && <FeedbackSummary title="Sentence feedback" summary={sentenceFeedback.summary_en} detail={sentenceFeedback.summary_vi} score={`${sentenceFeedback.practice_score}/10`} issues={sentenceFeedback.issues.map((issue) => `${issue.quote} → ${issue.replacement || issue.explanation_en}`)} />}
     </div>}
+    {tab === "video" && <VideoPractice />}
   </section>;
 }
 
