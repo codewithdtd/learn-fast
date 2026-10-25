@@ -3,11 +3,12 @@
 .header h1 { margin: 4px 0 6px; font-size: clamp(1.7rem, 5vw, 2.3rem); letter-spacing: -.04em; }
 .header p:last-child { max-width: 620px; margin: 0; color: var(--muted); line-height: 1.55; }
 .eyebrow { margin: 0; color: var(--foreground); font-size: .72rem; font-weight: 800; letter-spacing: .11em; }
-.tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin: 0 0 14px; border: 1px solid var(--outline); border-radius: var(--radius-lg); padding: 5px; background: var(--surface); }
+.tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin: 0 0 14px; border: 1px solid var(--outline); border-radius: var(--radius-lg); padding: 5px; background: var(--surface); }
 .tabs button { min-height: 44px; border: 0; border-radius: var(--radius-md); background: transparent; color: var(--muted); font: inherit; font-weight: 750; cursor: pointer; }
 .tabs button:hover { color: var(--foreground); background: var(--surface-low); }
 .tabs button:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
 .tabs .activeTab { background: var(--primary-soft); color: var(--foreground); }
+@media (max-width: 480px) { .tabs { gap: 2px; padding: 4px; } .tabs button { padding-inline: 3px; font-size: .78rem; } }
 @media (min-width: 760px) { .tabs { display: inline-grid; width: min(380px, 100%); margin-bottom: 20px; } }
 @media (max-width: 620px) {
   .hub { width: calc(100% - 32px); padding-top: 20px; }

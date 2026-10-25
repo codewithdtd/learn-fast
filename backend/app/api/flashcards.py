@@ -9,19 +9,48 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.models import Flashcard, User
 from app.schemas.flashcard import (
+    FlashcardCreate,
     FlashcardBookmarkUpdate,
     FlashcardContentUpdate,
     FlashcardListItem,
     FlashcardWeakUpdate,
 )
 from app.services.flashcards import (
+    FlashcardDuplicateError,
     FlashcardPersistenceError,
+    StudySheetNotFoundError,
+    create_flashcard as create_flashcard_service,
     update_flashcard_content as update_flashcard_content_service,
 )
 
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["flashcards"])
+
+
+@router.post("/sheets/{sheet_id}/cards", response_model=FlashcardListItem, status_code=status.HTTP_201_CREATED)
+def create_flashcard(
+    sheet_id: int,
+    payload: FlashcardCreate,
+    db: Session = Depends(get_db),
+    admin_user: User = Depends(get_current_admin),
+) -> FlashcardListItem:
+    try:
+        card = create_flashcard_service(
+            db,
+            sheet_id,
+            payload.phrase,
+            payload.meaning,
+            payload.example_en,
+            payload.example_vi,
+        )
+    except StudySheetNotFoundError as error:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error)) from error
+    except FlashcardDuplicateError as error:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(error)) from error
+    except FlashcardPersistenceError as error:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(error)) from error
+    return FlashcardListItem.model_validate(card)
 
 
 def get_flashcard_or_404(db: Session, card_id: int) -> Flashcard:

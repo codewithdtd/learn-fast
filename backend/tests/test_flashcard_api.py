@@ -5,6 +5,8 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from app.models import Flashcard
+from app.models import User, Workbook
+from app.core.security import create_access_token, get_password_hash
 from tests.test_management_api import create_workbook
 
 
@@ -108,3 +110,77 @@ def test_flashcard_flag_routes_return_404_for_missing_card(api_client: TestClien
     assert weak_response.json() == {"detail": "Flashcard not found."}
     assert bookmark_response.status_code == 404
     assert bookmark_response.json() == {"detail": "Flashcard not found."}
+
+
+def test_admin_can_add_a_word_to_a_sheet_without_changing_srs_state(
+    api_client: TestClient, db_session: Session
+) -> None:
+    sheet, _ = get_first_sheet_and_cards(db_session)
+    workbook = db_session.get(Workbook, sheet.workbook_id)
+    old_total = workbook.total_cards
+
+    response = api_client.post(
+        f"/api/v1/sheets/{sheet.id}/cards",
+        json={"phrase": "  look after  ", "meaning": "take care of", "example_en": "I look after my dog."},
+    )
+
+    assert response.status_code == 201
+    card = response.json()
+    assert card["phrase"] == "look after"
+    assert card["position"] == 3
+    assert card["is_weak"] is False
+    assert card["is_bookmarked"] is False
+    assert db_session.get(Flashcard, card["id"]).correct_count == 0
+    db_session.refresh(sheet)
+    db_session.refresh(workbook)
+    assert sheet.card_count == 3
+    assert workbook.total_cards == old_total + 1
+
+
+def test_guest_and_non_admin_cannot_add_words_to_shared_sheets(
+    api_client: TestClient, db_session: Session
+) -> None:
+    sheet, _ = get_first_sheet_and_cards(db_session)
+    user = User(
+        email="reader_fixture@example.com",
+        username="reader_fixture",
+        hashed_password=get_password_hash("ReaderPass123"),
+        is_active=True,
+        is_superuser=False,
+    )
+    db_session.add(user)
+    db_session.commit()
+    token = create_access_token(subject=user.id)
+    payload = {"phrase": "look after", "meaning": "take care of"}
+
+    guest_response = api_client.post(
+        f"/api/v1/sheets/{sheet.id}/cards", json=payload, headers={"Authorization": ""}
+    )
+    user_response = api_client.post(
+        f"/api/v1/sheets/{sheet.id}/cards",
+        json=payload,
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert guest_response.status_code == 401
+    assert user_response.status_code == 403
+    assert len(sheet.flashcards) == 2
+
+
+def test_add_word_rejects_duplicates_invalid_data_and_missing_sheet(
+    api_client: TestClient, db_session: Session
+) -> None:
+    sheet, _ = get_first_sheet_and_cards(db_session)
+    duplicate = api_client.post(
+        f"/api/v1/sheets/{sheet.id}/cards", json={"phrase": " ONE ", "meaning": "number 1"}
+    )
+    invalid = api_client.post(
+        f"/api/v1/sheets/{sheet.id}/cards", json={"phrase": "  ", "meaning": "meaning"}
+    )
+    missing = api_client.post(
+        "/api/v1/sheets/99999/cards", json={"phrase": "new word", "meaning": "meaning"}
+    )
+
+    assert duplicate.status_code == 409
+    assert invalid.status_code == 422
+    assert missing.status_code == 404
