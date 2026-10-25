@@ -1,4 +1,5 @@
 import html
+import logging
 import re
 from urllib.parse import quote, urlparse
 
@@ -8,10 +9,15 @@ from app.core.config import settings
 from app.schemas.video_practice import DictionaryDefinition, WordLookupResponse
 
 
+logger = logging.getLogger(__name__)
+
+
 def lookup_word(term: str, context: str | None) -> WordLookupResponse:
     # Từ điển miễn phí chỉ xử lý ổn định từ đơn; cụm/câu cần đi thẳng qua dịch máy để tránh truy vấn sai endpoint từ điển.
-    is_single_word = re.fullmatch(r"[A-Za-z]+(?:['’-][A-Za-z]+)*", term) is not None
-    definition_data = _get_english_definition(term) if is_single_word else None
+    # Transcript thường thêm dấu chấm/phẩy vào một từ; bỏ dấu ở rìa khi phân loại để không vô tình bỏ qua từ điển.
+    dictionary_term = term.strip().strip(".,!?;:()[]{}\"“”‘’")
+    is_single_word = re.fullmatch(r"[A-Za-z]+(?:['’-][A-Za-z]+)*", dictionary_term) is not None
+    definition_data = _get_english_definition(dictionary_term) if is_single_word else None
     translation = _get_vietnamese_translation(term)
 
     phonetic: str | None = None
@@ -88,7 +94,14 @@ def _get_english_definition(term: str) -> list[object] | None:
             return None
         response.raise_for_status()
         payload = response.json()
-    except (httpx.RequestError, httpx.HTTPStatusError, ValueError):
+    except httpx.HTTPStatusError as error:
+        logger.warning("Free Dictionary request failed with HTTP %s", error.response.status_code)
+        return None
+    except httpx.RequestError as error:
+        logger.warning("Free Dictionary request failed (%s)", type(error).__name__)
+        return None
+    except ValueError as error:
+        logger.warning("Free Dictionary returned invalid JSON (%s)", type(error).__name__)
         return None
     return payload if isinstance(payload, list) else None
 
@@ -102,13 +115,30 @@ def _get_vietnamese_translation(term: str) -> str | None:
         )
         response.raise_for_status()
         payload = response.json()
-    except (httpx.RequestError, httpx.HTTPStatusError, ValueError):
+    except httpx.HTTPStatusError as error:
+        # Không ghi term/context vào log để tránh lưu nội dung transcript; status upstream đủ để phân biệt quota và lỗi HTTP.
+        logger.warning("MyMemory translation request failed with HTTP %s", error.response.status_code)
         return None
-    if not isinstance(payload, dict) or payload.get("responseStatus") != 200:
+    except httpx.RequestError as error:
+        logger.warning("MyMemory translation request failed (%s)", type(error).__name__)
+        return None
+    except ValueError as error:
+        logger.warning("MyMemory returned invalid JSON (%s)", type(error).__name__)
+        return None
+    if not isinstance(payload, dict):
+        logger.warning("MyMemory returned an unexpected response shape")
+        return None
+    response_status = payload.get("responseStatus")
+    # Một số proxy/provider wrapper serialize số trạng thái thành chuỗi; chấp nhận cả hai dạng tương đương.
+    if isinstance(response_status, str) and response_status.isdigit():
+        response_status = int(response_status)
+    if response_status != 200:
+        logger.warning("MyMemory returned application status %s", response_status)
         return None
     data = payload.get("responseData")
     value = data.get("translatedText") if isinstance(data, dict) else None
     if not isinstance(value, str):
+        logger.warning("MyMemory response did not include translated text")
         return None
     cleaned = re.sub(r"<[^>]*>", "", html.unescape(value)).strip()
     return cleaned[:1000] or None
