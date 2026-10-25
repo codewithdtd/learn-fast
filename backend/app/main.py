@@ -15,6 +15,7 @@ from app.api.speaking import router as speaking_router
 from app.api.study_sessions import router as study_sessions_router
 from app.api.workbooks import router as workbooks_router
 from app.api.writing import router as writing_router
+from app.api.video_practice import router as video_practice_router
 from app.core.config import settings
 from app.api.deps import get_current_admin
 
@@ -27,6 +28,7 @@ api_app.include_router(auth_router, prefix="/api/v1")
 for public_learning_router in (
     workbooks_router, sheets_router, flashcards_router,
     ai_router, writing_router, speaking_router, dashboard_router, calendar_router,
+    video_practice_router,
 ):
     api_app.include_router(public_learning_router, prefix="/api/v1")
 api_app.include_router(guest_ai_router, prefix="/api/v1")

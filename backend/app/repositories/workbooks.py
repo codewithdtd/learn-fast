@@ -40,3 +40,9 @@ def refresh_workbook_counts(db: Session, workbook_id: int) -> None:
     if workbook is not None:
         workbook.sheet_count = sheet_count
         workbook.total_cards = total_cards
+
+
+def refresh_sheet_card_count(db: Session, sheet: StudySheet) -> None:
+    sheet.card_count = db.scalar(
+        select(func.count(Flashcard.id)).where(Flashcard.sheet_id == sheet.id)
+    ) or 0
