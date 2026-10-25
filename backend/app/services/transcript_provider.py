@@ -1,4 +1,5 @@
 import re
+from math import isfinite
 from urllib.parse import parse_qs, urlparse
 
 import httpx
@@ -32,34 +33,50 @@ def extract_youtube_video_id(video_url: str) -> str:
 
 def fetch_transcript(video_url: str, language: str) -> TranscriptResponse:
     video_id = extract_youtube_video_id(video_url)
-    if not settings.youtube_transcript_api_key.strip():
+    api_key = settings.ytranscript_api_key.strip()
+    if not api_key:
         raise VideoPracticeProviderError(
-            "Video transcript lookup is not configured. Add YOUTUBE_TRANSCRIPT_API_KEY on the backend.",
+            "Video transcript lookup is not configured. Add YTRANSCRIPT_API_KEY on the backend.",
             503,
         )
     try:
         response = httpx.get(
-            settings.youtube_transcript_api_url,
-            params={"v": video_id, "language": language, "timestamps": "true"},
-            headers={"Authorization": f"Bearer {settings.youtube_transcript_api_key}"},
+            settings.ytranscript_api_url,
+            params={"videoId": video_id, "lang": language},
+            headers={"Authorization": f"Bearer {api_key}"},
             timeout=settings.video_practice_provider_timeout,
         )
+        if response.status_code == 402:
+            raise VideoPracticeProviderError(
+                "YTranscript monthly credits have been used. Try again after the quota resets.",
+                429,
+            )
+        if response.status_code == 404:
+            raise VideoPracticeProviderError("No transcript is available for this video and language.", 404)
+        if response.status_code in {401, 403}:
+            raise VideoPracticeProviderError(
+                "YTranscript rejected the backend API key. Check YTRANSCRIPT_API_KEY.", 503
+            )
         response.raise_for_status()
         payload = response.json()
     except httpx.TimeoutException as error:
         raise VideoPracticeProviderError("Transcript lookup timed out. Please try again.", 504) from error
+    except VideoPracticeProviderError:
+        raise
     except httpx.HTTPStatusError as error:
         status_code = 429 if error.response.status_code == 429 else 502
         raise VideoPracticeProviderError(
-            "The transcript provider is temporarily unavailable. Please try again later.", status_code
+            f"YTranscript returned HTTP {error.response.status_code}. Transcript lookup is temporarily unavailable.",
+            status_code,
         ) from error
-    except (httpx.RequestError, ValueError) as error:
-        raise VideoPracticeProviderError("The transcript provider could not be reached.", 502) from error
+    except httpx.RequestError as error:
+        raise VideoPracticeProviderError("YTranscript could not be reached. Please try again.", 502) from error
+    except ValueError as error:
+        raise VideoPracticeProviderError("YTranscript returned an invalid transcript response.", 502) from error
 
-    if not isinstance(payload, dict) or payload.get("success") is not True:
-        raise VideoPracticeProviderError("No transcript is available for this video and language.", 404)
-    data = payload.get("data")
-    segments_data = data.get("segments") if isinstance(data, dict) else None
+    if not isinstance(payload, dict):
+        raise VideoPracticeProviderError("YTranscript returned an invalid transcript response.", 502)
+    segments_data = payload.get("segments")
     if not isinstance(segments_data, list):
         raise VideoPracticeProviderError("This video does not have timestamped transcript lines.", 404)
 
@@ -71,10 +88,16 @@ def fetch_transcript(video_url: str, language: str) -> TranscriptResponse:
         if not isinstance(text, str) or not text.strip():
             continue
         try:
+            # API timestamps are milliseconds; the player contract uses seconds.
+            start = float(item.get("offset", 0)) / 1000
+            duration = float(item.get("duration", 0)) / 1000
+            if not isfinite(start) or not isfinite(duration) or start < 0 or not 0 < duration <= 120:
+                continue
+            # Keep provider caption boundaries so the displayed text and playback interval stay paired.
             segments.append(
                 TranscriptSegment(
-                    start=float(item.get("start", 0)),
-                    duration=float(item.get("duration", 0)),
+                    start=start,
+                    duration=duration,
                     text=text.strip()[:1000],
                 )
             )
@@ -85,10 +108,10 @@ def fetch_transcript(video_url: str, language: str) -> TranscriptResponse:
 
     return TranscriptResponse(
         video_id=video_id,
-        title=_optional_text(data, "title"),
-        author_name=_optional_text(data, "author_name"),
-        language_code=_optional_text(data, "language_code"),
-        caption_type=_optional_text(data, "caption_type"),
+        title=None,
+        author_name=None,
+        language_code=_optional_text(payload, "lang") or language,
+        caption_type="auto" if payload.get("whisper") is True else "native",
         segments=segments,
     )
 

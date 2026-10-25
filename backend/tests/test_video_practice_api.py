@@ -30,38 +30,43 @@ def test_rejects_non_youtube_or_malformed_urls() -> None:
 
 
 def test_transcript_provider_returns_timestamped_lines_without_database_access(monkeypatch) -> None:
-    monkeypatch.setattr(settings, "youtube_transcript_api_key", "provider-test-key")
-    monkeypatch.setattr(settings, "youtube_transcript_api_url", "https://provider.example/transcript")
-    monkeypatch.setattr(
-        "app.services.transcript_provider.httpx.get",
-        lambda *args, **kwargs: SimpleNamespace(
+    monkeypatch.setattr(settings, "ytranscript_api_key", "provider-test-key")
+    monkeypatch.setattr(settings, "ytranscript_api_url", "https://provider.example/transcript")
+    request: dict[str, object] = {}
+
+    def fake_get(url: str, **kwargs):
+        request.update(url=url, **kwargs)
+        return SimpleNamespace(
+            status_code=200,
             json=lambda: {
-                "success": True,
-                "data": {
-                    "title": "A sample video",
-                    "author_name": "Example channel",
-                    "language_code": "en",
-                    "caption_type": "manual",
-                    "segments": [
-                        {"start": 0, "duration": 2.5, "text": "Good morning."},
-                        {"start": 2.5, "duration": 1.4, "text": "Welcome back."},
-                    ],
-                },
+                "lang": "en",
+                "whisper": False,
+                "segments": [
+                    {"offset": 0, "duration": 2500, "text": "Good morning."},
+                    {"offset": 2500, "duration": 1400, "text": "Welcome back."},
+                ],
             },
             raise_for_status=lambda: None,
-        ),
-    )
+        )
+
+    monkeypatch.setattr("app.services.transcript_provider.httpx.get", fake_get)
 
     result = fetch_transcript("https://youtu.be/abcdefghijk", "en")
 
     assert isinstance(result, TranscriptResponse)
     assert result.video_id == "abcdefghijk"
+    assert result.language_code == "en"
+    assert result.caption_type == "native"
     assert result.segments[1].start == 2.5
+    assert result.segments[1].duration == 1.4
     assert result.segments[1].text == "Welcome back."
+    assert request["url"] == "https://provider.example/transcript"
+    assert request["params"] == {"videoId": "abcdefghijk", "lang": "en"}
+    assert request["headers"] == {"Authorization": "Bearer provider-test-key"}
 
 
 def test_transcript_endpoint_reports_missing_provider_configuration(api_client, monkeypatch) -> None:
-    monkeypatch.setattr(settings, "youtube_transcript_api_key", "")
+    monkeypatch.setattr(settings, "ytranscript_api_key", "")
     response = api_client.post(
         "/api/v1/video-practice/transcript",
         json={"video_url": "https://youtu.be/abcdefghijk", "language": "en"},
