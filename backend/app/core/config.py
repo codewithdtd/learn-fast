@@ -45,9 +45,9 @@ class Settings(BaseSettings):
     speaking_grading_timeout: float = 90.0
     speaking_timezone: str = "Asia/Bangkok"
 
-    # Video practice uses a transcript provider only for captions; no video/audio is downloaded or stored.
-    youtube_transcript_api_key: str = ""
-    youtube_transcript_api_url: str = "https://getyoutubetranscript.com/api/v1/transcript"
+    # YTranscript returns timestamped caption segments; preserve their boundaries for accurate line playback.
+    ytranscript_api_key: str = ""
+    ytranscript_api_url: str = "https://ytranscript.com/api/v1/transcript"
     video_practice_provider_timeout: float = 20.0
     video_practice_requests_per_minute: int = 30
     video_dictionary_api_url: str = "https://api.dictionaryapi.dev/api/v2/entries/en"

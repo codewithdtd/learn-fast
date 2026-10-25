@@ -35,4 +35,4 @@ def get_word_lookup(payload: WordLookupRequest, request: Request) -> WordLookupR
 
 @router.get("/status")
 def get_video_practice_status() -> dict[str, bool]:
-    return {"transcript_configured": bool(settings.youtube_transcript_api_key.strip())}
+    return {"transcript_configured": bool(settings.ytranscript_api_key.strip())}
