@@ -173,10 +173,14 @@ def rate_session(
     current_user: User | None = Depends(get_current_user_optional),
     _session: StudySession = Depends(get_accessible_session),
 ) -> StudySessionRatingResponse:
-    if current_user is None or not current_user.is_superuser:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only an administrator can update the shared review schedule.")
+    if current_user is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Sign in to save your review progress.")
     if _session.user_id != current_user.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only your own study session can update the review schedule.")
+    if not current_user.is_superuser:
+        sheet_owner = get_sheet_or_404(db, _session.sheet_id).workbook.user_id
+        if sheet_owner != current_user.id:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Review progress is available only for your personal sheets.")
     try:
         session, sheet = rate_completed_session(db, session_id, payload.rating)
     except SrsPayloadError as error:
