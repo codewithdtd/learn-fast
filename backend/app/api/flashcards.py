@@ -1,13 +1,13 @@
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from app.api.deps import get_current_admin
+from app.api.deps import get_current_admin, get_current_user
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.core.database import get_db
-from app.models import Flashcard, User
+from app.models import Flashcard, StudySheet, User
 from app.schemas.flashcard import (
     FlashcardCreate,
     FlashcardBookmarkUpdate,
@@ -54,13 +54,24 @@ def create_flashcard(
 
 
 def get_flashcard_or_404(db: Session, card_id: int) -> Flashcard:
-    flashcard = db.scalar(select(Flashcard).where(Flashcard.id == card_id))
+    flashcard = db.scalar(
+        select(Flashcard)
+        .where(Flashcard.id == card_id)
+        .options(selectinload(Flashcard.sheet).selectinload(StudySheet.workbook))
+    )
     if flashcard is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Flashcard not found.",
         )
     return flashcard
+
+
+def ensure_flashcard_mutable(flashcard: Flashcard, current_user: User) -> None:
+    # Chủ sở hữu được sửa thẻ trong workbook riêng; sheet dùng chung vẫn do admin quản lý.
+    if current_user.is_superuser or flashcard.sheet.workbook.user_id == current_user.id:
+        return
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Flashcard not found.")
 
 
 def persist_flashcard_flag(db: Session, flashcard: Flashcard) -> FlashcardListItem:
@@ -84,8 +95,9 @@ def update_flashcard_content(
     card_id: int,
     update: FlashcardContentUpdate,
     db: Session = Depends(get_db),
-    admin_user: User = Depends(get_current_admin),
+    current_user: User = Depends(get_current_user),
 ) -> FlashcardListItem:
+    ensure_flashcard_mutable(get_flashcard_or_404(db, card_id), current_user)
     try:
         flashcard = update_flashcard_content_service(db, card_id, update.phrase, update.meaning)
     except FlashcardPersistenceError as error:
@@ -103,9 +115,10 @@ def update_flashcard_weak(
     card_id: int,
     update: FlashcardWeakUpdate,
     db: Session = Depends(get_db),
-    admin_user: User = Depends(get_current_admin),
+    current_user: User = Depends(get_current_user),
 ) -> FlashcardListItem:
     flashcard = get_flashcard_or_404(db, card_id)
+    ensure_flashcard_mutable(flashcard, current_user)
     # An explicit boolean makes retries idempotent: a repeated request leaves
     # the flag at the value selected by the user instead of toggling it again.
     flashcard.is_weak = update.is_weak
@@ -117,9 +130,10 @@ def update_flashcard_bookmark(
     card_id: int,
     update: FlashcardBookmarkUpdate,
     db: Session = Depends(get_db),
-    admin_user: User = Depends(get_current_admin),
+    current_user: User = Depends(get_current_user),
 ) -> FlashcardListItem:
     flashcard = get_flashcard_or_404(db, card_id)
+    ensure_flashcard_mutable(flashcard, current_user)
     # See the weak endpoint: setting a value, rather than toggling, preserves
     # the intended result if the browser retries a request after a network error.
     flashcard.is_bookmarked = update.is_bookmarked

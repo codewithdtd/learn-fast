@@ -3,7 +3,7 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, status
 from datetime import datetime, timezone
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, selectinload
 
@@ -33,8 +33,10 @@ def get_sheet_or_404(db: Session, sheet_id: int) -> StudySheet:
 
 
 def ensure_sheet_visible(db: Session, sheet: StudySheet, current_user: User | None) -> None:
-    # Non-admins can inspect only one admin-owned preview; workbook data stays read-only to protect shared SRS state.
+    # Owners may study their private workbook; other non-admins receive only the read-only showcase workbook.
     if current_user is not None and current_user.is_superuser:
+        return
+    if current_user is not None and sheet.workbook.user_id == current_user.id:
         return
     preview = get_guest_preview_workbook(db)
     if preview is None or sheet.workbook_id != preview.id:
@@ -45,14 +47,19 @@ def ensure_sheet_visible(db: Session, sheet: StudySheet, current_user: User | No
 def list_due_sheets_api(db: Session = Depends(get_db), current_user: User | None = Depends(get_current_user_optional)) -> list[SheetSummary]:
     if current_user is None or not current_user.is_superuser:
         preview = get_guest_preview_workbook(db)
-        if preview is None:
+        if preview is None and current_user is None:
             return []
         now = datetime.now(timezone.utc)
-        sheets = db.scalars(
-            select(StudySheet)
-            .where(StudySheet.workbook_id == preview.id, StudySheet.next_review_at.is_not(None), StudySheet.next_review_at <= now)
-            .order_by(StudySheet.next_review_at, StudySheet.position)
-        ).all()
+        statement = select(StudySheet).join(Workbook)
+        if current_user is None:
+            statement = statement.where(StudySheet.workbook_id == preview.id)
+        elif preview is not None:
+            statement = statement.where(or_(Workbook.user_id == current_user.id, StudySheet.workbook_id == preview.id))
+        else:
+            statement = statement.where(Workbook.user_id == current_user.id)
+        sheets = db.scalars(statement.where(
+            StudySheet.next_review_at.is_not(None), StudySheet.next_review_at <= now
+        ).order_by(StudySheet.next_review_at, StudySheet.position)).all()
         return [SheetSummary.model_validate(sheet) for sheet in sheets]
     try:
         return [SheetSummary.model_validate(sheet) for sheet in list_due_sheets(db)]
@@ -68,9 +75,14 @@ def list_not_started_sheets(db: Session = Depends(get_db), current_user: User | 
     statement = select(StudySheet).join(Workbook).where(StudySheet.status == SheetStatus.NOT_STARTED)
     if current_user is None or not current_user.is_superuser:
         preview = get_guest_preview_workbook(db)
-        if preview is None:
+        if current_user is None and preview is None:
             return []
-        statement = statement.where(StudySheet.workbook_id == preview.id)
+        if current_user is None:
+            statement = statement.where(StudySheet.workbook_id == preview.id)
+        elif preview is not None:
+            statement = statement.where(or_(Workbook.user_id == current_user.id, StudySheet.workbook_id == preview.id))
+        else:
+            statement = statement.where(Workbook.user_id == current_user.id)
     sheets = db.scalars(
         statement
         .order_by(StudySheet.workbook_id, StudySheet.position)

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { UserProfileMenu } from "@/components/auth/user-profile-menu";
 import { DemoBadge } from "@/components/layout/demo-badge";
 import { AccessGate, AdminNotifications } from "@/components/layout/access-gate";
+import { MobileNavDrawer, type MobileNavEntry } from "@/components/layout/mobile-nav-drawer";
 import { ThemeToggle } from "./theme-toggle";
 
 
@@ -36,12 +37,25 @@ export function Icon({ name, size = 24 }: { name: IconName; size?: number }) {
   return <svg aria-hidden="true" className="icon" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">{paths[name]}</svg>;
 }
 
-const navItems = [
-  { href: "/", label: "Dashboard", mobileLabel: "Home", icon: "home" as const },
-  { href: "/calendar", label: "Calendar & Check-in", mobileLabel: "Calendar", icon: "calendar" as const },
-  { href: "/workbooks", label: "Workbooks", mobileLabel: "Books", icon: "books" as const },
-  { href: "/import", label: "Import", mobileLabel: "Import", icon: "import" as const },
-  { href: "/ai-support", label: "AI Support", mobileLabel: "AI Support", icon: "writing" as const },
+const navItems: MobileNavEntry[] = [
+  { href: "/", label: "Dashboard", mobileLabel: "Home", icon: "home", primary: true },
+  { href: "/calendar", label: "Calendar & Check-in", mobileLabel: "Calendar", icon: "calendar", primary: true },
+  { href: "/workbooks", label: "Workbooks", mobileLabel: "Books", icon: "books", primary: true },
+  { href: "/import", label: "Import workbook", mobileLabel: "Import", icon: "import", primary: false },
+  {
+    href: "/ai-support",
+    label: "AI Support",
+    mobileLabel: "AI",
+    icon: "writing",
+    primary: true,
+    children: [
+      { href: "/ai-support?tab=sentences", label: "Sentence practice" },
+      { href: "/ai-support?tab=writing", label: "Writing practice" },
+      { href: "/ai-support?tab=speaking", label: "Speaking practice" },
+      { href: "/ai-support?tab=video", label: "Video practice" },
+    ],
+  },
+  { href: "/reading", label: "Read the news", mobileLabel: "Read", icon: "books", primary: true },
 ];
 
 
@@ -71,11 +85,12 @@ export function AppShell({
           <span className="brand-mark mobile-brand-mark"><Icon name="books" size={18} /></span>
           <span>DtdFLow</span>
         </Link>
-        <div className="mobile-header-actions flex items-center gap-2">
+        <div className="mobile-header-actions flex items-center">
           <DemoBadge />
           <ThemeToggle compact />
           <AdminNotifications />
           <UserProfileMenu />
+          <MobileNavDrawer items={navItems} activeHref={activeHref} />
         </div>
       </header>
 
@@ -90,7 +105,7 @@ export function AppShell({
 
 
       <nav className="mobile-bottom-nav" aria-label="Mobile navigation">
-        {navItems.map((item) => <Link key={item.href} href={item.href} className={item.href === activeHref ? "mobile-nav-link active" : "mobile-nav-link"}><Icon name={item.icon} size={22} /><span>{item.mobileLabel}</span></Link>)}
+        {navItems.filter((item) => item.primary).map((item) => <Link key={item.href} href={item.href} aria-label={item.label} aria-current={item.href === activeHref ? "page" : undefined} className={item.href === activeHref ? "mobile-nav-link active" : "mobile-nav-link"}><span className="mobile-nav-icon"><Icon name={item.icon} size={22} /></span><span className="mobile-nav-label">{item.mobileLabel}</span></Link>)}
       </nav>
     </div>
   );

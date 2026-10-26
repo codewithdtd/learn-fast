@@ -69,7 +69,7 @@ export function DashboardView() {
 
       <header className="dashboard-heading">
         <div><p className="eyebrow">English SRS</p><h1>Today&apos;s learning</h1><p className="heading-date"><Icon name="calendar" size={19} /> {formatDate(dashboard.generated_at)}</p></div>
-        <div className="heading-actions"><Link href="/import" className="button secondary">Import workbook</Link><Link href="/workbooks" className="button secondary">Workbooks</Link></div>
+        <div className="heading-actions"><Link href="/reading" className="button secondary">Read English news</Link><Link href="/import" className="button secondary">Import workbook</Link><Link href="/workbooks" className="button secondary">Workbooks</Link></div>
       </header>
 
       <DashboardCheckinBanner />

@@ -3,7 +3,7 @@ import logging
 from typing import Optional
 
 from fastapi import APIRouter, Depends, File, HTTPException, Response, UploadFile, status
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, selectinload
 
@@ -73,9 +73,14 @@ def list_workbooks(
     statement = select(Workbook)
     if current_user is None or not current_user.is_superuser:
         preview = get_guest_preview_workbook(db)
-        if preview is None:
+        if current_user is None and preview is None:
             return []
-        statement = statement.where(Workbook.id == preview.id)
+        if current_user is None:
+            statement = statement.where(Workbook.id == preview.id)
+        elif preview is None:
+            statement = statement.where(Workbook.user_id == current_user.id)
+        else:
+            statement = statement.where(or_(Workbook.user_id == current_user.id, Workbook.id == preview.id))
     statement = statement.order_by(Workbook.imported_at.desc(), Workbook.id.desc())
     workbooks = db.scalars(statement).all()
     return [WorkbookListItem.model_validate(workbook) for workbook in workbooks]
@@ -90,7 +95,9 @@ def get_workbook(
     workbook = get_workbook_or_404(db, workbook_id, include_sheets=True, current_user=current_user)
     if current_user is None or not current_user.is_superuser:
         preview = get_guest_preview_workbook(db)
-        if preview is None or workbook.id != preview.id:
+        is_owner = current_user is not None and workbook.user_id == current_user.id
+        is_preview = preview is not None and workbook.id == preview.id
+        if not is_owner and not is_preview:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Workbook not found.")
     return WorkbookDetail.model_validate(workbook)
 
