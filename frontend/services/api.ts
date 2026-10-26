@@ -120,6 +120,25 @@ export type WordLookup = {
   definitions: WordDefinition[];
 };
 
+export type ReadingCategory = { id: string; name: string };
+export type ReadingSource = { id: string; name: string; categories: ReadingCategory[] };
+export type ReadingArticle = {
+  id: string;
+  source_id: string;
+  source_name: string;
+  category: string;
+  title: string;
+  summary: string;
+  url: string;
+  published_at: string | null;
+  image_url: string | null;
+};
+export type ReadingArticleList = { articles: ReadingArticle[]; unavailable_sources: string[] };
+export type ReadingArticleContent = { article: ReadingArticle; paragraphs: string[]; available: boolean; message: string | null };
+export type ReadingLookup = { text: string; translation_vi: string };
+export type ReadingVocabularySheet = { id: number; name: string; workbook_id: number; workbook_name: string; card_count: number };
+export type ReadingVocabularyCollection = { sheets: ReadingVocabularySheet[] };
+
 export type StudySessionType =
   | "new_learning"
   | "srs_review"
@@ -415,6 +434,47 @@ export async function lookupVideoWord(term: string, context: string): Promise<Wo
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ term, context }),
+  });
+}
+
+export async function getReadingSources(): Promise<ReadingSource[]> {
+  return requestJson<ReadingSource[]>("/api/v1/reading/sources");
+}
+
+export async function getReadingArticles(source = "all", category = "all"): Promise<ReadingArticleList> {
+  const query = new URLSearchParams({ source, category });
+  return requestJson<ReadingArticleList>(`/api/v1/reading/articles?${query.toString()}`);
+}
+
+export async function getReadingArticleContent(article: ReadingArticle): Promise<ReadingArticleContent> {
+  const query = new URLSearchParams({ source: article.source_id, url: article.url, title: article.title });
+  return requestJson<ReadingArticleContent>(`/api/v1/reading/articles/content?${query.toString()}`);
+}
+
+export async function lookupReadingText(text: string): Promise<ReadingLookup> {
+  return requestJson<ReadingLookup>("/api/v1/reading/lookup", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text }),
+  });
+}
+
+export async function getReadingVocabularySheets(): Promise<ReadingVocabularyCollection> {
+  return requestJson<ReadingVocabularyCollection>("/api/v1/reading/vocabulary-sheets");
+}
+
+export async function createReadingVocabularySheet(): Promise<ReadingVocabularySheet> {
+  return requestJson<ReadingVocabularySheet>("/api/v1/reading/vocabulary-sheets", { method: "POST" });
+}
+
+export async function addReadingVocabularyCard(
+  sheetId: number,
+  card: { phrase: string; meaning: string },
+): Promise<FlashcardListItem> {
+  return requestJson<FlashcardListItem>(`/api/v1/reading/vocabulary-sheets/${encodeURIComponent(sheetId)}/cards`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(card),
   });
 }
 
