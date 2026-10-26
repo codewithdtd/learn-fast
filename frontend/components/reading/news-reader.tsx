@@ -266,7 +266,8 @@ export function NewsReader() {
         <div className={styles.listHeading}><h2>Latest stories</h2><span>{articles.length}</span></div>
         {loadingArticles ? <p className={styles.emptyState} role="status">Loading stories…</p> : articles.length === 0
           ? <p className={styles.emptyState}>No stories are available for these filters.</p>
-          : articles.map((article, index) => <button type="button" className={styles.articleChoice} data-selected={selectedArticle?.id === article.id} key={article.id || index} onClick={() => setSelectedArticle(article)}>
+          : articles.map((article, index) => <button type="button" className={styles.articleChoice} data-selected={selectedArticle?.id === article.id} data-has-image={Boolean(article.image_url)} key={article.id || index} onClick={() => setSelectedArticle(article)}>
+            {article.image_url && <NewsImage key={article.id} className={styles.articleThumbnail} src={article.image_url} alt="" />}
             <span className={styles.articleMeta}>{article.source_name} · {article.category}</span>
             <strong>{article.title}</strong>
             {article.summary && <span className={styles.articleSummary}>{article.summary}</span>}
@@ -275,6 +276,7 @@ export function NewsReader() {
       </aside>
       <article className={styles.reader}>
         {!selectedArticle ? <div className={styles.emptyReader}><span aria-hidden="true">📖</span><h2>Choose a story to read</h2><p>News stories will appear here.</p></div> : <>
+          {selectedArticle.image_url && <NewsImage key={`${selectedArticle.id}-hero`} className={styles.heroImage} src={selectedArticle.image_url} alt={selectedArticle.title} priority />}
           <div className={styles.readerHeader}>
             <p className={styles.articleMeta}>{selectedArticle.source_name} · {selectedArticle.category}{selectedArticle.published_at ? " · " + formatPublished(selectedArticle.published_at) : ""}</p>
             <h2>{selectedArticle.title}</h2>
@@ -333,4 +335,24 @@ export function NewsReader() {
 function formatPublished(value: string): string {
   const parsed = new Date(value);
   return Number.isNaN(parsed.getTime()) ? value : new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(parsed);
+}
+
+function NewsImage({ src, alt, className, priority = false }: { src: string; alt: string; className: string; priority?: boolean }) {
+  const [failed, setFailed] = useState(false);
+  if (failed) return null;
+
+  return (
+    // RSS image URLs come from the publisher allowlist; load them directly instead of proxying through image optimization.
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      className={className}
+      src={src}
+      alt={alt}
+      width={1200}
+      height={800}
+      loading={priority ? "eager" : "lazy"}
+      decoding="async"
+      onError={() => setFailed(true)}
+    />
+  );
 }
