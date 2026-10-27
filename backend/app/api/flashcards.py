@@ -20,6 +20,7 @@ from app.services.flashcards import (
     FlashcardPersistenceError,
     StudySheetNotFoundError,
     create_flashcard as create_flashcard_service,
+    delete_flashcard as delete_flashcard_service,
     update_flashcard_content as update_flashcard_content_service,
 )
 
@@ -108,6 +109,23 @@ def update_flashcard_content(
     if flashcard is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Flashcard not found.")
     return FlashcardListItem.model_validate(flashcard)
+
+
+@router.delete("/flashcards/{card_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_flashcard(
+    card_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> None:
+    flashcard = get_flashcard_or_404(db, card_id)
+    ensure_flashcard_mutable(flashcard, current_user)
+    try:
+        delete_flashcard_service(db, flashcard)
+    except FlashcardPersistenceError as error:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Flashcard could not be deleted. Please try again.",
+        ) from error
 
 
 @router.patch("/flashcards/{card_id}/weak", response_model=FlashcardListItem)

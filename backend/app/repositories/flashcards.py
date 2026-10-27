@@ -24,3 +24,7 @@ def get_next_card_position(db: Session, sheet_id: int) -> int:
 
 def add_flashcard(db: Session, card: Flashcard) -> None:
     db.add(card)
+
+
+def delete_flashcard(db: Session, card: Flashcard) -> None:
+    db.delete(card)
