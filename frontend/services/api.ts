@@ -552,6 +552,12 @@ export async function updateFlashcardContent(
   });
 }
 
+export async function deleteFlashcard(id: string): Promise<void> {
+  await requestNoContent(`/api/v1/flashcards/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+  });
+}
+
 export async function completeQuickRecall(
   sheetId: string,
   results: QuickRecallCardResultInput[],
