@@ -116,7 +116,7 @@ class WritingRepository:
         ))
         return rows, total
 
-    def consume_quota(self, user_id: int, usage_date: date, limit: int) -> int | None:
+    def consume_quota(self, user_id: int, usage_date: date, limit: int | None) -> int | None:
         # Dùng UPSERT có điều kiện để nhiều API worker không thể cùng vượt giới hạn trong một ngày.
         values = {"user_id": user_id, "usage_date": usage_date, "used_count": 1}
         if self.db.bind is not None and self.db.bind.dialect.name == "postgresql":
@@ -124,18 +124,21 @@ class WritingRepository:
         else:
             statement = sqlite_insert(WritingAIUsage).values(**values)
         table = WritingAIUsage.__table__
+        update_options = {}
+        if limit is not None:
+            update_options["where"] = table.c.used_count < limit
         statement = statement.on_conflict_do_update(
             index_elements=[table.c.user_id, table.c.usage_date],
             set_={
                 "used_count": table.c.used_count + 1,
                 "updated_at": utc_now(),
             },
-            where=table.c.used_count < limit,
+            **update_options,
         ).returning(table.c.used_count)
         return self.db.scalar(statement)
 
     def consume_topic_generation_quota(
-        self, user_id: int, usage_date: date, limit: int
+        self, user_id: int, usage_date: date, limit: int | None
     ) -> int | None:
         # UPSERT có điều kiện giữ quota chính xác khi người dùng gửi nhiều request tạo đề đồng thời.
         values = {
@@ -148,13 +151,16 @@ class WritingRepository:
         else:
             statement = sqlite_insert(WritingAIUsage).values(**values)
         table = WritingAIUsage.__table__
+        update_options = {}
+        if limit is not None:
+            update_options["where"] = table.c.topic_generation_count < limit
         statement = statement.on_conflict_do_update(
             index_elements=[table.c.user_id, table.c.usage_date],
             set_={
                 "topic_generation_count": table.c.topic_generation_count + 1,
                 "updated_at": utc_now(),
             },
-            where=table.c.topic_generation_count < limit,
+            **update_options,
         ).returning(table.c.topic_generation_count)
         return self.db.scalar(statement)
 
@@ -179,7 +185,7 @@ class WritingRepository:
         token: str,
         now: datetime,
         usage_date: date,
-        quota: int,
+        quota: int | None,
     ) -> tuple[str | None, int | None]:
         """Claim quota and a draft before AI; commit now so the network wait holds no DB lock."""
         # Quota và trạng thái được commit cùng nhau; nếu CAS thua thì rollback cả lượt quota.

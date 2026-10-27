@@ -15,10 +15,13 @@ from app.schemas.writing import (
     WritingPromptList,
     WritingPromptRead,
     WritingUsageRead,
+    WritingErrorHistory,
 )
 from app.services import writing as writing_service
 from app.services.sentence_practice import create_sentence_attempt
 from app.schemas.sentence_practice import SentenceAttemptCreate
+from app.schemas.paragraph_practice import ParagraphPracticeCreate
+from app.services.paragraph_practice import create_paragraph_attempt
 
 
 router = APIRouter(prefix="/writing", tags=["writing"])
@@ -59,6 +62,19 @@ def sentence_attempt(
 
 
 @router.post(
+    "/attempts/vocabulary-paragraph",
+    response_model=WritingAttemptRead,
+    status_code=status.HTTP_201_CREATED,
+)
+def vocabulary_paragraph_attempt(
+    payload: ParagraphPracticeCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> WritingAttemptRead:
+    return create_paragraph_attempt(db, current_user, payload)
+
+
+@router.post(
     "/attempts/random",
     response_model=WritingAttemptRead,
     status_code=status.HTTP_201_CREATED,
@@ -67,7 +83,9 @@ def generate_random_attempt(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> WritingAttemptRead:
-    return writing_service.generate_random_attempt(db, current_user.id)
+    return writing_service.generate_random_attempt(
+        db, current_user.id, is_admin=current_user.is_superuser
+    )
 
 
 @router.patch("/attempts/{attempt_id}", response_model=WritingAttemptRead)
@@ -89,7 +107,13 @@ def grade_attempt(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> WritingAttemptRead:
-    return writing_service.grade_attempt(db, current_user.id, attempt_id, payload.version)
+    return writing_service.grade_attempt(
+        db,
+        current_user.id,
+        attempt_id,
+        payload.version,
+        is_admin=current_user.is_superuser,
+    )
 
 
 @router.get("/attempts", response_model=WritingAttemptList)
@@ -115,8 +139,18 @@ def read_attempt(
     return writing_service.read_owned_attempt(db, current_user.id, attempt_id)
 
 
+@router.get("/error-history", response_model=WritingErrorHistory)
+def error_history(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    page: Annotated[int, Query(ge=1)] = 1,
+    page_size: Annotated[int, Query(ge=1, le=50)] = 20,
+) -> WritingErrorHistory:
+    return writing_service.list_error_history(db, current_user.id, page, page_size)
+
+
 @router.get("/usage", response_model=WritingUsageRead)
 def usage(
     current_user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ) -> WritingUsageRead:
-    return writing_service.get_usage(db, current_user.id)
+    return writing_service.get_usage(db, current_user.id, is_admin=current_user.is_superuser)

@@ -169,6 +169,20 @@ class WritingAttemptList(StrictModel):
     page_size: int
 
 
+class WritingErrorHistoryEntry(StrictModel):
+    attempt_id: int
+    title_en: str
+    graded_at: datetime | None
+    issues: list[WritingIssueRead]
+
+
+class WritingErrorHistory(StrictModel):
+    items: list[WritingErrorHistoryEntry]
+    total: int
+    page: int
+    page_size: int
+
+
 class WritingAttemptRead(StrictModel):
     id: int
     prompt_id: int
@@ -190,6 +204,6 @@ class WritingAttemptRead(StrictModel):
 
 class WritingUsageRead(StrictModel):
     usage_date: date
-    daily_limit: int
+    daily_limit: int | None
     used: int
-    remaining: int
+    remaining: int | None

@@ -105,9 +105,20 @@ Mark genuine strengths with exact quotes. Optional naturalness improvements must
 Give bilingual next steps and preserve the learner's intended meaning."""
         user_data["assignment"]["sentence_target"] = prompt.get("paragraph_hints", {}).get("sentence_practice", {})
         user_data["assignment"]["format"] = "sentence"
+    elif prompt.get("format") == "vocabulary_translation":
+        # Chấm bản dịch theo ý nghĩa đề tiếng Việt và các cụm mục tiêu, không ép khớp một đáp án mẫu.
+        system += """\nThis is Vietnamese-to-English translation practice. Compare the learner's English with
+the Vietnamese source and the supplied target expressions. Check meaning, omissions and natural use of
+each expression, allowing valid inflections and alternate translations. Do not invent errors or mark
+correct English wrong. Explain missing or misused expressions in the task and vocabulary feedback.
+Evaluate dialogue as dialogue when requested. Preserve the learner's meaning and give bilingual explanations."""
+        user_data["assignment"]["vocabulary_translation"] = prompt.get("paragraph_hints", {}).get("vocabulary_translation", {})
     raw = call_9router_chat(
         messages=[
-            {"role": "system", "content": system + "\nJSON schema:\n" + json.dumps(schema)},
+            {
+                "role": "system",
+                "content": system + "\nJSON schema:\n" + json.dumps(schema),
+            },
             {"role": "user", "content": json.dumps(user_data, ensure_ascii=False)},
         ],
         temperature=0.2,
