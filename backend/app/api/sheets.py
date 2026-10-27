@@ -1,6 +1,6 @@
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from datetime import datetime, timezone
 
 from sqlalchemy import or_, select
@@ -15,6 +15,7 @@ from app.schemas.sheet import SheetDetail, SheetUpdate
 from app.schemas.workbook import SheetSummary
 from app.services.public_preview import get_guest_preview_workbook
 from app.services.srs import SrsPersistenceError, list_due_sheets
+from app.services.sheet_management import StudySheetNotFoundError, delete_sheet
 
 
 logger = logging.getLogger(__name__)
@@ -132,3 +133,23 @@ def update_sheet(
         ) from error
 
     return SheetDetail.model_validate(sheet)
+
+
+@router.delete("/sheets/{sheet_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_sheet_api(
+    sheet_id: int,
+    db: Session = Depends(get_db),
+    admin_user: User = Depends(get_current_admin),
+) -> Response:
+    try:
+        delete_sheet(db, sheet_id=sheet_id)
+    except StudySheetNotFoundError as error:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error)) from error
+    except SQLAlchemyError as error:
+        db.rollback()
+        logger.exception("Study sheet deletion failed after database rollback.")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Study sheet could not be deleted. Please try again.",
+        ) from error
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

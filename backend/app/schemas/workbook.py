@@ -55,6 +55,17 @@ class WorkbookDetail(WorkbookListItem):
     sheets: list[SheetSummary]
 
 
+class WorkbookCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: str
+
+    @field_validator("name")
+    @classmethod
+    def normalize_name(cls, value: str) -> str:
+        return normalize_entity_name(value)
+
+
 class WorkbookUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 

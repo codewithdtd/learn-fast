@@ -4,6 +4,7 @@ import { Icon } from "@/components/layout/app-shell";
 import { formatDate, formatLabel } from "@/lib/format";
 import type { SheetSummary } from "@/services/api";
 import { InlineNameEditor } from "@/components/shared/inline-name-editor";
+import { DeleteSheetButton } from "@/components/sheets/delete-sheet-button";
 
 type SheetListItemProps = {
   sheet: SheetSummary;
@@ -11,6 +12,7 @@ type SheetListItemProps = {
     isSelected: boolean;
     onToggle: (sheetId: number) => void;
     onRename: (name: string) => Promise<void>;
+    onDelete: () => Promise<void>;
   };
 };
 
@@ -37,6 +39,7 @@ export function SheetListItem({ sheet, management }: SheetListItemProps) {
             label={`sheet ${sheet.name}`}
             onSave={management.onRename}
           />
+          <DeleteSheetButton sheetId={sheet.id} sheetName={sheet.name} onDeleted={management.onDelete} />
         </div>
       )}
       <Link

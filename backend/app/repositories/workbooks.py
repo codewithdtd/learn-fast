@@ -8,6 +8,15 @@ def get_workbook(db: Session, workbook_id: int) -> Workbook | None:
     return db.get(Workbook, workbook_id)
 
 
+def lock_workbook_for_sheet_management(db: Session, workbook_id: int) -> Workbook | None:
+    # Khóa workbook để hai yêu cầu tạo sheet đồng thời không cấp cùng một vị trí.
+    return db.scalar(select(Workbook).where(Workbook.id == workbook_id).with_for_update())
+
+
+def get_sheet(db: Session, sheet_id: int) -> StudySheet | None:
+    return db.get(StudySheet, sheet_id)
+
+
 def lock_sheets_in_workbook(
     db: Session, workbook_id: int, sheet_ids: list[int]
 ) -> list[StudySheet]:

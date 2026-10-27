@@ -13,8 +13,24 @@ from app.services.speaking_ai import grade_speaking, generate_speaking_prompt
 from app.services.writing import _prompt_snapshot
 from app.services.writing_ai import generate_writing_prompt, grade_writing
 from app.services.writing_feedback import validate_and_anchor_feedback
+from app.schemas.paragraph_practice import ParagraphGuestGrade, ParagraphGuestTask, ParagraphPracticeCreate
+from app.services.paragraph_practice import generate_task, select_words, task_snapshot
 
 router = APIRouter(prefix="/guest/ai", tags=["guest AI trials"])
+
+
+@router.post("/vocabulary-paragraph/topic", response_model=ParagraphGuestTask)
+def vocabulary_paragraph_topic(payload: ParagraphPracticeCreate, request: Request, db: Session = Depends(get_db)) -> ParagraphGuestTask:
+    words = select_words(db, payload, None)
+    consume_guest_ai_trial(db, request, "vocabulary_paragraph_topic")
+    return generate_task(words, payload.style, payload.sheet_id)
+
+
+@router.post("/vocabulary-paragraph/grade", response_model=WritingFeedbackRead)
+def vocabulary_paragraph_grade(payload: ParagraphGuestGrade, request: Request, db: Session = Depends(get_db)) -> WritingFeedbackRead:
+    consume_guest_ai_trial(db, request, "vocabulary_paragraph_feedback")
+    raw, _model = grade_writing(task_snapshot(payload.task), payload.draft_text)
+    return validate_and_anchor_feedback(raw, payload.draft_text)
 
 
 @router.post("/writing/topic", response_model=AIWritingPromptDraft)

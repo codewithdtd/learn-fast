@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { getWritingHistory } from "@/services/api";
-import type { WritingAttemptList } from "@/types/writing";
+import { getWritingErrorHistory, getWritingHistory } from "@/services/api";
+import type { WritingAttemptList, WritingErrorHistory } from "@/types/writing";
 import { useAuth } from "@/context/auth-context";
 import { AuthModal } from "@/components/auth/auth-modal";
 import styles from "./writing.module.css";
@@ -15,6 +15,7 @@ export function WritingHistory() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [authOpen, setAuthOpen] = useState(false);
+  const [view, setView] = useState<"attempts" | "mistakes">("attempts");
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -24,6 +25,8 @@ export function WritingHistory() {
   return (
     <main className={styles.page}>
       <div className={styles.pageHeading}><div><p className={styles.eyebrow}>YOUR PROGRESS</p><h1>Writing &amp; sentence history</h1><p>Open any saved draft or review to continue learning from it.</p></div><Link className={styles.historyLink} href="/ai-support?tab=sentences">← AI Support</Link></div>
+      {isAuthenticated && <div className={styles.tabs} role="group" aria-label="History view"><button className={view === "attempts" ? styles.activeTab : styles.tab} aria-pressed={view === "attempts"} onClick={() => setView("attempts")}>All attempts</button><button className={view === "mistakes" ? styles.activeTab : styles.tab} aria-pressed={view === "mistakes"} onClick={() => setView("mistakes")}>Mistake history</button></div>}
+      {view === "mistakes" && isAuthenticated ? <WritingMistakeHistory /> : <>
       {error && <div className={styles.errorNotice} role="alert">{error}</div>}
       {isAuthLoading || (isAuthenticated && isLoading) ? <div className={styles.loadingCard} role="status">Loading your writing history…</div> : !isAuthenticated ? <div className={styles.emptyCard}><h2>Sign in to view your writing</h2><p>Your writing history is private to your account.</p></div> : history?.items.length ? <>
         <div className={styles.historyList}>{history.items.map((item) => <Link href={`/writing/attempts/${item.id}`} className={styles.historyRow} key={item.id}>
@@ -34,7 +37,28 @@ export function WritingHistory() {
         </Link>)}</div>
         <div className={styles.pagination}><button className={styles.secondaryButton} disabled={page <= 1} onClick={() => { setIsLoading(true); setPage((current) => current - 1); }}>Previous</button><span>Page {history.page} · {history.total} attempts</span><button className={styles.secondaryButton} disabled={page * history.page_size >= history.total} onClick={() => { setIsLoading(true); setPage((current) => current + 1); }}>Next</button></div>
       </> : <div className={styles.emptyCard}><span aria-hidden="true">✎</span><h2>Your first paragraph starts here</h2><p>Choose a topic and submit your writing. Your drafts and feedback will appear here.</p><Link className={styles.primaryButton} href="/writing">Explore writing topics</Link></div>}
+      </>}
       <AuthModal isOpen={authOpen || (!isAuthLoading && !isAuthenticated)} onClose={() => setAuthOpen(false)} initialMode="login" />
     </main>
   );
+}
+
+function WritingMistakeHistory() {
+  const [history, setHistory] = useState<WritingErrorHistory | null>(null);
+  const [page, setPage] = useState(1);
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    let active = true;
+    getWritingErrorHistory(page).then((result) => { if (active) { setHistory(result); setError(null); } }).catch((cause: unknown) => { if (active) setError(cause instanceof Error ? cause.message : "Mistake history could not be loaded."); });
+    return () => { active = false; };
+  }, [page]);
+  if (error) return <div className={styles.errorNotice} role="alert">{error}</div>;
+  if (!history) return <div className={styles.loadingCard} role="status">Loading your corrections…</div>;
+  if (!history.total) return <div className={styles.emptyCard}><h2>No reviews yet</h2><p>Corrections from your reviewed writing will appear here.</p></div>;
+  return <section className={styles.mistakeHistory} aria-label="Mistake history">
+    {history.items.map((item) => <article key={item.attempt_id} className={`${styles.card} ${styles.mistakeHistoryItem}`}><h2>{item.title_en}</h2><Link href={`/writing/attempts/${item.attempt_id}`} className={styles.backLink}>Open full review →</Link>
+      {item.issues.length ? item.issues.map((issue) => <div key={issue.id}><span className={issue.kind === "error" ? styles.errorChip : styles.suggestionChip}>{issue.kind} · {issue.category.replaceAll("_", " ")}</span><p>{issue.operation === "insert" ? <>Insert {issue.anchor_position} “{issue.quote}”</> : issue.kind === "error" ? <s>{issue.quote}</s> : issue.quote} → <strong>{issue.operation === "delete" ? "Remove" : issue.replacement}</strong></p><p>{issue.explanation_en}</p><p lang="vi">{issue.explanation_vi}</p></div>) : <p>No corrections in this review.</p>}
+    </article>)}
+    <div className={styles.pagination}><button className={styles.secondaryButton} disabled={page <= 1} onClick={() => { setHistory(null); setPage((value) => value - 1); }}>Previous</button><span>Page {history.page} · {history.total} reviewed attempts</span><button className={styles.secondaryButton} disabled={page * history.page_size >= history.total} onClick={() => { setHistory(null); setPage((value) => value + 1); }}>Next</button></div>
+  </section>;
 }

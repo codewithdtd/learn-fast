@@ -5,9 +5,13 @@ import { useEffect, useMemo, useState } from "react";
 
 import { WorkbookCard } from "@/components/workbooks/workbook-card";
 import { NoriMascot } from "@/components/illustrations/nori-mascot";
-import { getWorkbooks, type WorkbookListItem } from "@/services/api";
+import { NamedEntityCreateForm } from "@/components/shared/named-entity-create-form";
+import { useAuth } from "@/context/auth-context";
+import { createWorkbook, getWorkbooks, type WorkbookListItem } from "@/services/api";
 
 export function WorkbookList() {
+  const { user, isAuthenticated } = useAuth();
+  const isAdmin = isAuthenticated && user?.is_superuser === true;
   const [workbooks, setWorkbooks] = useState<WorkbookListItem[]>([]);
   const [search, setSearch] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -57,7 +61,7 @@ export function WorkbookList() {
 
   if (isLoading) return <WorkbookLoading />;
   if (error) return <WorkbookError message={error} onRetry={loadWorkbooks} />;
-  if (workbooks.length === 0) return <WorkbookEmpty />;
+  if (workbooks.length === 0) return <WorkbookEmpty isAdmin={isAdmin} onCreate={async (name) => { await createWorkbook(name); await loadWorkbooks(); }} />;
 
   return (
     <section className="library-content" aria-label="Workbook library">
@@ -78,6 +82,14 @@ export function WorkbookList() {
         <span className="library-count">
           {filteredWorkbooks.length} {filteredWorkbooks.length === 1 ? "workbook" : "workbooks"}
         </span>
+        {isAdmin && (
+          <NamedEntityCreateForm
+            label="Workbook name"
+            buttonLabel="Create workbook"
+            placeholder="New workbook name"
+            onCreate={async (name) => { await createWorkbook(name); await loadWorkbooks(); }}
+          />
+        )}
       </div>
 
       {filteredWorkbooks.length === 0 ? (
@@ -108,13 +120,14 @@ function WorkbookError({ message, onRetry }: { message: string; onRetry: () => P
   );
 }
 
-function WorkbookEmpty() {
+function WorkbookEmpty({ isAdmin, onCreate }: { isAdmin: boolean; onCreate: (name: string) => Promise<void> }) {
   return (
     <section className="library-empty">
       <NoriMascot pose="guide" size={112} className="journey-only journey-empty-mascot" />
       <div className="library-empty-icon">+</div>
       <h2>No workbooks yet</h2>
       <p>Import an Excel workbook to start building your vocabulary library.</p>
+      {isAdmin && <NamedEntityCreateForm label="Workbook name" buttonLabel="Create workbook" placeholder="New workbook name" onCreate={onCreate} />}
       <Link href="/import" className="library-button library-button-primary">Import workbook</Link>
     </section>
   );
