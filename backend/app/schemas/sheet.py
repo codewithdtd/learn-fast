@@ -33,3 +33,14 @@ class SheetUpdate(BaseModel):
         if self.name is None and self.priority is None:
             raise ValueError("At least one sheet field must be provided.")
         return self
+
+
+class SheetCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: str
+
+    @field_validator("name")
+    @classmethod
+    def normalize_name(cls, value: str) -> str:
+        return normalize_entity_name(value)

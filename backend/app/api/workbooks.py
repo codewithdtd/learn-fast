@@ -11,6 +11,7 @@ from app.api.deps import get_current_admin, get_current_user_optional
 from app.core.database import get_db
 from app.models import User, Workbook
 from app.schemas.workbook import (
+    WorkbookCreate,
     WorkbookDetail,
     WorkbookImportResponse,
     WorkbookListItem,
@@ -18,6 +19,7 @@ from app.schemas.workbook import (
     MoveSheetsRequest,
     MoveSheetsResponse,
 )
+from app.schemas.sheet import SheetCreate
 from app.services.excel_parser import parse_excel_workbook
 from app.services.excel_types import ExcelParseError, ExcelValidationError
 from app.services.workbook_import import (
@@ -31,6 +33,8 @@ from app.services.sheet_management import (
     InvalidSheetMoveError,
     SheetsNotFoundError,
     WorkbookNotFoundError,
+    create_sheet,
+    create_workbook,
     move_sheets,
 )
 from app.services.public_preview import get_guest_preview_workbook
@@ -59,6 +63,47 @@ def get_workbook_or_404(
     if workbook is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Workbook not found.")
     return workbook
+
+
+@router.post("/workbooks", response_model=WorkbookDetail, status_code=status.HTTP_201_CREATED)
+def create_workbook_api(
+    payload: WorkbookCreate,
+    db: Session = Depends(get_db),
+    admin_user: User = Depends(get_current_admin),
+) -> WorkbookDetail:
+    try:
+        workbook = create_workbook(db, name=payload.name, owner_id=admin_user.id)
+        return WorkbookDetail.model_validate(get_workbook_or_404(
+            db, workbook.id, include_sheets=True
+        ))
+    except SQLAlchemyError as error:
+        db.rollback()
+        logger.exception("Workbook creation failed after database rollback.")
+        raise HTTPException(status_code=500, detail="Workbook could not be created. Please try again.") from error
+
+
+@router.post(
+    "/workbooks/{workbook_id}/sheets",
+    response_model=WorkbookDetail,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_workbook_sheet_api(
+    workbook_id: int,
+    payload: SheetCreate,
+    db: Session = Depends(get_db),
+    admin_user: User = Depends(get_current_admin),
+) -> WorkbookDetail:
+    try:
+        create_sheet(db, workbook_id=workbook_id, name=payload.name)
+        return WorkbookDetail.model_validate(get_workbook_or_404(
+            db, workbook_id, include_sheets=True
+        ))
+    except WorkbookNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except SQLAlchemyError as error:
+        db.rollback()
+        logger.exception("Study sheet creation failed after database rollback.")
+        raise HTTPException(status_code=500, detail="Study sheet could not be created. Please try again.") from error
 
 
 @router.get("/workbooks", response_model=list[WorkbookListItem])
