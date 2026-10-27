@@ -2928,9 +2928,20 @@ a {
 .vocabulary-edit-button:disabled { cursor: not-allowed; opacity: .55; }
 .vocabulary-edit-button.save { border-color: var(--primary-container); background: var(--primary-container); color: #fff; }
 .vocabulary-edit-button.save:hover:not(:disabled) { background: var(--primary-container); }
+.vocabulary-delete-trigger { color: var(--error); }
+.vocabulary-delete-trigger:hover:not(:disabled) { border-color: var(--error); background: color-mix(in srgb, var(--error) 9%, var(--surface)); color: var(--error); }
 .vocabulary-save-spinner { width: 17px; height: 17px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin 700ms linear infinite; }
 .vocabulary-edit-actions { display: flex; gap: 8px; }
 .vocabulary-edit-error { flex: 1 0 100%; margin: 4px 0 0; color: var(--error); font-size: 12px; line-height: 1.4; text-align: right; }
+.flashcard-delete-confirm { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; width: 100%; color: var(--foreground); font-size: 12px; font-weight: 700; }
+.flashcard-delete-confirm > span { flex: 1 1 100%; text-align: right; }
+.flashcard-delete-cancel,
+.flashcard-delete-confirm-button { min-height: 36px; border: 1px solid var(--outline); border-radius: 999px; padding: 0 12px; background: var(--surface); color: var(--foreground); font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; }
+.flashcard-delete-confirm-button { border-color: var(--error); background: var(--error); color: var(--on-error, #fff); }
+.flashcard-delete-cancel:focus-visible,
+.flashcard-delete-confirm-button:focus-visible { outline: 3px solid var(--foreground); outline-offset: 2px; }
+.flashcard-delete-cancel:disabled,
+.flashcard-delete-confirm-button:disabled { cursor: wait; opacity: .65; }
 
 .flashcard-flag-actions {
   display: flex;

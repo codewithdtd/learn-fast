@@ -118,6 +118,8 @@ export type WordLookup = {
   phonetic: string | null;
   audio_url: string | null;
   definitions: WordDefinition[];
+  translation_error?: string | null;
+  translation_retry_after?: number | null;
 };
 
 export type ReadingCategory = { id: string; name: string };
@@ -547,6 +549,12 @@ export async function updateFlashcardContent(
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(content),
+  });
+}
+
+export async function deleteFlashcard(id: string): Promise<void> {
+  await requestNoContent(`/api/v1/flashcards/${encodeURIComponent(id)}`, {
+    method: "DELETE",
   });
 }
 

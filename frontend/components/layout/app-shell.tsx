@@ -7,7 +7,7 @@ import { ThemeToggle } from "./theme-toggle";
 
 
 
-type IconName = "home" | "books" | "import" | "study" | "calendar" | "review" | "arrow" | "clock" | "check" | "weak" | "refresh" | "search" | "flame" | "bookmark" | "eye" | "eyeOff" | "chevronDown" | "back" | "play" | "bell" | "writing";
+type IconName = "home" | "books" | "import" | "study" | "calendar" | "review" | "arrow" | "clock" | "check" | "weak" | "refresh" | "search" | "flame" | "bookmark" | "eye" | "eyeOff" | "chevronDown" | "back" | "play" | "bell" | "writing" | "trash";
 
 export function Icon({ name, size = 24 }: { name: IconName; size?: number }) {
   const paths: Record<IconName, React.ReactNode> = {
@@ -32,6 +32,7 @@ export function Icon({ name, size = 24 }: { name: IconName; size?: number }) {
     play: <path d="m8 5 11 7-11 7z" />,
     bell: <><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></>,
     writing: <><path d="M4 20h4l10.5-10.5a2.12 2.12 0 0 0-4-4L4 16z" /><path d="m13.5 6.5 4 4M4 20h16" /></>,
+    trash: <><path d="M4 7h16M10 11v6M14 11v6M5 7l1 14h12l1-14M9 7V4h6v3" /></>,
   };
 
   return <svg aria-hidden="true" className="icon" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">{paths[name]}</svg>;

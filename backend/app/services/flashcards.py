@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.models.flashcard import Flashcard
 from app.repositories.flashcards import (
     add_flashcard,
+    delete_flashcard as delete_flashcard_record,
     get_flashcard,
     get_next_card_position,
     get_sheet_for_update,
@@ -98,3 +99,19 @@ def update_flashcard_content(
         raise FlashcardPersistenceError("Flashcard could not be updated.") from error
 
     return card
+
+
+def delete_flashcard(db: Session, card: Flashcard) -> None:
+    sheet = card.sheet
+    workbook_id = sheet.workbook_id
+    try:
+        # Removing the card also removes its session-card links through the existing FK cascade; refresh cached counts in the same transaction.
+        delete_flashcard_record(db, card)
+        db.flush()
+        refresh_sheet_card_count(db, sheet)
+        refresh_workbook_counts(db, workbook_id)
+        db.commit()
+    except SQLAlchemyError as error:
+        db.rollback()
+        logger.exception("Flashcard deletion failed after database rollback.")
+        raise FlashcardPersistenceError("Flashcard could not be deleted.") from error

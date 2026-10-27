@@ -256,7 +256,7 @@ export function VideoPractice() {
       const result = await lookupVideoWord(segment.text, segment.text);
       if (session !== inlineTranslationSession.current) return;
       const translation = result.translation_vi?.trim();
-      if (!translation) throw new Error("No Vietnamese translation was returned.");
+      if (!translation) throw new Error(result.translation_error ?? "No Vietnamese translation was returned.");
       setInlineTranslationStates((states) => ({
         ...states,
         [index]: { translation, loading: false, visible: true },
@@ -303,7 +303,8 @@ export function VideoPractice() {
       const result = await lookupVideoWord(term, context);
       if (requestId !== lookupRequestId.current) return;
       setLookup(result);
-      setLookupCache((current) => new Map(current).set(normalizedTerm, result));
+      // A partial dictionary result must stay retryable after the translation provider recovers.
+      if (!result.translation_error) setLookupCache((current) => new Map(current).set(normalizedTerm, result));
       setSavePhrase(term);
       setSaveMeaning(result.translation_vi ?? result.definitions[0]?.definition ?? "");
     } catch (cause) {
@@ -577,6 +578,7 @@ export function VideoPractice() {
           {lookupError && <p className={styles.error} role="alert">{lookupError}</p>}
           {lookup && <>
             {lookup.translation_vi && <p lang="vi"><strong>Vietnamese:</strong> {lookup.translation_vi}</p>}
+            {lookup.translation_error && <p className={styles.error} role="alert">{lookup.translation_error}</p>}
             {lookup.definitions.length > 0 && <ol className={styles.lookupDetails}>{lookup.definitions.map((item, index) => <li key={`${item.part_of_speech}-${index}`}><strong>{item.part_of_speech && `${item.part_of_speech}: `}</strong>{item.definition}{item.example && <small>{item.example}</small>}</li>)}</ol>}
             <div className={styles.lookupActions}>
               {lookup.audio_url || isSpeechSupported() ? <button type="button" className={styles.iconButton} onClick={playPronunciation} aria-label={`Play pronunciation for ${selectedWord.term}`} title="Play pronunciation"><SpeakerIcon /></button> : <p className={styles.note}>Pronunciation is not supported on this device.</p>}

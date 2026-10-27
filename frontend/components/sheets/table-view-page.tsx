@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 
 import { FlashcardFlagButtons } from "@/components/sheets/flashcard-flag-buttons";
-import { ApiRequestError, getSheet, getSheetCards, updateFlashcardBookmark, updateFlashcardContent, updateFlashcardWeak, type FlashcardListItem, type SheetDetail } from "@/services/api";
+import { ApiRequestError, deleteFlashcard, getSheet, getSheetCards, updateFlashcardBookmark, updateFlashcardContent, updateFlashcardWeak, type FlashcardListItem, type SheetDetail } from "@/services/api";
 import { Icon } from "@/components/layout/app-shell";
 import { useAuth } from "@/context/auth-context";
 
@@ -196,6 +196,23 @@ export function ResponsiveSheetTableView({ sheetId }: ResponsiveSheetTableViewPr
     }
   }
 
+  async function removeFlashcard(cardId: number): Promise<boolean> {
+    setError(null);
+    try {
+      await deleteFlashcard(String(cardId));
+      setCards((currentCards) => currentCards.filter((card) => card.id !== cardId));
+      setExpandedExamples((currentIds) => {
+        const nextIds = new Set(currentIds);
+        nextIds.delete(cardId);
+        return nextIds;
+      });
+      return true;
+    } catch (caughtError) {
+      setError(caughtError instanceof Error ? caughtError.message : "Could not delete this flashcard.");
+      return false;
+    }
+  }
+
   function toggleCardExamples(cardId: number) {
     setExpandedExamples((currentIds) => {
       const nextIds = new Set(currentIds);
@@ -309,6 +326,7 @@ export function ResponsiveSheetTableView({ sheetId }: ResponsiveSheetTableViewPr
                 canEdit={isAdmin}
                 onToggleExamples={() => toggleCardExamples(card.id)}
                 onContentSave={(phrase, meaning) => persistCardContent(card.id, phrase, meaning)}
+                onDelete={() => removeFlashcard(card.id)}
                 onWeakChange={(nextValue) => persistFlag(card.id, "is_weak", nextValue)}
                 onBookmarkChange={(nextValue) => persistFlag(card.id, "is_bookmarked", nextValue)}
               />
@@ -350,15 +368,18 @@ type VocabularyRowProps = {
   canEdit: boolean;
   onToggleExamples: () => void;
   onContentSave: (phrase: string, meaning: string) => Promise<boolean>;
+  onDelete: () => Promise<boolean>;
   onWeakChange: (nextValue: boolean) => Promise<void>;
   onBookmarkChange: (nextValue: boolean) => Promise<void>;
 };
 
-function VocabularyRow({ card, visibleColumns, gridStyle, isExampleExpanded, canEdit, onToggleExamples, onContentSave, onWeakChange, onBookmarkChange }: VocabularyRowProps) {
+function VocabularyRow({ card, visibleColumns, gridStyle, isExampleExpanded, canEdit, onToggleExamples, onContentSave, onDelete, onWeakChange, onBookmarkChange }: VocabularyRowProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [phraseDraft, setPhraseDraft] = useState(card.phrase);
   const [meaningDraft, setMeaningDraft] = useState(card.meaning);
   const [isSaving, setIsSaving] = useState(false);
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
   const hasExamples = Boolean(card.example_en || card.example_vi);
   const formId = `flashcard-edit-${card.id}`;
@@ -420,8 +441,15 @@ function VocabularyRow({ card, visibleColumns, gridStyle, isExampleExpanded, can
             </button>
           </div>
           {editError && <p className="vocabulary-edit-error" role="alert">{editError}</p>}
-        </> : <>
+        </> : isConfirmingDelete ? <div className="flashcard-delete-confirm" role="group" aria-label={`Confirm deletion of ${card.phrase}`}>
+          <span>Delete “{card.phrase}”?</span>
+          <button type="button" className="flashcard-delete-cancel" disabled={isDeleting} onClick={() => setIsConfirmingDelete(false)}>Cancel</button>
+          <button type="button" className="flashcard-delete-confirm-button" disabled={isDeleting} onClick={async () => { setIsDeleting(true); if (await onDelete()) setIsConfirmingDelete(false); setIsDeleting(false); }}>
+            {isDeleting ? "Deleting…" : "Delete"}
+          </button>
+        </div> : <>
           {canEdit && <button type="button" className="vocabulary-edit-button" aria-label={`Edit ${card.phrase}`} title="Edit phrase and meaning" onClick={startEditing}><Icon name="writing" size={18} /></button>}
+          {canEdit && <button type="button" className="vocabulary-edit-button vocabulary-delete-trigger" aria-label={`Delete ${card.phrase}`} title="Delete flashcard" onClick={() => setIsConfirmingDelete(true)}><Icon name="trash" size={18} /></button>}
           <FlashcardFlagButtons
             isWeak={card.is_weak}
             isBookmarked={card.is_bookmarked}
