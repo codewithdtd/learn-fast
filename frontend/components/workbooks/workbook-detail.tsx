@@ -8,6 +8,7 @@ import { useAuth } from "@/context/auth-context";
 import { InlineNameEditor } from "@/components/shared/inline-name-editor";
 import { SheetListItem } from "@/components/sheets/sheet-list-item";
 import { formatDate } from "@/lib/format";
+import { WorkbookCover } from "@/components/illustrations/workbook-cover";
 import {
   ApiRequestError,
   getWorkbook,
@@ -217,6 +218,7 @@ function WorkbookDetailContent({
             <span aria-current="page">{workbook.name}</span>
           </nav>
           <div className="workbook-detail-title-row">
+            <WorkbookCover workbookId={workbook.id} className="journey-workbook-detail-cover" />
             <h1>{workbook.name}</h1>
             <InlineNameEditor value={workbook.name} label="workbook name" onSave={onWorkbookRenamed} />
           </div>

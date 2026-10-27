@@ -16,6 +16,17 @@
 }
 
 .header { margin-bottom: 2rem; }
+:global(:root[data-theme="journey"]) .root { max-width: 68rem; }
+:global(:root[data-theme="journey"]) .header { position: relative; min-height: 106px; border-bottom: 1px solid #c6d7ec; }
+:global(:root[data-theme="journey"]) .header h1 { color: #17304a; }
+:global(:root[data-theme="journey"]) .setup,
+:global(:root[data-theme="journey"]) .questionCard,
+:global(:root[data-theme="journey"]) .scoreCard,
+:global(:root[data-theme="journey"]) .reviewList > li,
+:global(:root[data-theme="journey"]) .stateCard { border-color: #c2d2e7; border-radius: 22px; box-shadow: 0 4px 14px rgb(23 48 74 / 5%); }
+:global(:root[data-theme="journey"]) .modeOption { border-radius: 16px; background: #fff; }
+:global(:root[data-theme="journey"]) .modeOption[data-selected="true"] { border-color: #2457bc; background: #eaf1ff; }
+:global(:root[data-theme="journey"]) .primary { border-color: #1b4293; color: #fff; background: #2457bc; box-shadow: 0 3px 0 #1b4293; }
 .back { display: inline-flex; align-items: center; max-width: 100%; gap: .5rem; min-height: 2.75rem; margin-bottom: 1rem; color: var(--muted); font-size: .875rem; overflow-wrap: anywhere; }
 .back:hover { color: var(--foreground); text-decoration: underline; }
 .eyebrow { margin: 0 0 .5rem; color: var(--muted); font-size: .75rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }

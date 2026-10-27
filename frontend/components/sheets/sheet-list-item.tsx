@@ -42,6 +42,7 @@ export function SheetListItem({ sheet, management }: SheetListItemProps) {
       <Link
         href={`/sheets/${sheet.id}`}
         className={`workbook-sheet-row status-${sheet.status}`}
+        data-journey-tone={sheet.status === "due" ? "gold" : isLearned ? "teal" : "blue"}
       >
         <span className="workbook-sheet-icon"><Icon name={isLearned ? "check" : isDue ? "review" : "books"} size={25} /></span>
         <span className="workbook-sheet-copy">

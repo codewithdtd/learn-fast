@@ -4,6 +4,7 @@ import { Icon } from "@/components/layout/app-shell";
 import { DeleteWorkbookButton } from "@/components/workbooks/delete-workbook-button";
 import { formatDate } from "@/lib/format";
 import type { WorkbookListItem } from "@/services/api";
+import { WorkbookCover } from "@/components/illustrations/workbook-cover";
 
 type WorkbookCardProps = {
   workbook: WorkbookListItem;
@@ -13,6 +14,7 @@ type WorkbookCardProps = {
 export function WorkbookCard({ workbook, onDeleted }: WorkbookCardProps) {
   return (
     <article className="workbook-card">
+      <WorkbookCover workbookId={workbook.id} />
       <div className="workbook-card-topline">
         <span className="workbook-icon"><Icon name="books" size={26} /></span>
         <DeleteWorkbookButton workbookId={workbook.id} workbookName={workbook.name} onDeleted={onDeleted} />

@@ -4,8 +4,9 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { Icon } from "@/components/layout/app-shell";
+import { NoriMascot } from "@/components/illustrations/nori-mascot";
 import { useAuth } from "@/context/auth-context";
-import { formatDate, formatLabel } from "@/lib/format";
+import { formatDate } from "@/lib/format";
 import { ApiRequestError, getSheet, getStudySession, rateStudySession, type SheetDetail, type StudySession, type SrsRating } from "@/services/api";
 
 type StudySessionResultProps = { sessionId: string };
@@ -89,7 +90,7 @@ function CompletedResult({ session, weakCards, scheduledSheet, isAdmin, isRating
     <header className="study-result-header"><Link href={`/sheets/${session.sheet_id}`} className="study-result-back"><Icon name="back" size={18} /> Back to sheet</Link><div className="study-result-title-row"><div><p className="study-result-kicker">{formatSessionType(session.session_type)} · Session #{session.id}</p><h1>Session complete</h1><p>Completed {formatDate(session.completed_at)}.</p></div><span className="study-result-success-icon"><Icon name="check" size={32} /></span></div></header>
     <div className="study-result-layout">
       <div className="study-result-main">
-        <section className="study-result-score-card"><p className="eyebrow">Average mastery</p><strong>{masteryScore}%</strong><div className="study-result-score-track"><span style={{ width: `${Math.max(0, Math.min(masteryScore, 100))}%` }} /></div><p>Average recall across every completed round.</p></section>
+        <section className="study-result-score-card"><NoriMascot pose={masteryScore >= 70 ? "celebrate" : "rest"} size={88} className="journey-only journey-result-mascot" /><p className="eyebrow">Average mastery</p><strong>{masteryScore}%</strong><div className="study-result-score-track"><span style={{ width: `${Math.max(0, Math.min(masteryScore, 100))}%` }} /></div><p>Average recall across every completed round.</p></section>
         <section className="study-result-panel"><div className="study-result-section-heading"><div><p className="eyebrow">Session snapshot</p><h2>What you practiced</h2></div></div><dl className="study-result-stats"><Stat label="Rounds" value={String(completedRounds.length)} tone="lavender" /><Stat label="First-round recall" value={`${firstRoundRecall}%`} tone="gold" /><Stat label="Final-round recall" value={`${finalRoundRecall}%`} tone="mint" /><Stat label="Confirmed answers" value={String(session.total_attempts)} tone="neutral" /><Stat label="Again" value={String(session.again_count)} tone="rose" /></dl></section>
         <WeakCardPanel weakCards={weakCards} sheetId={session.sheet_id} />
       </div>
@@ -153,7 +154,6 @@ function SrsRatingPanel({ session, scheduledSheet, isRating, error, supportsSrsR
   );
 }
 
-function RatingButton({ rating, label, description, isRating, onRate }: { rating: SrsRating; label: string; description: string; isRating: boolean; onRate: (rating: SrsRating) => Promise<void> }) { return <button type="button" disabled={isRating} onClick={() => void onRate(rating)} className={`study-rating-button ${rating}`}><strong>{isRating ? "Saving…" : label}</strong><small>{description}</small></button>; }
 function Stat({ label, value, tone }: { label: string; value: string; tone: string }) { return <div className={`study-result-stat ${tone}`}><dt>{label}</dt><dd>{value}</dd></div>; }
 function IncompleteSession({ sessionId, remainingCards }: { sessionId: number; remainingCards: number }) { return <section className="study-result-state warning"><p className="eyebrow">Session in progress</p><h1>This session is not finished yet</h1><p>{remainingCards} card{remainingCards === 1 ? "" : "s"} still need to be remembered.</p><Link href={`/study-sessions/${sessionId}`}><Icon name="play" size={18} /> Continue studying</Link></section>; }
 function AbandonedSession({ sheetId }: { sheetId: number }) { return <section className="study-result-state"><p className="eyebrow">Read-only session</p><h1>This session was abandoned</h1><p>It has no completion result.</p><Link href={`/sheets/${sheetId}`}>Back to sheet</Link></section>; }

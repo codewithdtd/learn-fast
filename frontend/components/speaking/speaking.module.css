@@ -1,4 +1,11 @@
 .page { display: grid; gap: 18px; width: 100%; padding-bottom: 28px; }
+:global(:root[data-theme="journey"]) .page { color: #17304a; }
+:global(:root[data-theme="journey"]) .practiceCard,
+:global(:root[data-theme="journey"]) .topicSection,
+:global(:root[data-theme="journey"]) .history,
+:global(:root[data-theme="journey"]) .feedback { border-color: #c2d2e7; border-radius: 20px; background: #fff; box-shadow: 0 4px 14px rgb(23 48 74 / 5%); }
+:global(:root[data-theme="journey"]) .transcriptCard textarea { border-color: #879ab1; background: #f8faff; font-size: 16px; }
+:global(:root[data-theme="journey"]) .primaryButton { border-color: #1b4293; color: #fff; background: #2457bc; }
 .heading,.sectionHeader,.practiceTop,.feedbackHeading,.transcriptActions { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
 .heading { align-items: flex-start; }
 .heading h2,.sectionHeader h3,.practiceTop h3,.feedbackHeading h3 { margin: 4px 0; letter-spacing: -.035em; }
@@ -227,6 +234,25 @@
   .hints,.recording { padding: 15px; }
   .transcriptActions > span { padding-top: 0; }
   .feedback { border-radius: 16px; padding: 16px 14px; }
+}
+
+@media (max-width: 620px) {
+  :global(:root[data-theme="journey"]) .page { gap: 14px; padding-top: 14px; }
+  :global(:root[data-theme="journey"]) .heading { padding: 0 0 12px; }
+  :global(:root[data-theme="journey"]) .heading h2 { font-size: 1.55rem; }
+  :global(:root[data-theme="journey"]) .practiceCard,
+  :global(:root[data-theme="journey"]) .topicSection,
+  :global(:root[data-theme="journey"]) .history,
+  :global(:root[data-theme="journey"]) .feedback { border: 0; border-radius: 0; padding: 14px 0; background: transparent; box-shadow: none; }
+  :global(:root[data-theme="journey"]) .practiceCard,
+  :global(:root[data-theme="journey"]) .topicSection,
+  :global(:root[data-theme="journey"]) .history { border-top: 1px solid #c2d2e7; }
+  :global(:root[data-theme="journey"]) .topicGrid { gap: 0; }
+  :global(:root[data-theme="journey"]) .topicCard { border: 0; border-top: 1px solid #d5e0ed; border-radius: 0; padding: 14px 2px; background: transparent; }
+  :global(:root[data-theme="journey"]) .topicCard .secondaryButton { min-height: 46px; }
+  :global(:root[data-theme="journey"]) .historyList { gap: 0; }
+  :global(:root[data-theme="journey"]) .historyList button { min-height: 60px; border: 0; border-top: 1px solid #d5e0ed; border-radius: 0; padding-inline: 2px; }
+  :global(:root[data-theme="journey"]) .feedback { border-top: 1px solid #c2d2e7; }
 }
 @media (prefers-reduced-motion: reduce) {
   .topicCard,.recordButton,.stopButton,.primaryButton,.secondaryButton,.textButton,.generateTopicButton { transition: none; }

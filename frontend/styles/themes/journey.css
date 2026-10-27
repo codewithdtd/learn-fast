@@ -1,0 +1,616 @@
+:root[data-theme="journey"] {
+  color-scheme: light;
+  --background: #f4f8fe;
+  --foreground: #17304a;
+  --surface: #ffffff;
+  --surface-low: #edf3fc;
+  --surface-high: #e1ebf8;
+  --primary: #2457bc;
+  --primary-container: #1b4293;
+  --primary-soft: #e4edff;
+  --green: #17623d;
+  --green-soft: #e3f5e9;
+  --gold: #795000;
+  --gold-soft: #fff3cf;
+  --error: #a52e3c;
+  --error-soft: #fff0f1;
+  --muted: #50647b;
+  --outline: #879ab1;
+  --radius-md: 14px;
+  --radius-lg: 22px;
+  --shadow-soft: 0 8px 24px rgb(23 48 74 / 8%);
+  --journey-violet: #5a3c99;
+  --journey-violet-soft: #f0eaff;
+  --journey-teal: #176b72;
+  --journey-teal-soft: #e0f4f3;
+  --journey-coral: #953e28;
+  --journey-coral-soft: #fff0e8;
+}
+
+:root[data-theme="journey"] body { background: var(--background); color: var(--foreground); }
+:root[data-theme="journey"] ::selection { color: var(--foreground); background: #cadbff; }
+:root[data-theme="journey"] :focus-visible { outline-color: #2457bc; }
+:root[data-theme="journey"] .app-content { background: var(--background); }
+:root[data-theme="journey"] .desktop-sidebar { border-color: #c2d0e1; background: #fff; box-shadow: 3px 0 20px rgb(23 48 74 / 4%); }
+:root[data-theme="journey"] .mobile-header { border-bottom: 1px solid #c2d0e1; background: rgb(255 255 255 / 96%); box-shadow: 0 4px 18px rgb(23 48 74 / 5%); }
+:root[data-theme="journey"] .mobile-bottom-nav { border-top: 1px solid #c2d0e1; background: rgb(255 255 255 / 97%); box-shadow: 0 -5px 20px rgb(23 48 74 / 5%); }
+:root[data-theme="journey"] .mobile-nav-link { color: #50647b; }
+:root[data-theme="journey"] .mobile-nav-link.active { color: var(--primary); background: var(--primary-soft); }
+:root[data-theme="journey"] .nav-link { color: #334a64; }
+:root[data-theme="journey"] .nav-link:hover { border-color: #c6d6ee; color: var(--primary); background: #eff4ff; }
+:root[data-theme="journey"] .nav-link.active { border-color: #b9cdf4; color: #173f91; background: #e8efff; }
+:root[data-theme="journey"] .brand-mark,
+:root[data-theme="journey"] .mobile-brand-mark { border: 1px solid #b7cff5; color: #19499d; background: #e4edff; }
+:root[data-theme="journey"] .brand strong,
+:root[data-theme="journey"] .mobile-brand { color: #17304a; }
+:root[data-theme="journey"] .theme-toggle { border-color: var(--outline); color: var(--foreground); background: #edf3fc; }
+:root[data-theme="journey"] .button.primary { border: 1px solid #1b4293; color: #fff; background: #2457bc; box-shadow: 0 3px 0 #1b4293; }
+:root[data-theme="journey"] .button.primary:hover:not(:disabled) { border-color: #14367c; color: #fff; background: #1b4293; }
+:root[data-theme="journey"] .button.secondary,
+:root[data-theme="journey"] .button.light { border: 1px solid #9aacc3; color: #17304a; background: #fff; }
+:root[data-theme="journey"] .button.secondary:hover:not(:disabled),
+:root[data-theme="journey"] .button.light:hover:not(:disabled) { border-color: #2457bc; color: #173f91; background: #eaf0ff; }
+:root[data-theme="journey"] .button:focus-visible,
+:root[data-theme="journey"] .nav-link:focus-visible,
+:root[data-theme="journey"] .mobile-nav-link:focus-visible { outline: 3px solid #2457bc; outline-offset: 2px; }
+:root[data-theme="journey"] .sidebar-action { border-color: #2457bc; color: #fff; background: #2457bc; }
+
+/* These presentational slots let the dashboard share one set of API data and actions across themes. */
+:root:not([data-theme="journey"]) .journey-only { display: none; }
+:root[data-theme="journey"] .journey-only { display: block; }
+:root[data-theme="journey"] [data-journey-classic-only="true"] { display: none; }
+:root[data-theme="journey"] [data-journey-only="true"] { display: block; }
+
+:root[data-theme="journey"] .dashboard-page { width: min(100%, 1280px); margin-inline: auto; padding: 20px clamp(16px, 3vw, 32px) 48px; }
+:root[data-theme="journey"] .journey-welcome { display: grid; grid-template-columns: 72px minmax(0, 1fr) auto; align-items: center; gap: 14px; margin: 0 0 14px; padding: 8px 0; }
+:root[data-theme="journey"] .workbook-detail-title-row { align-items: center; gap: 16px; }
+:root[data-theme="journey"] .sheet-detail-title-row { align-items: center; gap: 14px; }
+:root[data-theme="journey"] .journey-welcome-copy { min-width: 0; }
+:root[data-theme="journey"] .journey-dashboard { display: block; }
+:root[data-theme="journey"] .journey-section-heading { display: flex; align-items: end; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+:root[data-theme="journey"] .journey-section-heading h2 { margin: 0; color: #17304a; font-size: 1.2rem; }
+:root[data-theme="journey"] .journey-text-link { display: inline-flex; min-height: 40px; align-items: center; gap: 5px; color: #1b4293; font-size: .82rem; font-weight: 750; text-decoration: none; }
+:root[data-theme="journey"] .journey-text-link:hover { text-decoration: underline; }
+:root[data-theme="journey"] .journey-welcome-kicker { margin: 0 0 4px; color: #2457bc; font-size: .72rem; font-weight: 850; letter-spacing: .1em; text-transform: uppercase; }
+:root[data-theme="journey"] .journey-welcome h1 { margin: 0; color: #17304a; font-size: clamp(1.5rem, 4.5vw, 2.1rem); line-height: 1.2; overflow-wrap: anywhere; }
+:root[data-theme="journey"] .journey-welcome p:last-child { margin: 5px 0 0; color: #50647b; line-height: 1.45; }
+:root[data-theme="journey"] .journey-welcome-art { width: clamp(72px, 13vw, 112px); height: auto; }
+:root[data-theme="journey"] .journey-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+:root[data-theme="journey"] .journey-metric { display: flex; min-width: 0; align-items: center; gap: 9px; border: 1px solid #c6d7ec; border-radius: 16px; padding: 10px 12px; background: #fff; }
+:root[data-theme="journey"] .journey-metric-icon { display: grid; width: 36px; height: 36px; flex: 0 0 36px; place-items: center; border: 1px solid #c7d8f0; border-radius: 12px; color: #1b4293; background: #e9f0ff; }
+:root[data-theme="journey"] .journey-metric[data-tone="teal"] .journey-metric-icon { border-color: #a9d9d5; color: #12575d; background: #e0f4f3; }
+:root[data-theme="journey"] .journey-metric[data-tone="gold"] .journey-metric-icon { border-color: #ecd49a; color: #684400; background: #fff3cf; }
+:root[data-theme="journey"] .journey-metric-copy { display: grid; min-width: 0; gap: 1px; }
+:root[data-theme="journey"] .journey-metric-copy strong { color: #17304a; font-size: 1.12rem; line-height: 1.15; }
+:root[data-theme="journey"] .journey-metric-copy span { color: #50647b; font-size: .74rem; line-height: 1.25; }
+:root[data-theme="journey"] .featured-hero-card { position: relative; overflow: hidden; border: 1px solid #8ea9d5; border-radius: 24px; padding: clamp(18px, 3vw, 28px); color: #17304a; background: #e8efff; box-shadow: 0 5px 0 #c1d1ef; }
+:root[data-theme="journey"] .featured-hero-card::after { opacity: .2; background: radial-gradient(circle at 90% 10%, #fff 0 25%, transparent 26%); }
+:root[data-theme="journey"] .hero-pill-badge { border: 1px solid #a9bee6; color: #1b4293; background: #fff; }
+:root[data-theme="journey"] .hero-title { color: #17304a; }
+:root[data-theme="journey"] .hero-subtitle { color: #334a64; }
+:root[data-theme="journey"] .hero-mascot-badge { border: 1px solid #b8cbea; color: #2457bc; background: #fff; }
+:root[data-theme="journey"] .daily-practice-flow span { border-color: #b8cbea; color: #17304a; background: #fff; }
+:root[data-theme="journey"] .daily-practice-flow span[data-current="true"] { border-color: #2457bc; color: #173f91; background: #fff; }
+:root[data-theme="journey"] .hero-cta-btn { border: 1px solid #1b4293; color: #fff; background: #2457bc; box-shadow: 0 3px 0 #1b4293; }
+:root[data-theme="journey"] .hero-cta-btn:hover:not(:disabled) { background: #1b4293; }
+:root[data-theme="journey"] .daily-practice-footer { color: #334a64; }
+:root[data-theme="journey"] .explore-section { border: 1px solid #c6d7ec; border-radius: 22px; padding: 16px; background: #fff; }
+:root[data-theme="journey"] .explore-section-header h3 { color: #17304a; }
+:root[data-theme="journey"] .explore-tile { border: 1px solid currentColor; box-shadow: 0 2px 0 rgb(23 48 74 / 9%); }
+:root[data-theme="journey"] .explore-tile.pastel-blue { border-color: #9ab6eb; color: #1c438d; background: #eaf1ff; }
+:root[data-theme="journey"] .explore-tile.pastel-peach { border-color: #e7bba8; color: #803820; background: #fff0e8; }
+:root[data-theme="journey"] .explore-tile.pastel-yellow { border-color: #dfc782; color: #684400; background: #fff3cf; }
+:root[data-theme="journey"] .explore-tile.pastel-mint { border-color: #9acbbe; color: #175a4b; background: #e2f4ef; }
+:root[data-theme="journey"] .explore-tile.pastel-lavender { border-color: #b9a9df; color: #523780; background: #f0eaff; }
+:root[data-theme="journey"] .explore-tile.pastel-coral { border-color: #dfaa98; color: #843a2c; background: #fff0e8; }
+:root[data-theme="journey"] .explore-tile-info strong { color: inherit; }
+:root[data-theme="journey"] .explore-tile-info span { color: #334a64; }
+:root[data-theme="journey"] .dashboard-heading { align-items: center; border-bottom: 1px solid #c6d7ec; padding-bottom: 14px; }
+:root[data-theme="journey"] .dashboard-heading h1 { color: #17304a; font-size: clamp(1.4rem, 3vw, 1.9rem); }
+:root[data-theme="journey"] .section-heading h2,
+:root[data-theme="journey"] .dashboard-section h2 { color: #17304a; }
+:root[data-theme="journey"] .overview-mobile-card,
+:root[data-theme="journey"] .side-card,
+:root[data-theme="journey"] .review-card,
+:root[data-theme="journey"] .learn-new-card,
+:root[data-theme="journey"] .activity-card,
+:root[data-theme="journey"] .recent-card { border: 1px solid #c6d7ec; border-radius: 20px; background: #fff; box-shadow: 0 3px 10px rgb(23 48 74 / 4%); }
+:root[data-theme="journey"] .review-row,
+:root[data-theme="journey"] .activity-item { border-color: #d5e0ed; }
+:root[data-theme="journey"] .stat-primary { border-color: #abc0e4; color: #1b4293; background: #eaf1ff; }
+:root[data-theme="journey"] .stat-green { border-color: #a8d4c0; color: #145436; background: #e3f5e9; }
+:root[data-theme="journey"] .stat-gold { border-color: #e1cb91; color: #684400; background: #fff3cf; }
+:root[data-theme="journey"] .dashboard-checkin-banner { border: 1px solid #e3ce8f; border-radius: 18px; background: #fff5d8; }
+:root[data-theme="journey"] .dashboard-checkin-banner.completed { border-color: #9bc9ac; background: #e8f6ec; }
+:root[data-theme="journey"] .journey-explore { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; margin: 8px 0 18px; }
+:root[data-theme="journey"] .journey-explore-section { margin: 14px 0 18px; padding: 8px 0; }
+:root[data-theme="journey"] .journey-explore-link { display: grid; min-width: 0; min-height: 68px; grid-template-columns: 42px minmax(0, 1fr) 24px; align-items: center; gap: 12px; border: 0; border-top: 1px solid #d5e0ed; border-radius: 0; padding: 10px 4px; color: #17304a; background: transparent; }
+:root[data-theme="journey"] .journey-explore-link:last-child { border-bottom: 1px solid #d5e0ed; }
+:root[data-theme="journey"] .journey-explore-link:hover { background: #f5f8ff; }
+:root[data-theme="journey"] .journey-explore-icon { display: grid; width: 40px; height: 40px; place-items: center; border: 0; border-radius: 14px; color: #1b4293; background: #eaf1ff; }
+:root[data-theme="journey"] .journey-explore-link[data-tone="teal"] .journey-explore-icon { border-color: #a9d9d5; color: #12575d; background: #e0f4f3; }
+:root[data-theme="journey"] .journey-explore-link[data-tone="violet"] .journey-explore-icon { border-color: #c7b8e4; color: #4a337c; background: #f0eaff; }
+:root[data-theme="journey"] .journey-explore-link[data-tone="gold"] .journey-explore-icon { border-color: #ecd49a; color: #684400; background: #fff3cf; }
+:root[data-theme="journey"] .journey-explore-copy { display: grid; min-width: 0; gap: 3px; }
+:root[data-theme="journey"] .journey-explore-copy strong { color: #17304a; font-size: .86rem; line-height: 1.2; }
+:root[data-theme="journey"] .journey-explore-copy span { color: #50647b; font-size: .73rem; line-height: 1.25; }
+:root[data-theme="journey"] .journey-explore-link[data-tone="blue"] .journey-explore-icon { border-color: #bdd0ef; color: #1b4293; background: #eaf1ff; }
+:root[data-theme="journey"] .journey-explore-link[data-tone="teal"] .journey-explore-icon { border-color: #a9d9d5; color: #12575d; background: #e0f4f3; }
+:root[data-theme="journey"] .journey-explore-link[data-tone="violet"] .journey-explore-icon { border-color: #c7b8e4; color: #4a337c; background: #f0eaff; }
+:root[data-theme="journey"] .journey-explore-link[data-tone="gold"] .journey-explore-icon { border-color: #ecd49a; color: #684400; background: #fff3cf; }
+:root[data-theme="journey"] .journey-only .dashboard-welcome-header,
+:root[data-theme="journey"] .journey-only .gamified-stats-bar { display: none; }
+
+:root[data-theme="journey"] .library-page,
+:root[data-theme="journey"] .workbook-detail-page,
+:root[data-theme="journey"] .sheet-detail-page,
+:root[data-theme="journey"] .table-view-page,
+:root[data-theme="journey"] .study-result-page,
+:root[data-theme="journey"] .notifications-full-page { color: var(--foreground); }
+:root[data-theme="journey"] .library-header h1,
+:root[data-theme="journey"] .sheet-detail-title-row h1,
+:root[data-theme="journey"] .table-view-heading h1,
+:root[data-theme="journey"] .study-result-title-row h1 { color: #17304a; }
+:root[data-theme="journey"] .library-search input,
+:root[data-theme="journey"] .table-view-search input,
+:root[data-theme="journey"] .auth-modal-container input,
+:root[data-theme="journey"] .auth-modal-container textarea,
+:root[data-theme="journey"] .auth-modal-container select,
+:root[data-theme="journey"] .sheet-detail-content input,
+:root[data-theme="journey"] .sheet-detail-content select { border: 1px solid #879ab1; color: #17304a; background: #fff; }
+:root[data-theme="journey"] .workbook-card,
+:root[data-theme="journey"] .sheet-detail-hero-card,
+:root[data-theme="journey"] .sheet-detail-panel,
+:root[data-theme="journey"] .study-result-score-card,
+:root[data-theme="journey"] .study-result-panel,
+:root[data-theme="journey"] .study-result-state { border: 1px solid #c2d2e7; border-radius: 22px; background: #fff; box-shadow: 0 4px 14px rgb(23 48 74 / 5%); }
+:root[data-theme="journey"] .workbook-card { border-top: 3px solid #6e9ae3; }
+:root[data-theme="journey"] .workbook-card:nth-child(3n + 2) { border-top-color: #70b6aa; }
+:root[data-theme="journey"] .workbook-card:nth-child(3n) { border-top-color: #c49cdf; }
+:root[data-theme="journey"] .workbook-card:hover { border-color: #7a9bc9; box-shadow: 0 8px 22px rgb(23 48 74 / 9%); }
+:root[data-theme="journey"] .workbook-icon { border: 1px solid #bdd0ef; color: #1b4293; background: #eaf1ff; }
+:root[data-theme="journey"] .workbook-card .workbook-icon { display: none; }
+:root[data-theme="journey"] .workbook-card .coverWrap { min-height: 86px; margin-bottom: 12px; }
+:root[data-theme="journey"] .journey-workbook-detail-cover { width: min(160px, 100%); margin: 8px 0; }
+:root[data-theme="journey"] .journey-sheet-cover { width: 112px; }
+:root[data-theme="journey"] .workbook-sheet-row[data-journey-tone="gold"] { border-color: #e1cb91; background: #fffaf0; }
+:root[data-theme="journey"] .workbook-sheet-row[data-journey-tone="teal"] { border-color: #a9d9d5; background: #f1fbf9; }
+:root[data-theme="journey"] .workbook-sheet-row[data-journey-tone="blue"] { border-color: #c2d2e7; background: #fff; }
+:root[data-theme="journey"] .library-empty,
+:root[data-theme="journey"] .library-error,
+:root[data-theme="journey"] .table-view-state { border: 1px solid #c2d2e7; border-radius: 22px; background: #fff; }
+:root[data-theme="journey"] .library-empty-icon,
+:root[data-theme="journey"] .table-view-state-icon { border: 1px solid #bdd0ef; color: #1b4293; background: #eaf1ff; }
+:root[data-theme="journey"] .table-view-toolbar,
+:root[data-theme="journey"] .table-view-filters { border-color: #c2d2e7; }
+:root[data-theme="journey"] .table-view-filter.active { border-color: #9ab6eb; color: #173f91; background: #eaf1ff; }
+:root[data-theme="journey"] .table-view-table,
+:root[data-theme="journey"] .sheet-table { border-color: #c2d2e7; }
+:root[data-theme="journey"] .table-view-table th,
+:root[data-theme="journey"] .sheet-table th { border-color: #c2d2e7; color: #17304a; background: #edf3fc; }
+:root[data-theme="journey"] .table-view-table td,
+:root[data-theme="journey"] .sheet-table td { border-color: #d5e0ed; }
+:root[data-theme="journey"] .sheet-detail-hero-card { background: #eaf1ff; }
+:root[data-theme="journey"] .sheet-detail-primary-action { border-color: #9ab6eb; color: #17304a; background: #fff; }
+:root[data-theme="journey"] .sheet-action-icon { border-color: #bdd0ef; color: #1b4293; background: #eaf1ff; }
+:root[data-theme="journey"] .study-result-score-card { background: #f0eaff; }
+:root[data-theme="journey"] .study-result-score-card { position: relative; }
+:root[data-theme="journey"] .journey-result-mascot { position: absolute; top: 12px; right: 14px; width: 76px; }
+:root[data-theme="journey"] .study-result-stat { border: 1px solid #d5e0ed; background: #edf3fc; }
+:root[data-theme="journey"] .study-result-stat.mint { border-color: #a8d4c0; background: #e3f5e9; }
+:root[data-theme="journey"] .study-result-stat.gold { border-color: #e1cb91; background: #fff3cf; }
+:root[data-theme="journey"] .study-result-stat.rose { border-color: #e4b4ba; background: #fff0f1; }
+:root[data-theme="journey"] .study-result-stat.lavender { border-color: #b9c9ea; background: #eaf1ff; }
+:root[data-theme="journey"] .study-result-stat.mint dd { color: #17623d; }
+:root[data-theme="journey"] .study-result-stat.gold dd { color: #684400; }
+:root[data-theme="journey"] .study-result-stat.rose dd { color: #a52e3c; }
+:root[data-theme="journey"] .study-result-inline-error,
+:root[data-theme="journey"] .study-session-inline-error { border-color: #dca8ae; color: #8b2330; background: #fff0f1; }
+:root[data-theme="journey"] .workbook-status,
+:root[data-theme="journey"] .sheet-status-badge { border: 1px solid #c2d2e7; }
+
+:root[data-theme="journey"] .study-session-content { color: #17304a; }
+:root[data-theme="journey"] .study-session-header,
+:root[data-theme="journey"] .study-session-progress,
+:root[data-theme="journey"] .study-round-summary { border-color: #c2d2e7; border-radius: 22px; background: #fff; }
+:root[data-theme="journey"] .study-progress-track { background: #e1ebf8; }
+:root[data-theme="journey"] .study-progress-track span { background: #2457bc; }
+:root[data-theme="journey"] .study-star-badge { color: #684400; background: #fff3cf; }
+:root[data-theme="journey"] .study-answer-button.again { border-color: #dfaa98; color: #843a2c; background: #fff0e8; }
+:root[data-theme="journey"] .study-answer-button.remembered { border-color: #8dbfa0; color: #fff; background: #17623d; }
+:root[data-theme="journey"] .study-answer-button:focus-visible { outline: 3px solid #2457bc; outline-offset: 3px; }
+:root[data-theme="journey"] .study-card-navigation-button { border-color: #aebfd4; color: #17304a; background: #fff; }
+:root[data-theme="journey"] .flashcard-face { border: 1px solid #b9c9dd; border-radius: 24px; background: #fff; box-shadow: 0 6px 0 #d6e2f0; }
+:root[data-theme="journey"] .flashcard-back { background: #f4f8fe; }
+:root[data-theme="journey"] .study-example,
+:root[data-theme="journey"] .recall-example { border: 1px solid #c2d2e7; border-radius: 16px; background: #edf3fc; }
+:root[data-theme="journey"] .study-answer-button:disabled,
+:root[data-theme="journey"] .study-card-navigation-button:disabled { opacity: .55; }
+
+:root[data-theme="journey"] .calendar-page,
+:root[data-theme="journey"] .import-page,
+:root[data-theme="journey"] .notifications-full-page { color: #17304a; }
+:root[data-theme="journey"] .calendar-card,
+:root[data-theme="journey"] .calendar-month-card,
+:root[data-theme="journey"] .import-card,
+:root[data-theme="journey"] .notification-page-item { border: 1px solid #c2d2e7; border-radius: 20px; background: #fff; }
+:root[data-theme="journey"] .calendar-day,
+:root[data-theme="journey"] .calendar-grid button { border-color: #d5e0ed; }
+:root[data-theme="journey"] .calendar-day.today { border-color: #2457bc; color: #173f91; background: #eaf1ff; }
+:root[data-theme="journey"] .calendar-day.has-activity { border-color: #9acbbe; background: #e2f4ef; }
+:root[data-theme="journey"] .auth-modal-backdrop { background: rgb(18 35 57 / 58%); }
+:root[data-theme="journey"] .auth-modal-container { border: 1px solid #c2d2e7; border-radius: 24px; background: #fff; box-shadow: 0 24px 70px rgb(10 25 45 / 28%); }
+:root[data-theme="journey"] .auth-modal-aside { color: #17304a; background: #eaf1ff; }
+:root[data-theme="journey"] .auth-preview-card { border: 1px solid #c2d2e7; color: #17304a; background: #fff; }
+:root[data-theme="journey"] .journey-empty-mascot { width: 112px; margin: 0 auto 10px; }
+:root[data-theme="journey"] .journey-ai-illustration { float: right; width: 78px; height: 78px; margin: 0 4px 4px 12px; color: #2457bc; }
+:root[data-theme="journey"] .journey-exercise-mascot { position: absolute; top: 0; right: 0; width: 74px; }
+
+:root[data-theme="journey"] .journey-workbook-detail-cover .coverWrap { margin: 0; }
+
+@keyframes journey-success-nudge {
+  0% { transform: scale(.985); }
+  65% { transform: scale(1.012); }
+  100% { transform: scale(1); }
+}
+
+:root[data-theme="journey"] .featured-hero-card,
+:root[data-theme="journey"] .journey-explore-link,
+:root[data-theme="journey"] .workbook-card {
+  transition: transform 150ms ease, border-color 150ms ease, background-color 150ms ease, box-shadow 150ms ease;
+}
+:root[data-theme="journey"] button:not(:disabled):active,
+:root[data-theme="journey"] a[href]:active {
+  transform: scale(.985);
+  transition-duration: 80ms;
+}
+:root[data-theme="journey"] .featured-hero-card:hover,
+:root[data-theme="journey"] .journey-explore-link:hover,
+:root[data-theme="journey"] .workbook-card:hover {
+  transform: translateY(-2px);
+}
+:root[data-theme="journey"] .journey-explore-link > .icon,
+:root[data-theme="journey"] .hero-cta-btn > .icon,
+:root[data-theme="journey"] .library-card-link > .icon {
+  transition: transform 150ms ease;
+}
+:root[data-theme="journey"] .journey-explore-link:hover > .icon,
+:root[data-theme="journey"] .hero-cta-btn:hover > .icon,
+:root[data-theme="journey"] .library-card-link:hover > .icon {
+  transform: translateX(3px);
+}
+:root[data-theme="journey"] .dashboard-checkin-banner.completed {
+  animation: journey-success-nudge 260ms ease-out both;
+}
+
+@media (max-width: 640px) {
+  :root[data-theme="journey"] .dashboard-page { padding: 14px 16px calc(32px + env(safe-area-inset-bottom, 0px)); }
+  :root[data-theme="journey"] .journey-welcome { grid-template-columns: minmax(0, 1fr) 76px; gap: 8px; border-radius: 20px; padding: 14px; }
+  :root[data-theme="journey"] .journey-welcome-art { width: 76px; }
+  :root[data-theme="journey"] .journey-metrics { gap: 7px; }
+  :root[data-theme="journey"] .journey-metric { flex-direction: column; align-items: flex-start; gap: 6px; padding: 9px; }
+  :root[data-theme="journey"] .journey-metric-icon { width: 32px; height: 32px; flex-basis: 32px; }
+  :root[data-theme="journey"] .journey-metric-copy span { font-size: .69rem; }
+  :root[data-theme="journey"] .journey-explore { gap: 8px; }
+  :root[data-theme="journey"] .journey-explore-link { min-height: 84px; grid-template-columns: 36px minmax(0, 1fr); gap: 8px; padding: 10px; }
+  :root[data-theme="journey"] .journey-explore-icon { width: 36px; height: 36px; }
+  :root[data-theme="journey"] .journey-explore-copy strong { font-size: .8rem; }
+  :root[data-theme="journey"] .journey-explore-copy span { font-size: .68rem; }
+  :root[data-theme="journey"] .journey-explore-section { border-radius: 20px; padding: 12px; }
+  :root[data-theme="journey"] .journey-ai-illustration { width: 60px; height: 60px; }
+  :root[data-theme="journey"] .journey-sheet-cover { width: 76px; }
+  :root[data-theme="journey"] .dashboard-grid { grid-template-columns: minmax(0, 1fr); }
+  :root[data-theme="journey"] .dashboard-side-column { order: 2; }
+  :root[data-theme="journey"] .dashboard-main-column { order: 1; }
+  :root[data-theme="journey"] .study-result-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 340px) {
+  :root[data-theme="journey"] .journey-welcome { grid-template-columns: minmax(0, 1fr) 64px; padding: 12px; }
+  :root[data-theme="journey"] .journey-welcome-art { width: 64px; }
+  :root[data-theme="journey"] .journey-explore-link { grid-template-columns: 32px minmax(0, 1fr); padding: 8px; }
+  :root[data-theme="journey"] .journey-explore-icon { width: 32px; height: 32px; }
+}
+
+/* The Journey dashboard uses a task-first flow so the phone layout reads like a learning app, not a grid of web panels. */
+@media (max-width: 640px) {
+  :root[data-theme="journey"] .dashboard-page {
+    display: flex;
+    width: 100%;
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px 16px calc(28px + env(safe-area-inset-bottom, 0px));
+  }
+  :root[data-theme="journey"] .journey-dashboard { display: contents; }
+  :root[data-theme="journey"] .journey-welcome { order: 1; grid-template-columns: 54px minmax(0, 1fr) auto; gap: 10px; margin: 0; padding: 0 0 6px; }
+  :root[data-theme="journey"] .journey-welcome-art { width: 54px; }
+  :root[data-theme="journey"] .journey-welcome-kicker { margin-bottom: 2px; font-size: .65rem; }
+  :root[data-theme="journey"] .journey-welcome h1 { font-size: 1.3rem; }
+  :root[data-theme="journey"] .journey-welcome p:last-child { margin-top: 3px; font-size: .8rem; line-height: 1.3; }
+  :root[data-theme="journey"] .journey-streak { min-height: 44px; gap: 4px; padding: 6px 8px; }
+  :root[data-theme="journey"] .featured-hero-card { order: 2; border-radius: 18px; padding: 16px; box-shadow: 0 3px 0 #c1d1ef; }
+  :root[data-theme="journey"] .featured-hero-card::after { display: none; }
+  :root[data-theme="journey"] .dashboard-checkin-banner { order: 3; margin: 0; padding: 12px 14px; }
+  :root[data-theme="journey"] .dashboard-grid { order: 4; display: flex; flex-direction: column; gap: 18px; }
+  :root[data-theme="journey"] .dashboard-main-column { display: flex; flex-direction: column; gap: 18px; }
+  :root[data-theme="journey"] .dashboard-side-column,
+  :root[data-theme="journey"] .overview-mobile-card { display: none; }
+  :root[data-theme="journey"] .journey-explore-section { order: 5; margin: 0; padding: 4px 0; }
+  :root[data-theme="journey"] .journey-section-heading { margin-bottom: 4px; }
+  :root[data-theme="journey"] .journey-section-heading h2 { font-size: 1.08rem; }
+  :root[data-theme="journey"] .journey-explore { margin: 4px 0 0; }
+  :root[data-theme="journey"] .journey-explore-link { min-height: 64px; grid-template-columns: 38px minmax(0, 1fr) 20px; gap: 10px; padding: 8px 2px; }
+  :root[data-theme="journey"] .journey-explore-icon { width: 36px; height: 36px; }
+  :root[data-theme="journey"] .journey-explore-copy strong { font-size: .84rem; }
+  :root[data-theme="journey"] .journey-explore-copy span { font-size: .72rem; }
+  :root[data-theme="journey"] .journey-dashboard-insights { order: 6; }
+
+  :root[data-theme="journey"] .mobile-header { min-height: 56px; border-bottom-color: #d5e0ed; box-shadow: none; }
+  :root[data-theme="journey"] .mobile-bottom-nav { gap: 0; border-top-color: #c2d0e1; padding: 5px 4px calc(5px + env(safe-area-inset-bottom, 0px)); box-shadow: 0 -3px 14px rgb(23 48 74 / 6%); }
+  :root[data-theme="journey"] .mobile-nav-link { position: relative; min-width: 0; min-height: 52px; gap: 3px; border-radius: 12px; padding: 6px 1px 4px; font-size: 9px; white-space: nowrap; }
+  :root[data-theme="journey"] .mobile-nav-link.active { background: transparent; }
+  :root[data-theme="journey"] .mobile-nav-link.active::before { position: absolute; top: 0; width: 22px; height: 3px; border-radius: 0 0 3px 3px; background: #2457bc; content: ""; }
+  :root[data-theme="journey"] .mobile-nav-link .icon { width: 21px; height: 21px; }
+  :root[data-theme="journey"] .mobile-nav-icon { display: grid; place-items: center; }
+  :root[data-theme="journey"] .mobile-nav-link:active { background: #eaf1ff; }
+
+  :root[data-theme="journey"] .workbook-grid { display: flex; flex-direction: column; gap: 0; }
+  :root[data-theme="journey"] .workbook-card { position: relative; display: grid; min-height: 0; grid-template-columns: 64px minmax(0, 1fr); align-items: start; column-gap: 12px; border: 0; border-top: 1px solid #d5e0ed; border-radius: 0; padding: 14px 0; background: transparent; box-shadow: none; }
+  :root[data-theme="journey"] .workbook-card:last-child { border-bottom: 1px solid #d5e0ed; }
+  :root[data-theme="journey"] .workbook-card:hover { border-color: #d5e0ed; box-shadow: none; }
+  :root[data-theme="journey"] .workbook-card > .coverWrap { grid-column: 1; grid-row: 1 / span 5; width: 64px; min-height: 48px; align-self: center; margin: 0; }
+  :root[data-theme="journey"] .workbook-card-topline { display: contents; }
+  :root[data-theme="journey"] .workbook-card .text-right { position: absolute; top: 9px; right: 0; z-index: 1; }
+  :root[data-theme="journey"] .workbook-card .text-right button { min-width: 44px; min-height: 44px; }
+  :root[data-theme="journey"] .workbook-card h2 { grid-column: 2; padding-right: 42px; font-size: 1rem; line-height: 1.25; }
+  :root[data-theme="journey"] .workbook-file { grid-column: 2; margin: 3px 0 7px; font-size: .74rem; }
+  :root[data-theme="journey"] .workbook-metrics { display: flex; grid-column: 2; gap: 12px; }
+  :root[data-theme="journey"] .workbook-metrics div { display: flex; gap: 4px; font-size: .76rem; }
+  :root[data-theme="journey"] .workbook-metrics dt { font-size: .76rem; }
+  :root[data-theme="journey"] .workbook-metrics dd { font-size: .76rem; }
+  :root[data-theme="journey"] .workbook-imported,
+  :root[data-theme="journey"] .workbook-status { display: none; }
+  :root[data-theme="journey"] .workbook-card-footer { grid-column: 2; margin: 3px 0 0; padding: 0; }
+  :root[data-theme="journey"] .library-card-link { min-height: 44px; padding: 0; font-size: .82rem; }
+  :root[data-theme="journey"] .study-result-page,
+  :root[data-theme="journey"] .sheet-detail-page,
+  :root[data-theme="journey"] .workbook-detail-page,
+  :root[data-theme="journey"] .table-view-page { padding-inline: 16px; }
+
+  /* A study session has its own back control, so system navigation can yield the whole screen to recall practice. */
+  :root[data-theme="journey"] .app-shell:has(.study-session-content) .mobile-header,
+  :root[data-theme="journey"] .app-shell:has(.study-session-content) .mobile-bottom-nav { display: none; }
+  :root[data-theme="journey"] .app-shell:has(.study-session-content) .app-content { padding-bottom: 0; }
+  :root[data-theme="journey"] .study-session-page { padding: 16px 16px calc(24px + env(safe-area-inset-bottom, 0px)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root[data-theme="journey"] *,
+  :root[data-theme="journey"] *::before,
+  :root[data-theme="journey"] *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+}
+
+/* Stronger Journey accents distinguish study actions without reducing text contrast. */
+:root[data-theme="journey"] {
+  --journey-blue-surface: #dce9ff;
+  --journey-blue-line: #91ace0;
+  --journey-blue-ink: #1c438d;
+  --journey-mint-surface: #d9f0e4;
+  --journey-mint-line: #8bc5a7;
+  --journey-mint-ink: #175a43;
+  --journey-gold-surface: #ffedb8;
+  --journey-gold-line: #d8b856;
+  --journey-gold-ink: #634500;
+  --journey-coral-surface: #ffe5d8;
+  --journey-coral-line: #d99b80;
+  --journey-coral-ink: #803820;
+  --journey-lilac-surface: #e9deff;
+  --journey-lilac-line: #b6a4dd;
+  --journey-lilac-ink: #523780;
+}
+
+:root[data-theme="journey"] .featured-hero-card {
+  border-color: #7898d2;
+  background: #d4e2ff;
+  box-shadow: 0 5px 0 #a8c0ed;
+}
+:root[data-theme="journey"] .active-session-card {
+  border: 1px solid #19499d;
+  background: #2d61ca;
+  box-shadow: 0 5px 0 #19499d;
+}
+:root[data-theme="journey"] .active-session-card .session-badge {
+  border: 1px solid #d8b856;
+  color: #573b00;
+  background: #fff0b9;
+}
+:root[data-theme="journey"] .active-session-card .button.light {
+  border: 1px solid #fff;
+  color: #173f91;
+  background: #fff;
+}
+:root[data-theme="journey"] .active-session-card .button.light:hover { background: #fff1c9; }
+
+:root[data-theme="journey"] .review-card,
+:root[data-theme="journey"] .activity-list {
+  overflow: hidden;
+  border-color: #8fa9ce;
+  box-shadow: 0 4px 12px rgb(23 48 74 / 8%);
+}
+:root[data-theme="journey"] .review-row {
+  border-left: 4px solid var(--journey-blue-line);
+  background: var(--journey-blue-surface);
+}
+:root[data-theme="journey"] .review-row:nth-child(4n + 2) {
+  border-left-color: var(--journey-mint-line);
+  background: var(--journey-mint-surface);
+}
+:root[data-theme="journey"] .review-row:nth-child(4n + 3) {
+  border-left-color: var(--journey-gold-line);
+  background: var(--journey-gold-surface);
+}
+:root[data-theme="journey"] .review-row:nth-child(4n + 4) {
+  border-left-color: var(--journey-coral-line);
+  background: var(--journey-coral-surface);
+}
+:root[data-theme="journey"] .review-row .review-icon {
+  border: 1px solid var(--journey-blue-line);
+  color: var(--journey-blue-ink);
+  background: #bed4ff;
+}
+:root[data-theme="journey"] .review-row:nth-child(4n + 2) .review-icon {
+  border-color: var(--journey-mint-line);
+  color: var(--journey-mint-ink);
+  background: #b2e3c9;
+}
+:root[data-theme="journey"] .review-row:nth-child(4n + 3) .review-icon {
+  border-color: var(--journey-gold-line);
+  color: var(--journey-gold-ink);
+  background: #ffdb73;
+}
+:root[data-theme="journey"] .review-row:nth-child(4n + 4) .review-icon {
+  border-color: var(--journey-coral-line);
+  color: var(--journey-coral-ink);
+  background: #ffc2a3;
+}
+:root[data-theme="journey"] .review-row .button.primary {
+  border-color: #19499d;
+  background: #2457bc;
+}
+
+:root[data-theme="journey"] .activity-item {
+  border-color: #c5d4e7;
+  background: var(--journey-blue-surface);
+}
+:root[data-theme="journey"] .activity-item:nth-child(4n + 2) { background: var(--journey-mint-surface); }
+:root[data-theme="journey"] .activity-item:nth-child(4n + 3) { background: var(--journey-gold-surface); }
+:root[data-theme="journey"] .activity-item:nth-child(4n + 4) { background: var(--journey-lilac-surface); }
+:root[data-theme="journey"] .activity-item:hover { filter: saturate(1.08); }
+:root[data-theme="journey"] .activity-icon {
+  border: 1px solid var(--journey-mint-line);
+  color: var(--journey-mint-ink);
+  background: #c9eedb;
+}
+:root[data-theme="journey"] .activity-item:nth-child(4n + 3) .activity-icon {
+  border-color: var(--journey-gold-line);
+  color: var(--journey-gold-ink);
+  background: #ffe29a;
+}
+:root[data-theme="journey"] .activity-item:nth-child(4n + 4) .activity-icon {
+  border-color: var(--journey-lilac-line);
+  color: var(--journey-lilac-ink);
+  background: #ded2fa;
+}
+:root[data-theme="journey"] .activity-score { color: var(--journey-blue-ink); }
+
+:root[data-theme="journey"] .journey-explore { gap: 9px; }
+:root[data-theme="journey"] .journey-explore-link {
+  border: 1px solid var(--journey-blue-line);
+  border-radius: 16px;
+  padding: 10px 12px;
+  background: var(--journey-blue-surface);
+}
+:root[data-theme="journey"] .journey-explore-link[data-tone="teal"] {
+  border-color: var(--journey-mint-line);
+  background: var(--journey-mint-surface);
+}
+:root[data-theme="journey"] .journey-explore-link[data-tone="violet"] {
+  border-color: var(--journey-lilac-line);
+  background: var(--journey-lilac-surface);
+}
+:root[data-theme="journey"] .journey-explore-link[data-tone="gold"] {
+  border-color: var(--journey-gold-line);
+  background: var(--journey-gold-surface);
+}
+:root[data-theme="journey"] .journey-explore-link[data-tone="blue"] .journey-explore-icon {
+  border: 1px solid var(--journey-blue-line);
+  color: var(--journey-blue-ink);
+  background: #bed4ff;
+}
+:root[data-theme="journey"] .journey-explore-link[data-tone="teal"] .journey-explore-icon {
+  border: 1px solid var(--journey-mint-line);
+  color: var(--journey-mint-ink);
+  background: #b2e3c9;
+}
+:root[data-theme="journey"] .journey-explore-link[data-tone="violet"] .journey-explore-icon {
+  border: 1px solid var(--journey-lilac-line);
+  color: var(--journey-lilac-ink);
+  background: #d3c2fa;
+}
+:root[data-theme="journey"] .journey-explore-link[data-tone="gold"] .journey-explore-icon {
+  border: 1px solid var(--journey-gold-line);
+  color: var(--journey-gold-ink);
+  background: #ffdb73;
+}
+:root[data-theme="journey"] .journey-explore-link:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 2px;
+}
+
+@media (max-width: 640px) {
+  :root[data-theme="journey"] .dashboard-grid,
+  :root[data-theme="journey"] .dashboard-main-column,
+  :root[data-theme="journey"] .dashboard-section,
+  :root[data-theme="journey"] .session-stack,
+  :root[data-theme="journey"] .active-session-card,
+  :root[data-theme="journey"] .review-card,
+  :root[data-theme="journey"] .review-row,
+  :root[data-theme="journey"] .recent-section,
+  :root[data-theme="journey"] .activity-list,
+  :root[data-theme="journey"] .activity-item {
+    box-sizing: border-box;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  :root[data-theme="journey"] .active-session-card h3,
+  :root[data-theme="journey"] .active-session-card p,
+  :root[data-theme="journey"] .active-session-card small,
+  :root[data-theme="journey"] .review-row .row-copy,
+  :root[data-theme="journey"] .activity-item .row-copy {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  :root[data-theme="journey"] .active-session-card .button.light {
+    max-width: 100%;
+    min-height: 44px;
+    white-space: normal;
+  }
+  :root[data-theme="journey"] .review-row {
+    grid-template-columns: 40px minmax(0, 1fr);
+    gap: 10px;
+    padding: 12px;
+  }
+  :root[data-theme="journey"] .review-row .review-icon { width: 40px; height: 40px; }
+  :root[data-theme="journey"] .review-row .button {
+    grid-column: 2;
+    justify-self: start;
+    max-width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    padding-inline: 12px;
+    white-space: normal;
+  }
+  :root[data-theme="journey"] .activity-item {
+    grid-template-columns: 32px minmax(0, 1fr);
+    gap: 10px;
+    padding: 12px;
+  }
+  :root[data-theme="journey"] .activity-score {
+    grid-column: 2;
+    justify-self: start;
+    white-space: nowrap;
+  }
+  :root[data-theme="journey"] .journey-explore-link {
+    min-height: 64px;
+    grid-template-columns: 38px minmax(0, 1fr) 20px;
+    padding: 8px 10px;
+  }
+}
+
+@media (max-width: 360px) {
+  :root[data-theme="journey"] .dashboard-page { padding-inline: 12px; }
+  :root[data-theme="journey"] .review-row { gap: 8px; padding: 10px; }
+  :root[data-theme="journey"] .activity-item { gap: 8px; padding: 10px; }
+  :root[data-theme="journey"] .active-session-card { padding: 16px; }
+}

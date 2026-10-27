@@ -35,6 +35,14 @@
 
 .pageHeading { align-items: flex-end; margin-bottom: 4px; }
 .pageHeading h1 { margin: 4px 0 8px; font-size: clamp(30px, 4vw, 42px); line-height: 1.08; letter-spacing: -0.04em; }
+:global(:root[data-theme="journey"]) .page { color: #17304a; }
+:global(:root[data-theme="journey"]) .pageHeading { border-bottom: 1px solid #c6d7ec; }
+:global(:root[data-theme="journey"]) .topicCard,
+:global(:root[data-theme="journey"]) .card,
+:global(:root[data-theme="journey"]) .resultHeader,
+:global(:root[data-theme="journey"]) .historyList { border-color: #c2d2e7; border-radius: 20px; background: #fff; box-shadow: 0 4px 14px rgb(23 48 74 / 5%); }
+:global(:root[data-theme="journey"]) .editor { border-color: #879ab1; background: #f8faff; font-size: 16px; }
+:global(:root[data-theme="journey"]) .tabs { border: 1px solid #c2d2e7; background: #edf3fc; }
 .pageHeading > div > p:last-child { max-width: 640px; margin: 0; color: var(--muted); line-height: 1.6; }
 .randomTopicAction { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
 .randomTopicAction > span { color: var(--muted); font-size: 12px; line-height: 1.5; }
@@ -287,4 +295,18 @@
   .sectionHeading > .tabs { max-width: 58%; }
   .vocabGrid { grid-template-columns: minmax(0,1fr); }
   .historyRow { grid-template-columns: 44px minmax(0,1fr) 58px; gap: 7px; padding: 10px; }
+}
+
+@media (max-width: 640px) {
+  :global(:root[data-theme="journey"]) .page { width: calc(100% - 32px); gap: 14px; padding: 14px 0 32px; }
+  :global(:root[data-theme="journey"]) .pageHeading { align-items: flex-start; gap: 10px; padding: 0 0 12px; }
+  :global(:root[data-theme="journey"]) .pageHeading h1 { font-size: 1.55rem; }
+  :global(:root[data-theme="journey"]) .dailyCard,
+  :global(:root[data-theme="journey"]) .card,
+  :global(:root[data-theme="journey"]) .topicCard,
+  :global(:root[data-theme="journey"]) .resultHeader,
+  :global(:root[data-theme="journey"]) .historyList { border-radius: 14px; box-shadow: none; }
+  :global(:root[data-theme="journey"]) .topicCard { border: 0; border-top: 1px solid #d5e0ed; border-radius: 0; padding: 14px 2px; background: transparent; }
+  :global(:root[data-theme="journey"]) .topicCard:hover { transform: none; box-shadow: none; }
+  :global(:root[data-theme="journey"]) .topicCard > p:not(.topicTitleVi) { min-height: 0; }
 }
