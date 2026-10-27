@@ -31,6 +31,7 @@ import styles from "./video-practice.module.css";
 type PracticeMode = "shadowing" | "dictation";
 type DictationMode = "full_sentence" | "fill_gaps";
 type SelectedWord = { term: string; context: string; canSaveToSheet: boolean };
+type SelectedPhrase = { index: number; text: string };
 type InlineTranslationState = { translation?: string; loading?: boolean; error?: string; visible?: boolean };
 
 export function VideoPractice() {
@@ -58,6 +59,7 @@ export function VideoPractice() {
   const [dictationResults, setDictationResults] = useState<Record<number, boolean>>({});
   const [firstTryResults, setFirstTryResults] = useState<Record<number, boolean>>({});
   const [selectedWord, setSelectedWord] = useState<SelectedWord | null>(null);
+  const [selectedPhrase, setSelectedPhrase] = useState<SelectedPhrase | null>(null);
   const [lookup, setLookup] = useState<WordLookup | null>(null);
   const [loadingLookup, setLoadingLookup] = useState(false);
   const [lookupError, setLookupError] = useState<string | null>(null);
@@ -167,6 +169,7 @@ export function VideoPractice() {
     setInlineTranslationStates({});
     resetDictation();
     closeLookup();
+    setSelectedPhrase(null);
     try {
       const result = await getVideoTranscript(videoUrl.trim(), language);
       setTranscript(result);
@@ -199,6 +202,7 @@ export function VideoPractice() {
   }
 
   function playSegment(index: number, segment: TranscriptSegment) {
+    setSelectedPhrase(null);
     if (!playerController) return;
     setActiveSegment(index);
     const nextSegmentStart = transcript?.segments[index + 1]?.start;
@@ -211,6 +215,26 @@ export function VideoPractice() {
     // Interactive controls inside a row keep their own action instead of starting playback as a side effect.
     if (event.target instanceof Element && event.target.closest("button, a, input, textarea, select, [data-no-line-playback]")) return;
     playSegment(index, segment);
+  }
+
+  function capturePhraseSelection(index: number, paragraph: HTMLParagraphElement) {
+    const selection = window.getSelection();
+    if (!selection || selection.isCollapsed || selection.rangeCount === 0) {
+      setSelectedPhrase(null);
+      return;
+    }
+    const range = selection.getRangeAt(0);
+    if (!paragraph.contains(range.commonAncestorContainer)) {
+      setSelectedPhrase(null);
+      return;
+    }
+    const text = selection.toString().replace(/\s+/g, " ").trim();
+    // Word taps already have a dedicated dictionary action; offer phrase translation only for multi-word selections.
+    if (text.length > 500 || text.split(" ").filter(Boolean).length < 2) {
+      setSelectedPhrase(null);
+      return;
+    }
+    setSelectedPhrase({ index, text });
   }
 
   async function toggleLineTranslation(index: number, segment: TranscriptSegment) {
@@ -260,6 +284,7 @@ export function VideoPractice() {
   async function selectWord(term: string, context: string, canSaveToSheet = true) {
     const normalizedTerm = term.trim().toLocaleLowerCase("en");
     if (!normalizedTerm) return;
+    setSelectedPhrase(null);
     const requestId = ++lookupRequestId.current;
     setSelectedWord({ term, context, canSaveToSheet });
     setLookupError(null);
@@ -298,6 +323,7 @@ export function VideoPractice() {
     setLookupError(null);
     setSaveError(null);
     setSaveMessage(null);
+    setSelectedPhrase(null);
   }
 
   function playPronunciation() {
@@ -425,7 +451,7 @@ export function VideoPractice() {
       <div className={styles.transcriptColumn}>
         {mode === "shadowing" ? <>
           <p className={styles.eyebrow}>SHADOWING · TAP A LINE TO PLAY</p>
-          <p className={styles.captionNotice}>Each selected line plays once. The transcript highlights and follows the video as it plays.</p>
+          <p className={styles.captionNotice}>Each selected line plays once. Tap a word to look it up, or select a phrase and translate it.</p>
           <div className={styles.segmentList} aria-label="Timestamped transcript">
             {transcript.segments.map((segment, index) => <div ref={(element) => {
               if (element) segmentElementsRef.current.set(index, element);
@@ -433,7 +459,9 @@ export function VideoPractice() {
             }} className={styles.segment} data-active={activeSegment === index} key={`${segment.start}-${index}`} role="group" aria-label={`Transcript line ${index + 1}`} onClick={(event) => handleSegmentCardClick(event, index, segment)}>
               <div className={styles.segmentLine}>
                 <span className={styles.timestamp}>{formatTimestamp(segment.start)}</span>
-                <p className={styles.segmentText}><TranscriptWords text={segment.text} onSelectWord={(term) => void selectWord(term, segment.text)} /></p>
+                <p className={styles.segmentText} onMouseUp={(event) => capturePhraseSelection(index, event.currentTarget)} onTouchEnd={(event) => capturePhraseSelection(index, event.currentTarget)}>
+                  <TranscriptWords text={segment.text} onSelectWord={(term) => void selectWord(term, segment.text)} />
+                </p>
                 <button
                   type="button"
                   className={styles.translateButton}
@@ -457,6 +485,12 @@ export function VideoPractice() {
                       : <TranslateIcon />}
                 </button>
               </div>
+              {selectedPhrase?.index === index && <div className={styles.phraseSelectionAction} data-no-line-playback>
+                <span title={selectedPhrase.text}>{selectedPhrase.text}</span>
+                <button type="button" className={styles.secondary} onClick={() => void selectWord(selectedPhrase.text, segment.text, false)}>
+                  <TranslateIcon /> Translate selection
+                </button>
+              </div>}
               {inlineTranslationStates[index]?.visible && <p className={styles.inlineTranslation} lang="vi" aria-live="polite" data-no-line-playback>
                 <span className={styles.inlineTranslationLabel}>Vietnamese</span>
                 {inlineTranslationStates[index]?.translation}
@@ -557,7 +591,7 @@ export function VideoPractice() {
                 <label>Word<input value={savePhrase} maxLength={200} onChange={(event) => setSavePhrase(event.target.value)} /></label>
                 <label>Meaning<input value={saveMeaning} maxLength={600} onChange={(event) => setSaveMeaning(event.target.value)} /></label>
                 <button type="button" className={styles.primary} disabled={savingWord || !selectedSheetId || !savePhrase.trim() || !saveMeaning.trim()} aria-busy={savingWord} onClick={() => void saveWord()}>{savingWord ? "Adding word…" : "Add to sheet"}</button>
-              </div> : isAdmin ? selectedWord.canSaveToSheet ? null : <p className={styles.note}>Only individual words can be added to a sheet. This transcript line will not be saved.</p> : <p className={styles.note}>{isAuthenticated ? "Administrator access is required to add words to shared sheets." : "Sign in as an administrator to add words to a shared sheet."}</p>}
+              </div> : isAdmin ? selectedWord.canSaveToSheet ? null : <p className={styles.note}>Whole lines and selected phrases are not added to sheets.</p> : <p className={styles.note}>{isAuthenticated ? "Administrator access is required to add words to shared sheets." : "Sign in as an administrator to add words to a shared sheet."}</p>}
             </div>
           </>}
           {saveMessage && <p className={styles.success} role="status">{saveMessage}</p>}
@@ -571,7 +605,12 @@ export function VideoPractice() {
 
 function TranscriptWords({ text, onSelectWord }: { text: string; onSelectWord: (word: string) => void }) {
   return <>{splitTranscriptText(text).map(({ value, isWord }, index) => isWord
-    ? <button type="button" className={styles.wordButton} key={`${value}-${index}`} onClick={(event) => { event.stopPropagation(); onSelectWord(value); }} aria-label={`Look up ${value}`}>{value}</button>
+    ? <button type="button" className={styles.wordButton} key={`${value}-${index}`} onClick={(event) => {
+      event.stopPropagation();
+      // A multi-word browser selection is handled by the adjacent phrase translation action, not this word button.
+      if ((window.getSelection()?.toString().trim().split(/\s+/).filter(Boolean).length ?? 0) > 1) return;
+      onSelectWord(value);
+    }} aria-label={`Look up ${value}`}>{value}</button>
     : <span key={`${value}-${index}`}>{value}</span>)}</>;
 }
 

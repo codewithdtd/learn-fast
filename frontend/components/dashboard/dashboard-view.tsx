@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 
 import { DashboardCheckinBanner } from "@/components/dashboard/dashboard-checkin-banner";
 import { DashboardLearningChart } from "@/components/dashboard/dashboard-learning-chart";
+import { JourneyDashboard, JourneyExplore } from "@/components/dashboard/journey-dashboard";
 import { Icon } from "@/components/layout/app-shell";
 import { useAuth } from "@/context/auth-context";
 import { formatDate, formatLabel } from "@/lib/format";
@@ -62,19 +63,25 @@ export function DashboardView() {
 
   return (
     <main className="dashboard-page">
-      <DashboardWelcomeHeader userName={displayName} />
-      <DashboardGamifiedStatsBar streak={streak} cardsCount={totalActiveCards} badgesCount={badgesCount} />
+      <JourneyDashboard userName={displayName} streak={streak} dashboard={dashboard} />
+      <div data-journey-classic-only="true">
+        <DashboardWelcomeHeader userName={displayName} />
+        <DashboardGamifiedStatsBar streak={streak} cardsCount={totalActiveCards} badgesCount={badgesCount} />
+      </div>
       <FeaturedHeroCard dashboard={dashboard} />
-      <ExplorePastelGrid dashboard={dashboard} />
+      <JourneyExplore />
+      <div data-journey-classic-only="true"><ExplorePastelGrid dashboard={dashboard} /></div>
 
-      <header className="dashboard-heading">
+      <header className="dashboard-heading" data-journey-classic-only="true">
         <div><p className="eyebrow">English SRS</p><h1>Today&apos;s learning</h1><p className="heading-date"><Icon name="calendar" size={19} /> {formatDate(dashboard.generated_at)}</p></div>
         <div className="heading-actions"><Link href="/reading" className="button secondary">Read English news</Link><Link href="/import" className="button secondary">Import workbook</Link><Link href="/workbooks" className="button secondary">Workbooks</Link></div>
       </header>
 
       <DashboardCheckinBanner />
 
-      <DashboardLearningChart dashboard={dashboard} />
+      <div className="journey-dashboard-insights">
+        <DashboardLearningChart dashboard={dashboard} />
+      </div>
 
       <div className="dashboard-grid">
 

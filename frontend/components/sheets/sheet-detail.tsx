@@ -7,6 +7,7 @@ import { Icon } from "@/components/layout/app-shell";
 import { InlineNameEditor } from "@/components/shared/inline-name-editor";
 import { PrioritySelector } from "@/components/sheets/priority-selector";
 import { formatDate, formatLabel } from "@/lib/format";
+import { WorkbookCover } from "@/components/illustrations/workbook-cover";
 import {
   ApiRequestError,
   getSheet,
@@ -91,6 +92,7 @@ export function SheetDetailView({ sheetId }: SheetDetailProps) {
           <Icon name="back" size={18} /> Back to {sheet.workbook.name}
         </Link>
         <div className="sheet-detail-title-row">
+          <WorkbookCover workbookId={sheet.workbook.id} className="journey-sheet-cover" />
           <div>
             <p className="sheet-detail-kicker">Sheet {sheet.position} · {formatLabel(sheet.status)}</p>
             <div className="sheet-detail-name-row">

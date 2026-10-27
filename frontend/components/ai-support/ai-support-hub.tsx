@@ -7,6 +7,7 @@ import { SentencePractice } from "@/components/sentences/sentence-practice";
 import { GuestAIPractice } from "@/components/demo/guest-ai-practice";
 import { VideoPractice } from "@/components/video-practice/video-practice";
 import { useAuth } from "@/context/auth-context";
+import { LearningIllustration } from "@/components/illustrations/learning-illustration";
 import styles from "./ai-support.module.css";
 
 type AITab = "writing" | "speaking" | "sentences" | "video";
@@ -30,11 +31,12 @@ export function AISupportHub({ initialTab, initialSheetId }: { initialTab: AITab
     document.getElementById(`${nextTab}-tab`)?.focus();
   }
   if (!isLoading && !isAuthenticated) return <div className={styles.hub}>
-    <header className={styles.header}><p className={styles.eyebrow}>PRACTICE WITH AI</p><h1>AI Support</h1><p>Try the AI tools with one free guest use per feature. Guest practice is not saved to an account.</p></header>
+    <header className={styles.header}><LearningIllustration kind={tab === "video" ? "video" : "writing"} className="journey-only journey-ai-illustration" /><p className={styles.eyebrow}>PRACTICE WITH AI</p><h1>AI Support</h1><p>Try the AI tools with one free guest use per feature. Guest practice is not saved to an account.</p></header>
     <GuestAIPractice initialVideo={tab === "video"} />
   </div>;
   return <div className={styles.hub}>
     <header className={styles.header}>
+      <LearningIllustration kind={tab === "speaking" ? "speaking" : tab === "video" ? "video" : tab === "writing" ? "writing" : "cards"} className="journey-only journey-ai-illustration" />
       <p className={styles.eyebrow}>PRACTICE WITH AI</p>
       <h1>AI Support</h1>
       <p>Build your English skills with focused writing, speaking, and video practice.</p>

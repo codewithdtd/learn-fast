@@ -1,4 +1,7 @@
 .page { width: min(calc(100% - 32px), 1120px); margin: 0 auto; padding: 1.5rem 0 calc(6rem + env(safe-area-inset-bottom)); color: var(--foreground); }
+:global(:root[data-theme="journey"]) .page { color: #17304a; }
+:global(:root[data-theme="journey"]) .card { border-color: #c2d2e7; border-radius: 20px; background: #fff; box-shadow: 0 4px 14px rgb(23 48 74 / 5%); }
+:global(:root[data-theme="journey"]) .primary { border-color: #1b4293; color: #fff; background: #2457bc; }
 .header { margin-bottom: 1.25rem; }
 .header h1 { margin: .5rem 0; font-size: clamp(1.8rem, 5vw, 2.75rem); line-height: 1.15; letter-spacing: -.04em; }
 .header p { max-width: 70ch; line-height: 1.6; }

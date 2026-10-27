@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 import { WorkbookCard } from "@/components/workbooks/workbook-card";
+import { NoriMascot } from "@/components/illustrations/nori-mascot";
 import { getWorkbooks, type WorkbookListItem } from "@/services/api";
 
 export function WorkbookList() {
@@ -110,6 +111,7 @@ function WorkbookError({ message, onRetry }: { message: string; onRetry: () => P
 function WorkbookEmpty() {
   return (
     <section className="library-empty">
+      <NoriMascot pose="guide" size={112} className="journey-only journey-empty-mascot" />
       <div className="library-empty-icon">+</div>
       <h2>No workbooks yet</h2>
       <p>Import an Excel workbook to start building your vocabulary library.</p>

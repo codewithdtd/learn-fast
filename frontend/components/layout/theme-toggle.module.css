@@ -1,0 +1,34 @@
+.root { position: relative; display: inline-flex; flex: 0 0 auto; }
+.root:not([data-compact="true"]) { width: 100%; margin: 24px 0 12px; }
+.root:not([data-compact="true"]) .trigger { width: 100%; }
+.trigger { display: inline-flex; min-width: 44px; min-height: 44px; align-items: center; justify-content: flex-start; gap: 10px; border: 1px solid var(--outline); border-radius: 14px; padding: 0 13px; color: var(--foreground); background: var(--surface-low); font: inherit; font-size: .84rem; font-weight: 750; cursor: pointer; transition: background-color .15s ease, border-color .15s ease, transform .15s ease; }
+.trigger:hover { border-color: var(--primary); background: var(--primary-soft); }
+.trigger:active { transform: scale(.98); }
+.trigger:focus-visible,.themeChoice:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
+.compact { width: 44px; justify-content: center; padding: 0; }
+.triggerIcon { display: inline-grid; width: 18px; height: 18px; flex: 0 0 18px; place-items: center; color: var(--primary); }
+.triggerIcon svg { width: 18px; height: 18px; }
+.triggerLabel { overflow: hidden; max-width: 160px; text-overflow: ellipsis; white-space: nowrap; }
+.menu { position: absolute; z-index: 80; bottom: calc(100% + 8px); left: 0; display: grid; width: min(280px, calc(100vw - 24px)); gap: 4px; border: 1px solid var(--outline); border-radius: 18px; padding: 8px; background: var(--surface); box-shadow: 0 14px 36px rgb(23 48 74 / 18%); }
+.menuLabel { margin: 3px 8px 5px; color: var(--muted); font-size: .7rem; font-weight: 850; letter-spacing: .1em; text-transform: uppercase; }
+.themeChoice { display: grid; grid-template-columns: 14px minmax(0, 1fr) auto; min-height: 48px; align-items: center; gap: 10px; border: 1px solid transparent; border-radius: 12px; padding: 7px 9px; color: var(--foreground); background: transparent; font: inherit; text-align: left; cursor: pointer; }
+.themeChoice:hover { border-color: var(--outline); background: var(--surface-low); }
+.themeChoice[aria-checked="true"] { border-color: var(--primary); background: var(--primary-soft); }
+.choiceSwatch { width: 13px; height: 30px; border: 1px solid var(--outline); border-radius: 8px; background: var(--swatch); }
+.choiceText { display: grid; min-width: 0; gap: 2px; }
+.choiceText strong { font-size: .84rem; line-height: 1.25; }
+.choiceText small { color: var(--muted); font-size: .72rem; line-height: 1.25; }
+.choiceCheck { display: inline-grid; width: 22px; height: 22px; place-items: center; color: var(--primary); font-weight: 900; }
+.soundPreference { display: flex; min-height: 56px; align-items: center; justify-content: space-between; gap: 12px; margin-top: 4px; border: 0; border-top: 1px solid var(--outline); border-radius: 0 0 12px 12px; padding: 8px 10px; color: var(--foreground); background: transparent; font: inherit; text-align: left; cursor: pointer; }
+.soundPreference:hover { background: var(--surface-low); }
+.soundPreference:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
+.soundPreferenceText { display: grid; gap: 2px; }
+.soundPreferenceText strong { font-size: .84rem; }
+.soundPreferenceText small { color: var(--muted); font-size: .72rem; }
+.soundSwitch { display: inline-flex; width: 38px; height: 23px; align-items: center; border: 1px solid var(--outline); border-radius: 999px; padding: 2px; background: var(--surface-high, var(--surface-low)); transition: background-color 160ms ease, border-color 160ms ease; }
+.soundSwitch > span { width: 17px; height: 17px; border-radius: 50%; background: var(--muted); transition: transform 160ms ease, background-color 160ms ease; }
+.soundSwitch > span[data-on="true"] { transform: translateX(14px); background: var(--primary); }
+@media (max-width: 640px) {
+  .root[data-compact="true"] .menu { position: fixed; top: calc(env(safe-area-inset-top, 0px) + 60px); right: 12px; bottom: auto; left: auto; width: min(280px, calc(100vw - 24px)); }
+}
+@media (prefers-reduced-motion: reduce) { .trigger,.soundSwitch,.soundSwitch > span { transition: none; } }

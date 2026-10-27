@@ -1,4 +1,15 @@
 .root { display: grid; gap: 18px; min-width: 0; color: var(--foreground); }
+:global(:root[data-theme="journey"]) .root { color: #17304a; }
+:global(:root[data-theme="journey"]) .linkForm,
+:global(:root[data-theme="journey"]) .dictationCard,
+:global(:root[data-theme="journey"]) .lookupCard { border-color: #c2d2e7; border-radius: 20px; background: #fff; box-shadow: 0 4px 14px rgb(23 48 74 / 5%); }
+:global(:root[data-theme="journey"]) .field input,
+:global(:root[data-theme="journey"]) .field select,
+:global(:root[data-theme="journey"]) .answerInput,
+:global(:root[data-theme="journey"]) .gapInput input { border-color: #879ab1; background: #f8faff; font-size: 16px; }
+:global(:root[data-theme="journey"]) .primary { border-color: #1b4293; color: #fff; background: #2457bc; }
+:global(:root[data-theme="journey"]) .segmentLine,
+:global(:root[data-theme="journey"]) .gapSentence { border-color: #c2d2e7; border-radius: 14px; background: #f8faff; }
 .intro { display: grid; gap: 6px; }
 .eyebrow { margin: 0; color: var(--muted); font-size: .7rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
 .intro h2 { margin: 0; font-size: clamp(1.45rem, 4vw, 1.9rem); letter-spacing: -.035em; }
@@ -41,6 +52,10 @@
 .segmentLine { display: flex; align-items: flex-start; gap: 10px; min-width: 0; }
 .playButton { min-width: 100px; min-height: 44px; gap: 8px; padding-inline: 12px; color: var(--primary); }
 .segmentText { flex: 1; min-width: 0; margin: 0; line-height: 1.6; overflow-wrap: anywhere; }
+.phraseSelectionAction { display: flex; align-items: center; justify-content: space-between; gap: 10px; border: 1px solid var(--outline); border-radius: var(--radius-md); padding: 6px; background: var(--surface-low); }
+.phraseSelectionAction > span { min-width: 0; overflow: hidden; padding-left: 6px; color: var(--muted); font-size: .82rem; text-overflow: ellipsis; white-space: nowrap; }
+.phraseSelectionAction button { flex: 0 0 auto; min-height: 44px; gap: 7px; }
+.phraseSelectionAction svg { width: 18px; height: 18px; }
 .translateButton { display: inline-grid; flex: 0 0 44px; place-items: center; width: 44px; min-height: 44px; border: 1px solid var(--outline); border-radius: var(--radius-md); padding: 0; color: var(--primary); background: var(--surface-low); cursor: pointer; transition: background-color .15s ease, border-color .15s ease, transform .15s ease; }
 .translateButton:hover { border-color: var(--primary); background: var(--primary-soft); }
 .translateButton:active { transform: scale(.97); }
@@ -53,7 +68,7 @@
 .inlineTranslationLabel { color: var(--primary); font-size: .68rem; font-weight: 850; letter-spacing: .08em; text-transform: uppercase; }
 .inlineTranslationStatus { margin: 7px 0 0; color: var(--muted); font-size: .82rem; }
 .inlineTranslationError { margin: 7px 0 0; color: var(--error); font-size: .82rem; line-height: 1.45; }
-.wordButton { display: inline; min-height: 0; border: 0; border-radius: 4px; padding: 0 1px; color: inherit; background: transparent; font: inherit; line-height: inherit; text-decoration: underline dotted color-mix(in srgb, var(--primary) 55%, transparent); text-underline-offset: 3px; cursor: pointer; }
+.wordButton { display: inline; min-height: 0; border: 0; border-radius: 4px; padding: 0 1px; color: inherit; background: transparent; font: inherit; line-height: inherit; text-decoration: underline dotted color-mix(in srgb, var(--primary) 55%, transparent); text-underline-offset: 3px; cursor: pointer; user-select: text; -webkit-user-select: text; }
 .wordButton:hover { color: var(--primary); background: color-mix(in srgb, var(--primary) 10%, transparent); }
 .timestamp { color: var(--muted); font-size: .73rem; font-variant-numeric: tabular-nums; }
 .dictationCard,.lookupCard { display: grid; gap: 10px; border: 1px solid var(--outline); border-radius: var(--radius-lg); padding: 14px; background: var(--surface); }
@@ -99,6 +114,9 @@
   .segmentLine .timestamp { flex: 0 0 auto; padding-top: 3px; }
   .segmentLine .translateButton { flex-basis: 44px; }
   .segmentLine .translateButton[data-has-translation="true"] { flex-basis: auto; }
+  .phraseSelectionAction { align-items: stretch; flex-direction: column; }
+  .phraseSelectionAction > span { padding: 4px 6px 0; }
+  .phraseSelectionAction button { width: 100%; }
   .dictationModeSwitch { position: sticky; top: calc(56px + env(safe-area-inset-top, 0px) + max(56.25vw, 200px) + 48px + 8px); z-index: 10; box-shadow: 0 4px 16px color-mix(in srgb, var(--foreground) 9%, transparent); }
   .dictationModeSwitch .modeButton { min-height: 48px; padding-inline: 8px; font-size: .82rem; }
   .dictationCard,.lookupCard { padding: 12px; }
@@ -108,7 +126,7 @@
   .playerSlot { height: max(56.25vw, 200px); aspect-ratio: auto; }
   .playerSlot .videoPlayerFrame { height: 100%; min-height: 200px; aspect-ratio: auto; }
   .playerColumn[data-floating="true"] .playerSlot { margin-bottom: 48px; }
-  .playerColumn[data-floating="true"] .videoPlayerFrame { position: fixed; top: calc(56px + env(safe-area-inset-top, 0px)); right: 0; left: 0; z-index: 30; width: 100vw; height: max(56.25vw, 200px); min-height: 200px; aspect-ratio: auto; border: 1px solid var(--outline); border-top: 0; border-radius: 0 0 var(--radius-md) var(--radius-md); box-shadow: 0 8px 24px color-mix(in srgb, #000 20%, transparent); }
-  .playerColumn[data-floating="true"] .playerControls { position: fixed; top: calc(56px + env(safe-area-inset-top, 0px) + max(56.25vw, 200px)); right: 0; left: 0; z-index: 30; border-right: 0; border-left: 0; border-radius: 0; }
+  .playerColumn[data-floating="true"] .videoPlayerFrame { position: fixed; top: calc(56px + env(safe-area-inset-top, 0px)); right: 0; left: 0; z-index: 41; width: 100vw; height: max(56.25vw, 200px); min-height: 200px; aspect-ratio: auto; border: 1px solid var(--outline); border-top: 0; border-radius: 0 0 var(--radius-md) var(--radius-md); box-shadow: 0 8px 24px color-mix(in srgb, #000 20%, transparent); }
+  .playerColumn[data-floating="true"] .playerControls { position: fixed; top: calc(56px + env(safe-area-inset-top, 0px) + max(56.25vw, 200px)); right: 0; left: 0; z-index: 41; border-right: 0; border-left: 0; border-radius: 0; }
 }
 @media (prefers-reduced-motion: reduce) { .primary,.secondary,.playButton,.wordButton,.modeButton { transition: none; } .translationSpinner { animation: none; border-top-color: var(--outline); } }

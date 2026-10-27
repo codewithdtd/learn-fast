@@ -1,4 +1,8 @@
 .root { display: grid; gap: 1rem; padding-bottom: calc(6rem + env(safe-area-inset-bottom)); color: var(--foreground); }
+:global(:root[data-theme="journey"]) .root { color: #17304a; }
+:global(:root[data-theme="journey"]) .card { border-color: #c2d2e7; border-radius: 20px; box-shadow: 0 4px 14px rgb(23 48 74 / 5%); }
+:global(:root[data-theme="journey"]) .word { border: 1px solid #a9d9d5; border-left: 4px solid #176b72; border-radius: 14px; background: #f1fbf9; }
+:global(:root[data-theme="journey"]) .primary { border-color: #1b4293; color: #fff; background: #2457bc; }
 .heading { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: start; gap: 1rem; }
 .heading h2 { margin: .4rem 0; font-size: clamp(1.6rem, 4vw, 2rem); letter-spacing: -.04em; }
 .heading p:last-child { max-width: 65ch; margin: 0; color: var(--muted); line-height: 1.6; }

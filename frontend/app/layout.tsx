@@ -1,7 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Lora, Playfair_Display } from "next/font/google";
 import { AuthProvider } from "@/context/auth-context";
+import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import "./globals.css";
+import "@/styles/themes/journey.css";
 
 // Cấu hình Viewport chuẩn Mobile-First & iOS PWA Standalone
 // viewportFit: "cover" kích hoạt biến môi trường env(safe-area-inset-*) trên iOS (iPhone 15 Pro Max Dynamic Island)
@@ -52,16 +54,7 @@ const retroDisplay = Playfair_Display({
   variable: "--font-retro-display",
 });
 
-const themeScript = `(() => {
-  try {
-    const storedTheme = localStorage.getItem("learn-fast-theme");
-    // Use Playful for first-time visitors while honoring any previously saved choice.
-    const theme = storedTheme === "light" || storedTheme === "dark" || storedTheme === "retro" || storedTheme === "playful"
-      ? storedTheme
-      : "playful";
-    document.documentElement.dataset.theme = theme;
-  } catch {}
-})();`;
+const themeScript = THEME_INIT_SCRIPT;
 
 export default function RootLayout({
   children,

@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 from email.utils import parsedate_to_datetime
 from html import unescape
 from html.parser import HTMLParser
+import json
 import logging
 import re
 from threading import Lock
@@ -147,6 +148,11 @@ def fetch_news_article(source_id: str, article: ReadingArticle) -> ReadingArticl
     parser = _ArticleTextParser()
     parser.feed(html_text)
     paragraphs = parser.paragraphs[:MAX_ARTICLE_PARAGRAPHS]
+    structured_paragraphs = _extract_jsonld_article_body(html_text)
+    # Publisher pages can leave only an introductory paragraph in the visible HTML container while
+    # exposing the full story in schema.org metadata; prefer that copy only when it is materially fuller.
+    if _paragraph_text_length(structured_paragraphs) > _paragraph_text_length(paragraphs) + 120:
+        paragraphs = structured_paragraphs[:MAX_ARTICLE_PARAGRAPHS]
     if not paragraphs:
         raise NewsArticleUnavailable("The article text is unavailable in this preview. Open it on the publisher website.")
     return ReadingArticleContent(article=article, paragraphs=paragraphs, available=True)
@@ -266,7 +272,19 @@ class _PlainTextParser(HTMLParser):
 class _ArticleTextParser(HTMLParser):
     """Extract readable paragraphs only from semantic article body containers."""
 
-    _BODY_CLASSES = {"fck_detail", "article-body", "article-content", "detail-content", "content-detail", "news-content"}
+    _BODY_CLASSES = {
+        "fck_detail",
+        "article-body",
+        "article__body",
+        "article-content",
+        "article__content",
+        "detail-content",
+        "detail__content",
+        "content-detail",
+        "news-content",
+        "news-detail-content",
+        "story-content",
+    }
     _SKIP_TAGS = {"script", "style", "nav", "footer", "aside", "noscript", "svg"}
 
     def __init__(self) -> None:
@@ -282,9 +300,10 @@ class _ArticleTextParser(HTMLParser):
         self.depth += 1
         attributes = dict(attrs)
         classes = set((attributes.get("class") or "").lower().split())
+        element_id = (attributes.get("id") or "").lower()
         if tag in self._SKIP_TAGS and self.skip_depth is None:
             self.skip_depth = self.depth
-        if self.body_depth is None and (tag == "article" or classes & self._BODY_CLASSES):
+        if self.body_depth is None and _is_article_body_container(tag, attributes, classes, element_id):
             self.body_depth = self.depth
         if self.body_depth is not None and self.skip_depth is None and tag == "p":
             self.paragraph_depth = self.depth
@@ -308,3 +327,69 @@ class _ArticleTextParser(HTMLParser):
     def handle_data(self, data: str) -> None:
         if self.body_depth is not None and self.skip_depth is None and self.paragraph_depth is not None:
             self.paragraph.append(data)
+
+
+def _is_article_body_container(
+    tag: str,
+    attributes: dict[str, str | None],
+    classes: set[str],
+    element_id: str,
+) -> bool:
+    """Recognize semantic publisher containers without treating generic layout sections as article text."""
+    itemprop = set((attributes.get("itemprop") or "").lower().split())
+    if tag == "article" or "articlebody" in itemprop or classes & _ArticleTextParser._BODY_CLASSES:
+        return True
+
+    # Publisher templates often add a site prefix or version suffix to these common body names.
+    normalized_names = re.sub(r"[^a-z]", "", "".join(classes) + element_id)
+    return any(
+        marker in normalized_names
+        for marker in ("articlebody", "articlecontent", "detailcontent", "contentdetail", "newscontent", "newsdetailcontent")
+    )
+
+
+def _extract_jsonld_article_body(html_text: str) -> list[str]:
+    """Use schema.org articleBody only when it supplies a fuller publisher-provided copy."""
+    bodies: list[str] = []
+    pattern = re.compile(
+        r"<script\b[^>]*type\s*=\s*(['\"])application/ld\+json\1[^>]*>(.*?)</script\s*>",
+        re.IGNORECASE | re.DOTALL,
+    )
+    for match in pattern.finditer(html_text):
+        try:
+            payload = json.loads(unescape(match.group(2)).strip())
+        except (json.JSONDecodeError, TypeError):
+            continue
+        _collect_article_bodies(payload, bodies)
+
+    paragraph_sets = [_split_article_body(body) for body in bodies]
+    return max(paragraph_sets, key=_paragraph_text_length, default=[])
+
+
+def _collect_article_bodies(value: object, bodies: list[str]) -> None:
+    if isinstance(value, dict):
+        body = value.get("articleBody")
+        if isinstance(body, str) and body.strip():
+            bodies.append(body)
+        for nested in value.values():
+            _collect_article_bodies(nested, bodies)
+    elif isinstance(value, list):
+        for nested in value:
+            _collect_article_bodies(nested, bodies)
+
+
+def _split_article_body(body: str) -> list[str]:
+    # Preserve paragraph boundaries from publisher HTML while decoding entities and removing markup.
+    marked_body = re.sub(r"<br\s*/?>", "\n", body, flags=re.IGNORECASE)
+    marked_body = re.sub(r"</(?:p|div|li|h[1-6])\s*>", "\n\n", marked_body, flags=re.IGNORECASE)
+    parser = _PlainTextParser()
+    parser.feed(marked_body)
+    plain_text = "".join(parser.parts)
+    paragraphs = [re.sub(r"\s+", " ", item).strip() for item in re.split(r"\n\s*\n|\r?\n", plain_text)]
+    return [item for item in paragraphs if len(item) >= 20]
+
+
+def _paragraph_text_length(paragraphs: list[str]) -> int:
+    return sum(len(paragraph) for paragraph in paragraphs)
+
+

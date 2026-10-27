@@ -1,109 +1,168 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useEffect, useId, useRef, useState, useSyncExternalStore, type CSSProperties, type KeyboardEvent } from "react";
+import { setTheme, useTheme } from "@/hooks/use-theme";
+import { THEME_OPTIONS, type Theme } from "@/lib/theme";
+import { getJourneySoundsEnabled, getJourneySoundsServerSnapshot, setJourneySoundsEnabled, subscribeToJourneySoundPreference } from "@/lib/journey-sounds";
+import styles from "./theme-toggle.module.css";
 
-type Theme = "light" | "dark" | "retro" | "playful";
-
-const themeListeners = new Set<() => void>();
-
-function subscribeToTheme(listener: () => void) {
-  themeListeners.add(listener);
-  return () => themeListeners.delete(listener);
-}
-
-function getThemeSnapshot(): Theme {
-  const storedTheme = window.localStorage.getItem("learn-fast-theme");
-  if (storedTheme === "light" || storedTheme === "dark" || storedTheme === "retro" || storedTheme === "playful") {
-    return storedTheme;
-  }
-  // Keep first-time visitors on the app's intended default, independent of their OS theme.
-  return "playful";
-}
-
-function getServerThemeSnapshot(): Theme {
-  return "playful";
-}
+const swatches: Record<Theme, string> = {
+  light: "linear-gradient(135deg, #eaf2f7 50%, #ffffff 50%)",
+  dark: "linear-gradient(135deg, #111827 50%, #334155 50%)",
+  retro: "linear-gradient(135deg, #805a37 50%, #ddbf8e 50%)",
+  playful: "linear-gradient(135deg, #0284c7 50%, #c7d2fe 50%)",
+  journey: "linear-gradient(135deg, #2457bc 50%, #f4f8fe 50%)",
+};
 
 export function ThemeToggle({ compact = false }: { compact?: boolean }) {
-  const theme = useSyncExternalStore(subscribeToTheme, getThemeSnapshot, getServerThemeSnapshot);
+  const activeTheme = useTheme();
+  const [isOpen, setIsOpen] = useState(false);
+  const soundsEnabled = useSyncExternalStore(
+    subscribeToJourneySoundPreference,
+    getJourneySoundsEnabled,
+    getJourneySoundsServerSnapshot,
+  );
+  const instanceId = useId().replace(/:/g, "");
+  const menuId = "theme-menu-" + instanceId;
+  const rootRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const menuItemRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const soundOptionRef = useRef<HTMLButtonElement>(null);
 
-  function toggleTheme() {
-    let nextTheme: Theme;
-    if (theme === "light") {
-      nextTheme = "dark";
-    } else if (theme === "dark") {
-      nextTheme = "retro";
-    } else if (theme === "retro") {
-      nextTheme = "playful";
-    } else {
-      nextTheme = "light";
+  useEffect(() => {
+    if (!isOpen) return;
+    menuItemRefs.current[THEME_OPTIONS.findIndex((option) => option.id === activeTheme)]?.focus();
+    function handlePointerDown(event: PointerEvent) {
+      if (event.target instanceof Node && !rootRef.current?.contains(event.target)) setIsOpen(false);
     }
+    function handleEscape(event: globalThis.KeyboardEvent) {
+      if (event.key !== "Escape") return;
+      setIsOpen(false);
+      triggerRef.current?.focus();
+    }
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [activeTheme, isOpen]);
 
-    document.documentElement.dataset.theme = nextTheme;
-    window.localStorage.setItem("learn-fast-theme", nextTheme);
-    themeListeners.forEach((listener) => listener());
+  function focusChoice(index: number) {
+    const nextIndex = (index + THEME_OPTIONS.length) % THEME_OPTIONS.length;
+    menuItemRefs.current[nextIndex]?.focus();
   }
 
-  const activeTheme = theme;
+  function handleMenuKeyDown(event: KeyboardEvent<HTMLButtonElement>, index: number) {
+    if (event.key === "ArrowDown" || event.key === "ArrowRight") {
+      event.preventDefault();
+      if (activeTheme === "journey" && index === THEME_OPTIONS.length - 1) soundOptionRef.current?.focus();
+      else focusChoice(index + 1);
+    } else if (event.key === "ArrowUp" || event.key === "ArrowLeft") {
+      event.preventDefault();
+      if (activeTheme === "journey" && index === 0) soundOptionRef.current?.focus();
+      else focusChoice(index - 1);
+    } else if (event.key === "Home") {
+      event.preventDefault();
+      focusChoice(0);
+    } else if (event.key === "End") {
+      event.preventDefault();
+      focusChoice(THEME_OPTIONS.length - 1);
+    } else if (event.key === "Tab") {
+      setIsOpen(false);
+    }
+  }
 
-  const themeLabels: Record<Theme, string> = {
-    light: "Light mode",
-    dark: "Dark mode",
-    retro: "Retro Farm",
-    playful: "Playful EdTech",
-  };
+  function handleSoundOptionKeyDown(event: KeyboardEvent<HTMLButtonElement>) {
+    if (event.key === "ArrowUp" || event.key === "ArrowLeft") {
+      event.preventDefault();
+      focusChoice(THEME_OPTIONS.length - 1);
+    } else if (event.key === "ArrowDown" || event.key === "ArrowRight") {
+      event.preventDefault();
+      focusChoice(0);
+    } else if (event.key === "Tab") {
+      setIsOpen(false);
+    }
+  }
 
-  const nextLabels: Record<Theme, string> = {
-    light: "Switch to dark mode",
-    dark: "Switch to retro farm mode",
-    retro: "Switch to playful edtech mode",
-    playful: "Switch to light mode",
-  };
+  function toggleSounds() {
+    const nextEnabled = !soundsEnabled;
+    setJourneySoundsEnabled(nextEnabled);
+  }
+
+  function chooseTheme(theme: Theme) {
+    setTheme(theme);
+    setIsOpen(false);
+    triggerRef.current?.focus();
+  }
 
   return (
-    <button
-      type="button"
-      className={`theme-toggle${compact ? " compact" : ""}`}
-      suppressHydrationWarning
-      aria-label={nextLabels[activeTheme]}
-      title={themeLabels[activeTheme]}
-      onClick={toggleTheme}
-    >
-      <span className="theme-toggle-icon" aria-hidden="true">
-        {activeTheme === "dark" ? (
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-          </svg>
-        ) : activeTheme === "retro" ? (
-          /* Biểu tượng mầm cây / nông trại HayDay hoài cổ */
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M7 20h10" />
-            <path d="M12 20v-8" />
-            <path d="M12 12c0-3.5 3-6.5 7-6.5 0 4-3 7-7 7z" />
-            <path d="M12 15c0-2.5-2.5-4.5-5.5-4.5 0 3 2.5 5 5.5 5z" />
-          </svg>
-        ) : activeTheme === "playful" ? (
-          /* Biểu tượng ngôi sao năng động Playful EdTech */
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" fill="currentColor" fillOpacity="0.2" />
-          </svg>
-        ) : (
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="5" />
-            <line x1="12" y1="1" x2="12" y2="3" />
-            <line x1="12" y1="21" x2="12" y2="23" />
-            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-            <line x1="1" y1="12" x2="3" y2="12" />
-            <line x1="21" y1="12" x2="23" y2="12" />
-            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-          </svg>
-        )}
-      </span>
-      {!compact && (
-        <span className="theme-toggle-label">{themeLabels[activeTheme]}</span>
+    <div className={styles.root} data-compact={compact || undefined} ref={rootRef}>
+      <button
+        ref={triggerRef}
+        type="button"
+        className={styles.trigger + (compact ? " " + styles.compact : "")}
+        aria-label={"Choose theme. Current theme: " + (THEME_OPTIONS.find((option) => option.id === activeTheme)?.label ?? "Playful EdTech")}
+        aria-haspopup="menu"
+        aria-expanded={isOpen}
+        aria-controls={menuId}
+        title="Choose theme"
+        onClick={() => setIsOpen((open) => !open)}
+        onKeyDown={(event) => {
+          if (event.key === "ArrowDown" && !isOpen) {
+            event.preventDefault();
+            setIsOpen(true);
+          }
+        }}
+      >
+        <span className={styles.triggerIcon} aria-hidden="true"><ThemeIcon theme={activeTheme} /></span>
+        {!compact && <span className={styles.triggerLabel}>{THEME_OPTIONS.find((option) => option.id === activeTheme)?.label}</span>}
+      </button>
+      {isOpen && (
+        <div id={menuId} className={styles.menu} role="menu" aria-label="Choose a theme">
+          <p className={styles.menuLabel} role="presentation">Appearance</p>
+          {THEME_OPTIONS.map((option, index) => (
+            <button
+              key={option.id}
+              ref={(element) => { menuItemRefs.current[index] = element; }}
+              type="button"
+              role="menuitemradio"
+              aria-checked={activeTheme === option.id}
+              tabIndex={activeTheme === option.id ? 0 : -1}
+              className={styles.themeChoice}
+              style={{ "--swatch": swatches[option.id] } as CSSProperties}
+              onKeyDown={(event) => handleMenuKeyDown(event, index)}
+              onClick={() => chooseTheme(option.id)}
+            >
+              <span className={styles.choiceSwatch} aria-hidden="true" />
+              <span className={styles.choiceText}><strong>{option.label}</strong><small>{option.description}</small></span>
+              <span className={styles.choiceCheck} aria-hidden="true">{activeTheme === option.id ? "✓" : ""}</span>
+            </button>
+          ))}
+          {activeTheme === "journey" && (
+            <button
+              ref={soundOptionRef}
+              type="button"
+              role="menuitemcheckbox"
+              aria-checked={soundsEnabled}
+              className={styles.soundPreference}
+              onKeyDown={handleSoundOptionKeyDown}
+              onClick={toggleSounds}
+            >
+              <span className={styles.soundPreferenceText}><strong>Completion sound</strong><small>Plays when practice is complete</small></span>
+              <span className={styles.soundSwitch} aria-hidden="true"><span data-on={soundsEnabled || undefined} /></span>
+            </button>
+          )}
+        </div>
       )}
-    </button>
+    </div>
   );
+}
+
+function ThemeIcon({ theme }: { theme: Theme }) {
+  if (theme === "dark") return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20.5 14A8.5 8.5 0 0 1 10 3.5 8.5 8.5 0 1 0 20.5 14Z" /></svg>;
+  if (theme === "retro") return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 21V11m0 4c-4 0-6-2-6-6 4 0 6 2 6 6Zm0-3c0-4 2-6 6-6 0 4-2 6-6 6Z" /></svg>;
+  if (theme === "playful") return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m12 2 2.8 6.2 6.8.8-5 4.6 1.3 6.6-5.9-3.2-5.9 3.2 1.3-6.6-5-4.6 6.8-.8L12 2Z" /></svg>;
+  if (theme === "journey") return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19V6l8-3 8 3v13l-8 3-8-3Z" /><path d="m4 6 8 3 8-3M12 9v13" /></svg>;
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="4" /><path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></svg>;
 }
