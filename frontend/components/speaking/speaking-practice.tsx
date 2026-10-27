@@ -14,6 +14,7 @@ import {
   transcribeSpeakingAttempt,
 } from "@/services/api";
 import type { SpeakingAttempt, SpeakingAttemptSummary, SpeakingFeedback, SpeakingPrompt, SpeakingUsage } from "@/types/speaking";
+import { playJourneyCompletionSound } from "@/lib/journey-sounds";
 import styles from "./speaking.module.css";
 
 const MAX_RECORDING_SECONDS = 120;
@@ -258,6 +259,7 @@ export function SpeakingPractice() {
       const graded = await gradeSpeakingAttempt(current.id, current.version);
       setAttempt(graded);
       setTranscript(graded.transcript);
+      playJourneyCompletionSound("speaking-" + graded.id + "-" + graded.version);
       setNotice("Feedback is ready.");
       await refreshHistory().catch(() => undefined);
     } catch (cause) {

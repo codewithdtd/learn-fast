@@ -11,6 +11,7 @@ import { AuthModal } from "@/components/auth/auth-modal";
 import { WritingHints } from "./writing-hints";
 import { WritingEditor, type SaveState } from "./writing-editor";
 import { WritingFeedbackView } from "./writing-feedback";
+import { playJourneyCompletionSound } from "@/lib/journey-sounds";
 import styles from "./writing.module.css";
 
 export function WritingAttemptView({ attemptId }: { attemptId: number }) {
@@ -140,6 +141,7 @@ export function WritingAttemptView({ attemptId }: { attemptId: number }) {
     try {
       const graded = await gradeWritingAttempt(current.id, current.version, controller.signal);
       setAttempt(graded); setDraft(graded.draft_text); lastSavedText.current = graded.draft_text;
+      playJourneyCompletionSound("writing-" + graded.id + "-" + graded.version);
       const quota = await getWritingUsage().catch(() => null);
       if (quota) setUsage(quota);
       window.setTimeout(() => document.getElementById("feedback-title")?.focus(), 0);

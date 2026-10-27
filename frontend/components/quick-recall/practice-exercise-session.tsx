@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 
 import { Icon } from "@/components/layout/app-shell";
+import { NoriMascot } from "@/components/illustrations/nori-mascot";
+import { playJourneyCompletionSound } from "@/lib/journey-sounds";
 import {
   buildExerciseQuestions, createExercisePool, gradeExerciseAnswer, summarizeExercise,
   type ExerciseCount, type ExerciseMode, type ExerciseQuestion, type ExerciseResponse, type ExerciseSettings,
@@ -44,13 +46,14 @@ export function PracticeExerciseSession({ sheet, cards, backHref }: { sheet: She
 
   return <section className={styles.root}>
     <header className={styles.header}>
+      <NoriMascot pose="guide" size={80} className="journey-only journey-exercise-mascot" />
       <Link href={backHref ?? `/sheets/${sheet.id}`} className={styles.back}><Icon name="back" size={18} /> Back to {sheet.name}</Link>
       <p className={styles.eyebrow}>Put your vocabulary to work</p>
       <h1 ref={pageHeadingRef} tabIndex={-1}>Practice Exercises</h1>
       <p>Find out what you remember, one question at a time.</p>
     </header>
 
-    {round ? <ExerciseRound key={round.id} round={round}
+    {round ? <ExerciseRound key={round.id} sheetId={sheet.id} round={round}
       onRestart={() => startRound(round.settings)} onConfigure={() => setRound(null)} /> : <>
       <form className={styles.setup} onSubmit={(event) => { event.preventDefault(); startRound(settings); }}>
         <fieldset className={styles.modeGroup}>
@@ -113,7 +116,7 @@ export function PracticeExerciseSession({ sheet, cards, backHref }: { sheet: She
   </section>;
 }
 
-function ExerciseRound({ round, onRestart, onConfigure }: { round: Round; onRestart: () => void; onConfigure: () => void }) {
+function ExerciseRound({ round, sheetId, onRestart, onConfigure }: { round: Round; sheetId: number; onRestart: () => void; onConfigure: () => void }) {
   const [responses, setResponses] = useState<ExerciseResponse[]>([]);
   const [remainingQuestions, setRemainingQuestions] = useState(round.questions);
   const [draft, setDraft] = useState("");
@@ -161,7 +164,7 @@ function ExerciseRound({ round, onRestart, onConfigure }: { round: Round; onRest
     setResponse(graded);
   }
 
-  if (isComplete) return <ExerciseResults responses={responses} retryUntilCorrect={round.settings.mode === "translation"} onRestart={onRestart} onConfigure={onConfigure} />;
+  if (isComplete) return <ExerciseResults completionId={"exercise-" + sheetId + "-" + round.id} responses={responses} retryUntilCorrect={round.settings.mode === "translation"} onRestart={onRestart} onConfigure={onConfigure} />;
   if (!question) return null;
 
   return <div className={styles.round}>
@@ -219,9 +222,12 @@ function ExerciseRound({ round, onRestart, onConfigure }: { round: Round; onRest
   </div>;
 }
 
-function ExerciseResults({ responses, retryUntilCorrect, onRestart, onConfigure }: { responses: ExerciseResponse[]; retryUntilCorrect: boolean; onRestart: () => void; onConfigure: () => void }) {
+function ExerciseResults({ completionId, responses, retryUntilCorrect, onRestart, onConfigure }: { completionId: string; responses: ExerciseResponse[]; retryUntilCorrect: boolean; onRestart: () => void; onConfigure: () => void }) {
   const headingRef = useRef<HTMLHeadingElement>(null);
-  useEffect(() => { headingRef.current?.focus(); }, []);
+  useEffect(() => {
+    headingRef.current?.focus();
+    playJourneyCompletionSound(completionId);
+  }, [completionId]);
   const summary = summarizeExercise(responses);
   const incorrect = responses.filter((response) => !response.is_correct);
 

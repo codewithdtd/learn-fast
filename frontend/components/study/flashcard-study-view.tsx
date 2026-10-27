@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react
 import { useRouter } from "next/navigation";
 
 import { Icon } from "@/components/layout/app-shell";
+import { playJourneyCompletionSound } from "@/lib/journey-sounds";
 import { Flashcard } from "@/components/study/flashcard";
 import { StudyProgress } from "@/components/study/study-progress";
 import { speakEnglish } from "@/lib/speech";
@@ -106,6 +107,7 @@ export function FlashcardStudyView({ sessionId }: FlashcardStudyViewProps) {
       // Results are markers, not a retry queue. Both buttons move to the next
       // physical card exactly once, never search backward and never wrap.
       if (updatedSession.status === "completed") {
+        playJourneyCompletionSound("study-" + updatedSession.id);
         router.replace(`/study-sessions/${updatedSession.id}/result`);
       } else if (updatedSession.active_round && currentIndex < updatedSession.active_round.round_cards.length - 1) {
         setCurrentIndex(currentIndex + 1);
