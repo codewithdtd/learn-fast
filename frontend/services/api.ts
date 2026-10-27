@@ -2,6 +2,8 @@ import type {
   WritingAttempt,
   WritingAttemptList,
   WritingFeedback,
+  WritingErrorHistory,
+  ParagraphPracticeTask,
   GuestWritingTopic,
   WritingPrompt,
   WritingPromptList,
@@ -1006,6 +1008,24 @@ export async function generateSentenceWritingAttempt(flashcardId: number, signal
     }
     throw cause;
   }
+}
+
+export async function generateVocabularyParagraph(sheetId: number, cardIds: number[], style: "paragraph" | "dialogue", guest: boolean): Promise<WritingAttempt | ParagraphPracticeTask> {
+  return requestWritingJson<WritingAttempt | ParagraphPracticeTask>(guest ? "/api/v1/guest/ai/vocabulary-paragraph/topic" : "/api/v1/writing/attempts/vocabulary-paragraph", {
+    method: "POST", headers: { ...(guest ? guestTrialHeaders() : {}), "Content-Type": "application/json" },
+    body: JSON.stringify({ sheet_id: sheetId, card_ids: cardIds, style }),
+  }, 180_000);
+}
+
+export async function gradeGuestVocabularyParagraph(task: ParagraphPracticeTask, draftText: string): Promise<WritingFeedback> {
+  return requestWritingJson<WritingFeedback>("/api/v1/guest/ai/vocabulary-paragraph/grade", {
+    method: "POST", headers: { ...guestTrialHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify({ task, draft_text: draftText }),
+  }, 300_000);
+}
+
+export async function getWritingErrorHistory(page = 1): Promise<WritingErrorHistory> {
+  return requestJson<WritingErrorHistory>(`/api/v1/writing/error-history?page=${page}&page_size=20`);
 }
 
 export async function saveWritingAttempt(

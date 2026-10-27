@@ -173,7 +173,10 @@
 .correctedText { border-left: 3px solid var(--green); padding: 4px 0 4px 14px; }
 .strengthMark { border-radius: 4px; padding: 1px 0; background: var(--green-soft); color: var(--foreground); text-decoration: underline; text-decoration-color: var(--green); text-decoration-thickness: 2px; }
 .errorMark,.suggestionMark,.insertionMark { position: relative; display: inline; min-height: 0; border: 0; border-radius: 4px; padding: 0 1px; background: transparent; font: inherit; line-height: inherit; cursor: pointer; }
-.errorMark { background: var(--error-soft); color: var(--error); text-decoration: line-through; text-decoration-thickness: 1.5px; text-decoration-color: var(--error); }
+.errorMark { background: var(--error-soft); color: var(--error); }
+.inlineCorrection { color: var(--foreground); background: var(--green-soft); text-decoration: none; font-weight: 700; }
+.targetWords { display: grid; gap: .5rem; }.targetWords > div { display: grid; gap: .2rem; padding: .75rem; border: 1px solid var(--outline); border-radius: 10px; background: var(--primary-soft); overflow-wrap: anywhere; }.targetWords span { color: var(--muted); font-size: .85rem; }
+.mistakeHistory { display: grid; gap: 1rem; }.mistakeHistoryItem { display: grid; gap: .7rem; }.mistakeHistoryItem > div { display: grid; gap: .3rem; border-top: 1px solid var(--outline); padding-top: .7rem; overflow-wrap: anywhere; }.mistakeHistoryItem p { margin: 0; }.mistakeHistoryItem s { color: var(--error); }.mistakeHistoryItem strong { color: var(--foreground); }
 .suggestionMark { background: var(--gold-soft); color: var(--foreground); text-decoration: underline; text-decoration-style: wavy; text-decoration-color: var(--gold); }
 .insertionMark { margin: 0 2px; color: var(--error); font-size: 17px; font-weight: 900; }
 .errorMark sup,.suggestionMark sup,.insertionMark sup { display: inline-block; margin-left: 3px; color: inherit; font-size: 8px; font-weight: 900; text-decoration: none; vertical-align: super; }

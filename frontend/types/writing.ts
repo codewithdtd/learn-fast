@@ -16,8 +16,15 @@ export type SentencePracticeContext = {
   example: BilingualItem;
 };
 
+export type ParagraphWord = { id: number; phrase: string; meaning: string };
+export type ParagraphPracticeTask = {
+  sheet_id: number; title_en: string; title_vi: string; paragraph_vi: string;
+  style: "paragraph" | "dialogue"; words: ParagraphWord[];
+};
+
 export type WritingParagraphHints = {
   sentence_practice?: SentencePracticeContext;
+  vocabulary_translation?: ParagraphPracticeTask;
   opening_vi: string;
   opening_en: string;
   details_vi: string;
@@ -137,5 +144,10 @@ export type WritingAttemptList = {
   page_size: number;
 };
 
+export type WritingErrorHistory = {
+  items: { attempt_id: number; title_en: string; graded_at: string | null; issues: WritingIssue[] }[];
+  total: number; page: number; page_size: number;
+};
+
 export type WritingPromptList = { items: WritingPrompt[]; suggested_prompt_id: number | null };
-export type WritingUsage = { usage_date: string; daily_limit: number; used: number; remaining: number };
+export type WritingUsage = { usage_date: string; daily_limit: number | null; used: number; remaining: number | null };
