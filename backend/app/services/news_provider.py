@@ -266,7 +266,19 @@ class _PlainTextParser(HTMLParser):
 class _ArticleTextParser(HTMLParser):
     """Extract readable paragraphs only from semantic article body containers."""
 
-    _BODY_CLASSES = {"fck_detail", "article-body", "article-content", "detail-content", "content-detail", "news-content"}
+    _BODY_CLASSES = {
+        "fck_detail",
+        "article-body",
+        "article__body",
+        "article-content",
+        "article__content",
+        "detail-content",
+        "detail__content",
+        "content-detail",
+        "news-content",
+        "news-detail-content",
+        "story-content",
+    }
     _SKIP_TAGS = {"script", "style", "nav", "footer", "aside", "noscript", "svg"}
 
     def __init__(self) -> None:
@@ -282,9 +294,10 @@ class _ArticleTextParser(HTMLParser):
         self.depth += 1
         attributes = dict(attrs)
         classes = set((attributes.get("class") or "").lower().split())
+        element_id = (attributes.get("id") or "").lower()
         if tag in self._SKIP_TAGS and self.skip_depth is None:
             self.skip_depth = self.depth
-        if self.body_depth is None and (tag == "article" or classes & self._BODY_CLASSES):
+        if self.body_depth is None and _is_article_body_container(tag, attributes, classes, element_id):
             self.body_depth = self.depth
         if self.body_depth is not None and self.skip_depth is None and tag == "p":
             self.paragraph_depth = self.depth
@@ -308,3 +321,24 @@ class _ArticleTextParser(HTMLParser):
     def handle_data(self, data: str) -> None:
         if self.body_depth is not None and self.skip_depth is None and self.paragraph_depth is not None:
             self.paragraph.append(data)
+
+
+def _is_article_body_container(
+    tag: str,
+    attributes: dict[str, str | None],
+    classes: set[str],
+    element_id: str,
+) -> bool:
+    """Recognize semantic publisher containers without treating generic layout sections as article text."""
+    itemprop = set((attributes.get("itemprop") or "").lower().split())
+    if tag == "article" or "articlebody" in itemprop or classes & _ArticleTextParser._BODY_CLASSES:
+        return True
+
+    # Publisher templates often add a site prefix or version suffix to these common body names.
+    normalized_names = re.sub(r"[^a-z]", "", "".join(classes) + element_id)
+    return any(
+        marker in normalized_names
+        for marker in ("articlebody", "articlecontent", "detailcontent", "contentdetail", "newscontent", "newsdetailcontent")
+    )
+
+
