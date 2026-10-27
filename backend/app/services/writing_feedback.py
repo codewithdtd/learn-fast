@@ -73,9 +73,14 @@ def validate_and_anchor_feedback(raw: object, source_text: str) -> WritingFeedba
     strength_rows: list[WritingStrengthRead] = []
     error_ranges = [(item.start, item.end) for item in issue_rows if item.kind == "error"]
     for strength in feedback.strengths:
-        start, end = _find_occurrence(source_text, strength.quote, strength.occurrence)
+        try:
+            start, end = _find_occurrence(source_text, strength.quote, strength.occurrence)
+        except InvalidWritingFeedback:
+            # Strength là tùy chọn; bỏ lời khen không xác minh được để tránh tô sáng sai và giữ feedback hợp lệ.
+            continue
         if any(_ranges_overlap((start, end), error_range) for error_range in error_ranges):
-            raise InvalidWritingFeedback("A strength highlight cannot cover an error.")
+            # Không biến vùng đã đánh dấu là lỗi thành dẫn chứng tích cực chỉ để giữ strength tùy chọn.
+            continue
         strength_rows.append(WritingStrengthRead(**strength.model_dump(), start=start, end=end))
 
     # Chỉ áp dụng lỗi đã neo chính xác; suggestion không được tự ý thay câu vốn đúng của người học.
