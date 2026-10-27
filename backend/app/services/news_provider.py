@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 from email.utils import parsedate_to_datetime
 from html import unescape
 from html.parser import HTMLParser
+import json
 import logging
 import re
 from threading import Lock
@@ -147,6 +148,11 @@ def fetch_news_article(source_id: str, article: ReadingArticle) -> ReadingArticl
     parser = _ArticleTextParser()
     parser.feed(html_text)
     paragraphs = parser.paragraphs[:MAX_ARTICLE_PARAGRAPHS]
+    structured_paragraphs = _extract_jsonld_article_body(html_text)
+    # Publisher pages can leave only an introductory paragraph in the visible HTML container while
+    # exposing the full story in schema.org metadata; prefer that copy only when it is materially fuller.
+    if _paragraph_text_length(structured_paragraphs) > _paragraph_text_length(paragraphs) + 120:
+        paragraphs = structured_paragraphs[:MAX_ARTICLE_PARAGRAPHS]
     if not paragraphs:
         raise NewsArticleUnavailable("The article text is unavailable in this preview. Open it on the publisher website.")
     return ReadingArticleContent(article=article, paragraphs=paragraphs, available=True)
@@ -340,5 +346,50 @@ def _is_article_body_container(
         marker in normalized_names
         for marker in ("articlebody", "articlecontent", "detailcontent", "contentdetail", "newscontent", "newsdetailcontent")
     )
+
+
+def _extract_jsonld_article_body(html_text: str) -> list[str]:
+    """Use schema.org articleBody only when it supplies a fuller publisher-provided copy."""
+    bodies: list[str] = []
+    pattern = re.compile(
+        r"<script\b[^>]*type\s*=\s*(['\"])application/ld\+json\1[^>]*>(.*?)</script\s*>",
+        re.IGNORECASE | re.DOTALL,
+    )
+    for match in pattern.finditer(html_text):
+        try:
+            payload = json.loads(unescape(match.group(2)).strip())
+        except (json.JSONDecodeError, TypeError):
+            continue
+        _collect_article_bodies(payload, bodies)
+
+    paragraph_sets = [_split_article_body(body) for body in bodies]
+    return max(paragraph_sets, key=_paragraph_text_length, default=[])
+
+
+def _collect_article_bodies(value: object, bodies: list[str]) -> None:
+    if isinstance(value, dict):
+        body = value.get("articleBody")
+        if isinstance(body, str) and body.strip():
+            bodies.append(body)
+        for nested in value.values():
+            _collect_article_bodies(nested, bodies)
+    elif isinstance(value, list):
+        for nested in value:
+            _collect_article_bodies(nested, bodies)
+
+
+def _split_article_body(body: str) -> list[str]:
+    # Preserve paragraph boundaries from publisher HTML while decoding entities and removing markup.
+    marked_body = re.sub(r"<br\s*/?>", "\n", body, flags=re.IGNORECASE)
+    marked_body = re.sub(r"</(?:p|div|li|h[1-6])\s*>", "\n\n", marked_body, flags=re.IGNORECASE)
+    parser = _PlainTextParser()
+    parser.feed(marked_body)
+    plain_text = "".join(parser.parts)
+    paragraphs = [re.sub(r"\s+", " ", item).strip() for item in re.split(r"\n\s*\n|\r?\n", plain_text)]
+    return [item for item in paragraphs if len(item) >= 20]
+
+
+def _paragraph_text_length(paragraphs: list[str]) -> int:
+    return sum(len(paragraph) for paragraph in paragraphs)
 
 
