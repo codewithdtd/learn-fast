@@ -1,16 +1,20 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { Icon } from "@/components/layout/app-shell";
 import { useAuth } from "@/context/auth-context";
 import { InlineNameEditor } from "@/components/shared/inline-name-editor";
+import { NamedEntityCreateForm } from "@/components/shared/named-entity-create-form";
+import { DeleteWorkbookButton } from "@/components/workbooks/delete-workbook-button";
 import { SheetListItem } from "@/components/sheets/sheet-list-item";
 import { formatDate } from "@/lib/format";
 import { WorkbookCover } from "@/components/illustrations/workbook-cover";
 import {
   ApiRequestError,
+  createSheet,
   getWorkbook,
   getWorkbooks,
   moveSheetsToWorkbook,
@@ -26,6 +30,7 @@ type WorkbookDetailProps = {
 };
 
 export function WorkbookDetailView({ workbookId }: WorkbookDetailProps) {
+  const router = useRouter();
   const { user, isAuthenticated } = useAuth();
   const isAdmin = isAuthenticated && user?.is_superuser === true;
   const [workbook, setWorkbook] = useState<WorkbookDetail | null>(null);
@@ -122,6 +127,16 @@ export function WorkbookDetailView({ workbookId }: WorkbookDetailProps) {
         setWorkbook(await getWorkbook(workbookId));
         setAvailableWorkbooks(await getWorkbooks());
       }}
+      onSheetCreated={async (name) => {
+        setWorkbook(await createSheet(Number(workbookId), name));
+      }}
+      onSheetDeleted={async () => {
+        setWorkbook(await getWorkbook(workbookId));
+      }}
+      onWorkbookDeleted={async () => {
+        router.replace("/workbooks");
+        router.refresh();
+      }}
     />
   );
   /*
@@ -161,6 +176,9 @@ function WorkbookDetailContent({
   onWorkbookRenamed,
   onSheetRenamed,
   onSheetsMoved,
+  onSheetCreated,
+  onSheetDeleted,
+  onWorkbookDeleted,
 }: {
   workbook: WorkbookDetail;
   isAdmin: boolean;
@@ -168,6 +186,9 @@ function WorkbookDetailContent({
   onWorkbookRenamed: (name: string) => Promise<void>;
   onSheetRenamed: (sheetId: number, name: string) => Promise<void>;
   onSheetsMoved: () => Promise<void>;
+  onSheetCreated: (name: string) => Promise<void>;
+  onSheetDeleted: () => Promise<void>;
+  onWorkbookDeleted: () => Promise<void>;
 }) {
   const [selectedSheetIds, setSelectedSheetIds] = useState<Set<number>>(new Set());
   const [targetWorkbookId, setTargetWorkbookId] = useState("");
@@ -220,18 +241,19 @@ function WorkbookDetailContent({
           <div className="workbook-detail-title-row">
             <WorkbookCover workbookId={workbook.id} className="journey-workbook-detail-cover" />
             <h1>{workbook.name}</h1>
-            <InlineNameEditor value={workbook.name} label="workbook name" onSave={onWorkbookRenamed} />
+            {isAdmin && <InlineNameEditor value={workbook.name} label="workbook name" onSave={onWorkbookRenamed} />}
           </div>
           <div className="workbook-detail-meta">
-            <span><Icon name="calendar" size={17} /> Imported {formatDate(workbook.imported_at)}</span>
+            <span><Icon name="calendar" size={17} /> {workbook.original_filename === "Created manually" ? "Created" : "Imported"} {formatDate(workbook.imported_at)}</span>
             <span><Icon name="books" size={17} /> {workbook.original_filename}</span>
             <span>{workbook.sheet_count} sheets</span>
             <span>{workbook.total_cards} total cards</span>
           </div>
         </div>
-        <Link href="/workbooks" className="button secondary workbook-back-button">
-          Back to workbooks
-        </Link>
+        <div className="workbook-detail-header-actions">
+          <Link href="/workbooks" className="button secondary workbook-back-button">Back to workbooks</Link>
+          {isAdmin && <DeleteWorkbookButton workbookId={workbook.id} workbookName={workbook.name} onDeleted={onWorkbookDeleted} />}
+        </div>
       </header>
 
       <WorkbookSnapshot workbook={workbook} summary={summary} />
@@ -243,6 +265,14 @@ function WorkbookDetailContent({
             <h2 id="workbook-sheets-heading">Sheets</h2>
           </div>
           <span className="workbook-section-count">{workbook.sheets.length}</span>
+          {isAdmin && (
+            <NamedEntityCreateForm
+              label="Sheet name"
+              buttonLabel="Add sheet"
+              placeholder="New sheet name"
+              onCreate={onSheetCreated}
+            />
+          )}
         </div>
 
         {isAdmin && workbook.sheets.length > 0 && (
@@ -290,6 +320,7 @@ function WorkbookDetailContent({
                   isSelected: selectedSheetIds.has(sheet.id),
                   onToggle: toggleSheet,
                   onRename: (name) => onSheetRenamed(sheet.id, name),
+                  onDelete: onSheetDeleted,
                 } : undefined}
               />
             ))}

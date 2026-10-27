@@ -361,6 +361,14 @@ export async function getWorkbooks(): Promise<WorkbookListItem[]> {
   return requestJson<WorkbookListItem[]>("/api/v1/workbooks");
 }
 
+export async function createWorkbook(name: string): Promise<WorkbookDetail> {
+  return requestJson<WorkbookDetail>("/api/v1/workbooks", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name }),
+  });
+}
+
 export async function getWorkbook(id: string): Promise<WorkbookDetail> {
   return requestJson<WorkbookDetail>(`/api/v1/workbooks/${encodeURIComponent(id)}`);
 }
@@ -399,6 +407,18 @@ export async function deleteWorkbook(id: string): Promise<void> {
   await requestNoContent(`/api/v1/workbooks/${encodeURIComponent(id)}`, {
     method: "DELETE",
   });
+}
+
+export async function createSheet(workbookId: number, name: string): Promise<WorkbookDetail> {
+  return requestJson<WorkbookDetail>(`/api/v1/workbooks/${workbookId}/sheets`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name }),
+  });
+}
+
+export async function deleteSheet(id: number): Promise<void> {
+  await requestNoContent(`/api/v1/sheets/${id}`, { method: "DELETE" });
 }
 
 export async function getSheet(id: string): Promise<SheetDetail> {

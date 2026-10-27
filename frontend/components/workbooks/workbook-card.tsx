@@ -12,6 +12,7 @@ type WorkbookCardProps = {
 };
 
 export function WorkbookCard({ workbook, onDeleted }: WorkbookCardProps) {
+  const isManuallyCreated = workbook.original_filename === "Created manually";
   return (
     <article className="workbook-card">
       <WorkbookCover workbookId={workbook.id} />
@@ -29,12 +30,12 @@ export function WorkbookCard({ workbook, onDeleted }: WorkbookCardProps) {
       </dl>
 
       <div className="workbook-imported">
-        <span>Imported</span>
+        <span>{isManuallyCreated ? "Created" : "Imported"}</span>
         <time dateTime={workbook.imported_at}>{formatDate(workbook.imported_at)}</time>
       </div>
 
       <div className="workbook-card-footer">
-        <span className="workbook-status">Imported</span>
+        <span className="workbook-status">{isManuallyCreated ? "Manual" : "Imported"}</span>
         <Link href={`/workbooks/${workbook.id}`} className="library-card-link">
           Open workbook <Icon name="arrow" size={17} />
         </Link>
