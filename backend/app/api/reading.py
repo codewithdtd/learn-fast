@@ -104,7 +104,8 @@ def lookup_reading_selection(payload: ReadingLookupRequest, request: Request) ->
     except ValueError as error:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(error)) from error
     except TranslationProviderError as error:
-        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(error)) from error
+        headers = {"Retry-After": str(error.retry_after)} if error.retry_after is not None else None
+        raise HTTPException(status_code=error.status_code, detail=str(error), headers=headers) from error
 
 
 @router.get("/vocabulary-sheets", response_model=ReadingVocabularyCollection)

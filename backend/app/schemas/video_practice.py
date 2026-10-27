@@ -59,3 +59,5 @@ class WordLookupResponse(BaseModel):
     phonetic: str | None = None
     audio_url: str | None = None
     definitions: list[DictionaryDefinition] = Field(default_factory=list)
+    translation_error: str | None = None
+    translation_retry_after: int | None = Field(default=None, ge=1)

@@ -26,3 +26,9 @@ def test_process_environment_still_overrides_dotenv(tmp_path, monkeypatch):
     env_file.write_text("WRITING_DAILY_AI_QUOTA=50\n", encoding="utf-8")
     monkeypatch.setenv("WRITING_DAILY_AI_QUOTA", "7")
     assert Settings(_env_file=env_file).writing_daily_ai_quota == 7
+
+
+def test_mymemory_contact_email_is_loaded_from_environment(monkeypatch):
+    monkeypatch.setenv("MYMEMORY_EMAIL", "learner@example.com")
+
+    assert Settings(_env_file=None).mymemory_email == "learner@example.com"

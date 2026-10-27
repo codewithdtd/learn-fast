@@ -52,6 +52,7 @@ class Settings(BaseSettings):
     video_practice_requests_per_minute: int = 30
     video_dictionary_api_url: str = "https://api.dictionaryapi.dev/api/v2/entries/en"
     video_translation_api_url: str = "https://api.mymemory.translated.net/get"
+    mymemory_email: str = ""
 
     # Neo vào thư mục backend để chạy uvicorn từ root vẫn đọc đúng quota và cấu hình local.
     model_config = SettingsConfigDict(
