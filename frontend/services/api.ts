@@ -118,6 +118,8 @@ export type WordLookup = {
   phonetic: string | null;
   audio_url: string | null;
   definitions: WordDefinition[];
+  translation_error?: string | null;
+  translation_retry_after?: number | null;
 };
 
 export type ReadingCategory = { id: string; name: string };
