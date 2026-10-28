@@ -35,7 +35,9 @@
 .readerHeader { width: min(100%, 760px); margin: 0 auto 25px; }
 .readerHeader h2 { margin: 10px 0; font-size: clamp(1.5rem, 3vw, 2.2rem); line-height: 1.2; letter-spacing: -.025em; }
 .summary { margin: 0; border-left: 3px solid var(--primary); padding-left: 13px; color: var(--muted); font-size: 1rem; line-height: 1.6; }
-.articleBody { width: min(100%, 760px); margin: 0 auto; user-select: text; -webkit-user-select: text; }
+.readerHeader,.articleBody { user-select: text; -webkit-user-select: text; }
+.articleBody { width: min(100%, 760px); margin: 0 auto; }
+.selectionHint { display: none; width: min(100%, 760px); margin: -7px auto 16px; color: var(--muted); font-size: .78rem; line-height: 1.45; }
 .articleBody p { margin: 0 0 1.25em; font-size: clamp(1rem, 1.1vw, 1.12rem); line-height: 1.85; overflow-wrap: anywhere; }
 .articleBody ::selection { color: var(--foreground); background: color-mix(in srgb, var(--primary) 28%, transparent); }
 .originalLink { display: inline-flex; align-items: center; gap: 7px; min-height: 44px; color: var(--primary); font-size: .86rem; font-weight: 800; text-decoration: underline; text-underline-offset: 3px; }
@@ -61,6 +63,8 @@
 .closeButton:focus-visible,.saveButton:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
 .translationResult { min-height: 42px; border: 1px solid var(--outline); border-left: 3px solid var(--primary); border-radius: var(--radius-md); padding: 10px; background: var(--surface-low); font-size: .9rem; line-height: 1.5; overflow-wrap: anywhere; }
 .translationResult > span { color: var(--muted); }
+.translateButton { min-height: 42px; border: 1px solid var(--primary); border-radius: var(--radius-md); padding: 8px 12px; color: var(--primary); background: var(--surface); font: inherit; font-size: .86rem; font-weight: 800; cursor: pointer; }
+.translateButton:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
 .savePanel { display: grid; gap: 9px; }
 .saveButton { min-height: 46px; border: 1px solid var(--primary); border-radius: var(--radius-md); padding: 9px 12px; color: var(--on-primary, #fff); background: var(--primary); font: inherit; font-weight: 800; cursor: pointer; }
 .saveButton:disabled { cursor: not-allowed; opacity: .55; }
@@ -108,8 +112,11 @@
   .heroImage { margin-bottom: 18px; border-radius: 16px; }
   .readerHeader { margin-bottom: 18px; }
   .readerHeader h2 { font-size: 1.55rem; }
+  .selectionHint { display: block; }
   .articleBody p { font-size: 1.06rem; line-height: 1.8; }
-  .lookupPopover { width: min(380px, calc(100vw - 20px)); max-height: 58vh; padding: 12px; }
+  .lookupPopover { top: auto !important; right: 10px; bottom: calc(78px + env(safe-area-inset-bottom, 0px)); left: 10px !important; width: auto; max-height: min(52vh, 480px); max-height: min(52dvh, 480px); border-radius: 18px; padding: 12px; transform: none !important; }
+  .lookupPopover .closeButton { flex-basis: 44px; width: 44px; height: 44px; }
+  .lookupPopover .translateButton,.lookupPopover .saveButton { min-height: 46px; }
   .lookupPopover .savePanel { gap: 7px; }
   .lookupPopover .savePanel label { gap: 3px; font-size: .75rem; }
   .lookupPopover .savePanel input,.lookupPopover .savePanel textarea,.lookupPopover .savePanel select { min-height: 40px; font-size: 16px; }
