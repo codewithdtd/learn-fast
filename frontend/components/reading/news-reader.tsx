@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { AuthModal } from "@/components/auth/auth-modal";
 import { useAuth } from "@/context/auth-context";
+import { getReadingWordAtOffset } from "@/lib/reading-selection";
 import {
   addReadingVocabularyCard,
   createReadingVocabularySheet,
@@ -49,21 +50,75 @@ export function NewsReader() {
   const [sheetError, setSheetError] = useState<string | null>(null);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const articleBodyRef = useRef<HTMLElement | null>(null);
+  const articleHeaderRef = useRef<HTMLDivElement | null>(null);
   const selectedRangeRef = useRef<Range | null>(null);
+  const selectedTextRef = useRef<string | null>(null);
   const selectionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lookupSequenceRef = useRef(0);
   const articleRequestRef = useRef(0);
   const translationCacheRef = useRef(new Map<string, string>());
-  const preservePopoverRef = useRef(false);
+  const pendingTranslationsRef = useRef(new Map<string, Promise<{ translation_vi: string }>>());
 
   const clearLookup = useCallback(() => {
+    if (selectionTimerRef.current) clearTimeout(selectionTimerRef.current);
     lookupSequenceRef.current += 1;
     selectedRangeRef.current = null;
+    selectedTextRef.current = null;
     setLookupPopover(null);
     setTranslation({ value: "", loading: false, error: null });
     setSaveMessage(null);
     setSaveError(null);
   }, []);
+
+  const translateSelection = useCallback((text: string) => {
+    const key = text.toLocaleLowerCase("en");
+    const sequence = ++lookupSequenceRef.current;
+    const cached = translationCacheRef.current.get(key);
+    if (cached) {
+      setTranslation({ value: cached, loading: false, error: null });
+      setMeaningToSave(cached);
+      return;
+    }
+    setTranslation({ value: "", loading: true, error: null });
+    // Nhiều sự kiện selectionchange cho cùng đoạn chỉ dùng một request đang chờ.
+    let pending = pendingTranslationsRef.current.get(key);
+    if (!pending) {
+      pending = lookupReadingText(text).finally(() => pendingTranslationsRef.current.delete(key));
+      pendingTranslationsRef.current.set(key, pending);
+    }
+    void pending.then((result) => {
+      translationCacheRef.current.set(key, result.translation_vi);
+      if (sequence !== lookupSequenceRef.current) return;
+      setTranslation({ value: result.translation_vi, loading: false, error: null });
+      setMeaningToSave(result.translation_vi);
+    }).catch((error: unknown) => {
+      if (sequence === lookupSequenceRef.current) setTranslation({ value: "", loading: false, error: error instanceof Error ? error.message : "Translation could not be loaded." });
+    });
+  }, []);
+
+  const openLookup = useCallback((text: string, range: Range, autoTranslate: boolean) => {
+    const rectangle = range.getBoundingClientRect();
+    const width = Math.min(360, window.innerWidth - 24);
+    const left = Math.max(12, Math.min(rectangle.left + rectangle.width / 2 - width / 2, window.innerWidth - width - 12));
+    const above = rectangle.top > 210;
+    selectedRangeRef.current = range.cloneRange();
+    if (selectedTextRef.current === text) {
+      setLookupPopover((current) => current ? { ...current, left, top: above ? rectangle.top - 10 : rectangle.bottom + 10, placement: above ? "above" : "below" } : current);
+      return;
+    }
+    selectedTextRef.current = text;
+    lookupSequenceRef.current += 1;
+    setLookupPopover({ text, left, top: above ? rectangle.top - 10 : rectangle.bottom + 10, placement: above ? "above" : "below" });
+    setPhraseToSave(text.slice(0, 200));
+    setSaveMessage(null);
+    setSaveError(null);
+    setSheetError(null);
+    const cached = translationCacheRef.current.get(text.toLocaleLowerCase("en"));
+    setMeaningToSave(cached ?? "");
+    if (cached) setTranslation({ value: cached, loading: false, error: null });
+    else if (autoTranslate) translateSelection(text);
+    else setTranslation({ value: "", loading: false, error: null });
+  }, [translateSelection]);
 
   useEffect(() => {
     let active = true;
@@ -133,55 +188,50 @@ export function NewsReader() {
   }, [clearLookup, selectedArticle]);
 
   useEffect(() => {
-    if (!articleContent?.available) return;
+    if (!selectedArticle) return;
+    const isReadableNode = (node: Node) => Boolean(
+      articleBodyRef.current?.contains(node) || articleHeaderRef.current?.contains(node),
+    );
+    const isTouchDevice = () => window.matchMedia("(pointer: coarse)").matches || navigator.maxTouchPoints > 0;
     const readSelection = () => {
+      const selection = window.getSelection();
+      if (!selection || selection.isCollapsed || selection.rangeCount === 0) return;
+      const range = selection.getRangeAt(0);
+      if (!isReadableNode(range.startContainer) || !isReadableNode(range.endContainer)) return;
+      const text = selection.toString().replace(/\s+/g, " ").trim();
+      if (!text) return;
+      const capturedRange = range.cloneRange();
       if (selectionTimerRef.current) clearTimeout(selectionTimerRef.current);
-      selectionTimerRef.current = setTimeout(() => {
-        const selection = window.getSelection();
-        if (!selection || selection.isCollapsed || selection.rangeCount === 0) {
-          if (!preservePopoverRef.current) clearLookup();
-          return;
-        }
-        const range = selection.getRangeAt(0);
-        if (!articleBodyRef.current?.contains(range.commonAncestorContainer)) {
-          if (!preservePopoverRef.current) clearLookup();
-          return;
-        }
-        const text = selection.toString().replace(/\s+/g, " ").trim();
-        if (!text) return;
-        selectedRangeRef.current = range.cloneRange();
-        const rectangle = range.getBoundingClientRect();
-        const width = Math.min(360, window.innerWidth - 24);
-        const left = Math.max(12, Math.min(rectangle.left + rectangle.width / 2 - width / 2, window.innerWidth - width - 12));
-        const above = rectangle.top > 210;
-        setLookupPopover({ text, left, top: above ? rectangle.top - 10 : rectangle.bottom + 10, placement: above ? "above" : "below" });
-        setPhraseToSave(text.slice(0, 200));
-        setMeaningToSave(translationCacheRef.current.get(text.toLocaleLowerCase("en")) ?? "");
-        setSaveMessage(null);
-        setSaveError(null);
-        setSheetError(null);
-        const sequence = ++lookupSequenceRef.current;
-        const cacheKey = text.toLocaleLowerCase("en");
-        const cached = translationCacheRef.current.get(cacheKey);
-        if (cached) {
-          setTranslation({ value: cached, loading: false, error: null });
-          setMeaningToSave(cached);
-          return;
-        }
-        setTranslation({ value: "", loading: true, error: null });
-        void lookupReadingText(text).then((result) => {
-          if (sequence !== lookupSequenceRef.current) return;
-          translationCacheRef.current.set(cacheKey, result.translation_vi);
-          setTranslation({ value: result.translation_vi, loading: false, error: null });
-          setMeaningToSave(result.translation_vi);
-        }).catch((error: unknown) => {
-          if (sequence === lookupSequenceRef.current) setTranslation({ value: "", loading: false, error: error instanceof Error ? error.message : "Translation could not be loaded." });
-        });
-      }, 320);
+      selectionTimerRef.current = setTimeout(() => openLookup(text, capturedRange, !isTouchDevice()), 320);
+    };
+    const translateTappedWord = (event: MouseEvent) => {
+      if (!isTouchDevice()) return;
+      const target = event.target instanceof Element ? event.target : null;
+      if (!target || target.closest("button, a, input, textarea, select")) return;
+      const textContainer = target.closest("p, h2");
+      if (!textContainer || !isReadableNode(textContainer)) return;
+      const selection = window.getSelection();
+      if (selection && !selection.isCollapsed && selection.toString().trim()) return;
+      type CaretDocument = Document & {
+        caretPositionFromPoint?: (x: number, y: number) => { offsetNode: Node; offset: number } | null;
+        caretRangeFromPoint?: (x: number, y: number) => Range | null;
+      };
+      const caretDocument = document as CaretDocument;
+      const position = caretDocument.caretPositionFromPoint?.(event.clientX, event.clientY);
+      const fallbackRange = position ? null : caretDocument.caretRangeFromPoint?.(event.clientX, event.clientY);
+      const textNode = position?.offsetNode ?? fallbackRange?.startContainer;
+      const offset = position?.offset ?? fallbackRange?.startOffset;
+      if (!textNode || textNode.nodeType !== Node.TEXT_NODE || offset === undefined || !textContainer.contains(textNode)) return;
+      const word = getReadingWordAtOffset(textNode.textContent ?? "", offset);
+      if (!word) return;
+      const range = document.createRange();
+      range.setStart(textNode, word.start);
+      range.setEnd(textNode, word.end);
+      openLookup(word.text, range, true);
     };
     const reposition = () => {
       const range = selectedRangeRef.current;
-      if (!range || !articleBodyRef.current?.contains(range.commonAncestorContainer)) return;
+      if (!range || !isReadableNode(range.startContainer) || !isReadableNode(range.endContainer)) return;
       const rectangle = range.getBoundingClientRect();
       const width = Math.min(360, window.innerWidth - 24);
       const left = Math.max(12, Math.min(rectangle.left + rectangle.width / 2 - width / 2, window.innerWidth - width - 12));
@@ -191,16 +241,20 @@ export function NewsReader() {
         : current);
     };
     document.addEventListener("selectionchange", readSelection);
+    document.addEventListener("touchend", readSelection, { passive: true });
+    document.addEventListener("click", translateTappedWord);
     window.addEventListener("scroll", reposition, true);
     window.addEventListener("resize", reposition);
     return () => {
       document.removeEventListener("selectionchange", readSelection);
+      document.removeEventListener("touchend", readSelection);
+      document.removeEventListener("click", translateTappedWord);
       window.removeEventListener("scroll", reposition, true);
       window.removeEventListener("resize", reposition);
       if (selectionTimerRef.current) clearTimeout(selectionTimerRef.current);
       lookupSequenceRef.current += 1;
     };
-  }, [articleContent?.available, clearLookup]);
+  }, [openLookup, selectedArticle]);
 
   async function ensureVocabularySheet() {
     setCreatingSheet(true);
@@ -277,11 +331,12 @@ export function NewsReader() {
       <article className={styles.reader}>
         {!selectedArticle ? <div className={styles.emptyReader}><span aria-hidden="true">📖</span><h2>Choose a story to read</h2><p>News stories will appear here.</p></div> : <>
           {selectedArticle.image_url && <NewsImage key={`${selectedArticle.id}-hero`} className={styles.heroImage} src={selectedArticle.image_url} alt={selectedArticle.title} priority />}
-          <div className={styles.readerHeader}>
+          <div className={styles.readerHeader} ref={articleHeaderRef}>
             <p className={styles.articleMeta}>{selectedArticle.source_name} · {selectedArticle.category}{selectedArticle.published_at ? " · " + formatPublished(selectedArticle.published_at) : ""}</p>
             <h2>{selectedArticle.title}</h2>
             <p className={styles.summary}>{selectedArticle.summary}</p>
           </div>
+          <p className={styles.selectionHint}>Tap a word to translate it, or select a phrase and choose “Translate selection”.</p>
           {loadingContent || articleContent?.article.id !== selectedArticle.id ? <p className={styles.emptyState} role="status">Loading article…</p> : articleContent.available
             ? <section className={styles.articleBody} ref={articleBodyRef} aria-label="Article text" lang="en">
               {articleContent.paragraphs.map((paragraph, index) => <p key={index}>{paragraph}</p>)}
@@ -302,16 +357,14 @@ export function NewsReader() {
       data-placement={lookupPopover.placement}
       data-selection-popover="true"
       style={{ left: lookupPopover.left, top: lookupPopover.top }}
-      onPointerDown={() => { preservePopoverRef.current = true; }}
-      onPointerUp={() => { window.setTimeout(() => { preservePopoverRef.current = false; }, 800); }}
       aria-live="polite"
     >
       <div className={styles.lookupTop}>
         <div><span className={styles.eyebrow}>SELECTED TEXT</span><p lang="en">{lookupPopover.text}</p></div>
-        <button type="button" className={styles.closeButton} onClick={clearLookup} aria-label="Close translation">×</button>
+        <button type="button" className={styles.closeButton} onClick={() => { clearLookup(); window.getSelection()?.removeAllRanges(); }} aria-label="Close translation">×</button>
       </div>
-      <div className={styles.translationResult} lang="vi">
-        {translation.loading ? <span role="status">Translating…</span> : translation.error ? <p className={styles.error} role="alert">{translation.error}</p> : translation.value || <span>Select text to translate.</span>}
+      <div className={styles.translationResult}>
+        {translation.loading ? <span role="status">Translating…</span> : translation.error ? <><p className={styles.error} role="alert">{translation.error}</p><button type="button" className={styles.translateButton} onClick={() => translateSelection(lookupPopover.text)}>Try translation again</button></> : translation.value ? <span lang="vi">{translation.value}</span> : <button type="button" className={styles.translateButton} onClick={() => translateSelection(lookupPopover.text)}>Translate selection</button>}
       </div>
       {isAuthenticated ? <div className={styles.savePanel}>
         {vocabularySheets.length > 0 && <label>Personal sheet<select value={selectedSheetId} onChange={(event) => setSelectedSheetId(event.target.value)}>
