@@ -22,10 +22,10 @@ def _make_user(db_session, username: str, admin: bool) -> tuple[User, dict[str, 
     return user, {"Authorization": f"Bearer {create_access_token(subject=user.id)}"}
 
 
-def test_speaking_routes_are_admin_only(api_client, db_session, admin_headers):
+def test_speaking_prompts_are_available_for_preview(api_client, db_session, admin_headers):
     _, member_headers = _make_user(db_session, "speaking_member", False)
-    assert api_client.get("/api/v1/speaking/prompts").status_code == 401
-    assert api_client.get("/api/v1/speaking/prompts", headers=member_headers).status_code == 403
+    assert api_client.get("/api/v1/speaking/prompts").status_code == 200
+    assert api_client.get("/api/v1/speaking/prompts", headers=member_headers).status_code == 200
     response = api_client.get("/api/v1/speaking/prompts", headers=admin_headers)
     assert response.status_code == 200
     assert len(response.json()["items"]) == 8
@@ -54,7 +54,8 @@ def test_ai_generated_speaking_topic_is_saved_with_attempt(api_client, db_sessio
     _, member_headers = _make_user(db_session, "speaking_generate_member", False)
 
     assert api_client.post("/api/v1/speaking/attempts/random").status_code == 401
-    assert api_client.post("/api/v1/speaking/attempts/random", headers=member_headers).status_code == 403
+    assert api_client.post("/api/v1/speaking/attempts/random", headers=member_headers).status_code == 201
+    assert api_client.post("/api/v1/speaking/attempts/random", headers=member_headers).status_code == 429
     response = api_client.post("/api/v1/speaking/attempts/random", headers=admin_headers)
 
     assert response.status_code == 201, response.text
@@ -84,7 +85,7 @@ def test_attempt_is_private_to_its_owner(api_client, db_session, admin_headers):
     assert response.status_code == 404
 
 
-def test_transcription_validates_audio_and_consumes_quota_once(api_client, db_session, admin_headers, monkeypatch):
+def test_admin_transcription_records_usage_without_daily_cap(api_client, db_session, admin_headers, monkeypatch):
     monkeypatch.setattr(settings, "speaking_daily_ai_quota", 1)
     monkeypatch.setattr(speaking_service, "transcribe_audio", lambda audio, mime, name: "I live in a small apartment.")
     first = api_client.post("/api/v1/speaking/attempts", headers=admin_headers, json={"prompt_id": 1}).json()
@@ -102,7 +103,7 @@ def test_transcription_validates_audio_and_consumes_quota_once(api_client, db_se
         f"/api/v1/speaking/attempts/{second['id']}/transcribe", headers=admin_headers,
         files={"audio": ("answer.webm", b"audio-bytes", "audio/webm")},
     )
-    assert blocked.status_code == 429
+    assert blocked.status_code == 200
 
 
 def test_failed_provider_call_can_retry_without_second_quota(api_client, db_session, admin_headers, monkeypatch):

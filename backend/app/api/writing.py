@@ -1,6 +1,6 @@
 from typing import Annotated, Literal
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, Query, Request, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
@@ -22,6 +22,8 @@ from app.services.sentence_practice import create_sentence_attempt
 from app.schemas.sentence_practice import SentenceAttemptCreate
 from app.schemas.paragraph_practice import ParagraphPracticeCreate
 from app.services.paragraph_practice import create_paragraph_attempt
+from app.services.guest_ai_quota import account_trial_used, provider_trial
+from app.repositories.writing import WritingRepository
 
 
 router = APIRouter(prefix="/writing", tags=["writing"])
@@ -55,10 +57,12 @@ def create_attempt(
 )
 def sentence_attempt(
     payload: SentenceAttemptCreate,
+    request: Request,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> WritingAttemptRead:
-    return create_sentence_attempt(db, current_user.id, payload.flashcard_id)
+    with provider_trial(db, request, "sentence_topic", current_user):
+        return create_sentence_attempt(db, current_user.id, payload.flashcard_id, is_admin=current_user.is_superuser)
 
 
 @router.post(
@@ -68,10 +72,12 @@ def sentence_attempt(
 )
 def vocabulary_paragraph_attempt(
     payload: ParagraphPracticeCreate,
+    request: Request,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> WritingAttemptRead:
-    return create_paragraph_attempt(db, current_user, payload)
+    with provider_trial(db, request, "vocabulary_paragraph_topic", current_user):
+        return create_paragraph_attempt(db, current_user, payload)
 
 
 @router.post(
@@ -80,12 +86,14 @@ def vocabulary_paragraph_attempt(
     status_code=status.HTTP_201_CREATED,
 )
 def generate_random_attempt(
+    request: Request,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> WritingAttemptRead:
-    return writing_service.generate_random_attempt(
-        db, current_user.id, is_admin=current_user.is_superuser
-    )
+    with provider_trial(db, request, "writing_topic", current_user):
+        return writing_service.generate_random_attempt(
+            db, current_user.id, is_admin=current_user.is_superuser
+        )
 
 
 @router.patch("/attempts/{attempt_id}", response_model=WritingAttemptRead)
@@ -104,16 +112,18 @@ def save_attempt(
 def grade_attempt(
     attempt_id: int,
     payload: AttemptGrade,
+    request: Request,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> WritingAttemptRead:
-    return writing_service.grade_attempt(
-        db,
-        current_user.id,
-        attempt_id,
-        payload.version,
-        is_admin=current_user.is_superuser,
-    )
+    attempt = WritingRepository(db).get_attempt(attempt_id, current_user.id)
+    # Bài đã chấm chỉ đọc lại kết quả, không tiêu thụ provider hoặc thêm lượt thử.
+    if attempt is None or attempt.status == "graded":
+        return writing_service.grade_attempt(db, current_user.id, attempt_id, payload.version, is_admin=current_user.is_superuser)
+    format_name = attempt.prompt_snapshot.get("format")
+    feature = {"sentence": "sentence_feedback", "vocabulary_translation": "vocabulary_paragraph_feedback"}.get(format_name, "writing_feedback")
+    with provider_trial(db, request, feature, current_user):
+        return writing_service.grade_attempt(db, current_user.id, attempt_id, payload.version, is_admin=current_user.is_superuser)
 
 
 @router.get("/attempts", response_model=WritingAttemptList)
@@ -151,6 +161,12 @@ def error_history(
 
 @router.get("/usage", response_model=WritingUsageRead)
 def usage(
-    current_user: User = Depends(get_current_user), db: Session = Depends(get_db)
+    request: Request,
+    current_user: User = Depends(get_current_user), db: Session = Depends(get_db),
+    feature: Literal["writing_feedback", "sentence_feedback", "vocabulary_paragraph_feedback"] = "writing_feedback",
 ) -> WritingUsageRead:
-    return writing_service.get_usage(db, current_user.id, is_admin=current_user.is_superuser)
+    usage = writing_service.get_usage(db, current_user.id, is_admin=current_user.is_superuser)
+    if current_user.is_superuser:
+        return usage
+    used = int(account_trial_used(db, current_user, feature, request))
+    return WritingUsageRead(usage_date=usage.usage_date, daily_limit=1, used=used, remaining=1 - used)

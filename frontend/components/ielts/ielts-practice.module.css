@@ -1,0 +1,84 @@
+.page { display: grid; gap: 18px; padding-bottom: 70px; color: var(--foreground); }
+.heading { display: grid; gap: 7px; padding: 8px 2px 4px; }
+.kicker { color: var(--primary); font-size: .72rem; font-weight: 850; letter-spacing: .11em; text-transform: uppercase; }
+.heading h2 { margin: 0; font-size: clamp(1.6rem, 3.8vw, 2.5rem); letter-spacing: -.035em; line-height: 1.12; }
+.heading p,.helper { margin: 0; color: var(--muted); font-size: .87rem; line-height: 1.55; }
+.card,.history { display: grid; gap: 16px; border: 1px solid var(--outline); border-radius: var(--radius-lg); padding: clamp(16px, 3vw, 28px); background: var(--surface); }
+.choiceRow,.skillCards { display: flex; gap: 10px; }
+.choiceRow button,.secondary,.evidenceButton,.mobileSwitch button { min-height: 44px; border: 1px solid var(--outline); border-radius: var(--radius-md); padding: 9px 14px; color: var(--foreground); background: var(--surface-low); font: inherit; font-weight: 760; cursor: pointer; }
+.choiceRow button { flex: 1; }
+.choiceRow .selected,.mobileSwitch button[aria-pressed="true"] { border-color: var(--primary); color: var(--primary); background: var(--primary-soft); }
+.field { display: grid; gap: 7px; font-size: .84rem; font-weight: 760; }
+.field input,.field textarea,.field select { width: 100%; min-height: 46px; border: 1px solid var(--outline); border-radius: var(--radius-md); padding: 10px 12px; color: var(--foreground); background: var(--surface-low); font: inherit; }
+.field textarea { resize: vertical; line-height: 1.55; }
+.timeFields,.generation { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
+.generation { border-top: 1px solid var(--outline); padding-top: 16px; }
+.generation > .helper,.generation > .primary { grid-column: 1 / -1; }
+.sourceActions { display: flex; flex-wrap: wrap; gap: 9px; }
+.primary { min-height: 48px; border: 1px solid var(--primary); border-radius: var(--radius-md); padding: 10px 18px; color: var(--on-primary, #fff); background: var(--primary); font: inherit; font-weight: 820; cursor: pointer; }
+.primary:disabled,.secondary:disabled,.skillCard:disabled { opacity: .55; cursor: not-allowed; }
+.page button:hover:not(:disabled) { filter: brightness(.96); }
+.page button:active:not(:disabled) { transform: scale(.99); }
+.page button:focus-visible,.page input:focus-visible,.page textarea:focus-visible,.page select:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
+.sourceReady,.notice,.error { display: flex; flex-wrap: wrap; gap: 6px 12px; border: 1px solid var(--outline); border-radius: var(--radius-md); padding: 12px; font-size: .86rem; }
+.sourceReady { border-color: var(--green); background: color-mix(in srgb,var(--green) 8%,var(--surface)); }
+.sourceReady span { color: var(--muted); }
+.notice { background: var(--primary-soft); }
+.error { border-color: var(--error); color: var(--error); background: color-mix(in srgb,var(--error) 8%,var(--surface)); }
+.testHeader { display: flex; align-items: start; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.testActions { display: flex; flex-wrap: wrap; gap: 8px; }
+.testHeader h3 { margin: 4px 0 3px; font-size: 1.35rem; }
+.testHeader p { margin: 0; color: var(--muted); font-size: .84rem; }
+.skillCards > button { display: grid; flex: 1; gap: 5px; min-height: 112px; border: 1px solid var(--outline); border-radius: var(--radius-lg); padding: 14px; color: var(--foreground); background: var(--surface-low); font: inherit; text-align: left; cursor: pointer; }
+.skillCards > button > span { color: var(--primary); font-size: 1.45rem; }
+.skillCards small { color: var(--muted); }
+.skillCards .skillActive { border-color: var(--primary); background: var(--primary-soft); }
+.stickyVideo { position: static; z-index: auto; display: grid; gap: 5px; justify-self: start; width: min(100%, 760px); border: 1px solid var(--outline); border-radius: var(--radius-lg); padding: 7px; background: var(--surface); box-shadow: 0 4px 18px color-mix(in srgb,#000 12%,transparent); }
+.stickyVideo iframe { display: block; width: 100%; aspect-ratio: 16 / 9; border: 0; }
+.videoCaption { margin: 0; padding: 2px 7px 5px; color: var(--muted); font-size: .76rem; }
+.stickyVideo > button { justify-self: start; margin: 0 6px 5px; }
+.readingLayout { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); align-items: start; gap: 16px; }
+.listeningLayout { display: block; }
+.passage { position: sticky; top: 10px; max-height: min(78vh,850px); overflow: auto; border: 1px solid var(--outline); border-radius: var(--radius-lg); padding: 18px; background: var(--surface-low); line-height: 1.8; white-space: pre-wrap; }
+.passage p { margin: 1em 0; }
+.passage mark { border-radius: 3px; padding: 2px; color: var(--foreground); background: color-mix(in srgb,var(--green) 28%,var(--surface)); }
+.questionList { display: grid; gap: 14px; min-width: 0; }
+.progress { display: flex; justify-content: space-between; gap: 10px; border: 1px solid var(--outline); border-radius: var(--radius-md); padding: 12px; color: var(--primary); background: var(--primary-soft); font-weight: 800; }
+.question { display: grid; gap: 12px; border: 1px solid var(--outline); border-radius: var(--radius-lg); padding: clamp(14px,2vw,20px); background: var(--surface); }
+.questionHeading { display: flex; align-items: start; gap: 10px; }
+.questionHeading h4 { margin: 0; line-height: 1.5; font-size: 1rem; }
+.number { flex: 0 0 32px; display: grid; width: 32px; height: 32px; place-items: center; border-radius: 10px; color: var(--primary); background: var(--primary-soft); font-weight: 850; }
+.options { display: grid; gap: 7px; }
+.option { display: flex; align-items: center; gap: 10px; min-height: 46px; border: 1px solid var(--outline); border-radius: var(--radius-md); padding: 9px 12px; cursor: pointer; }
+.option[data-selected="true"] { border-color: var(--primary); background: var(--primary-soft); }
+.option input { width: 18px; height: 18px; accent-color: var(--primary); }
+.correct,.incorrect { display: grid; gap: 6px; border: 1px solid var(--green); border-radius: var(--radius-md); padding: 12px; background: color-mix(in srgb,var(--green) 8%,var(--surface)); font-size: .84rem; line-height: 1.5; }
+.incorrect { border-color: var(--error); background: color-mix(in srgb,var(--error) 7%,var(--surface)); }
+.correct p,.incorrect p { margin: 0; }
+.incorrect del { color: var(--error); text-decoration-thickness: 2px; }
+.correct ins,.incorrect ins { color: var(--green); font-weight: 800; text-decoration: none; }
+.correct blockquote,.incorrect blockquote { margin: 5px 0; border-left: 3px solid var(--primary); padding-left: 10px; font-style: italic; }
+.evidenceButton { justify-self: start; }
+.history { gap: 10px; }
+.history h3 { margin: 0 0 4px; }
+.history > div { display: grid; grid-template-columns: repeat(auto-fit,minmax(180px,1fr)); gap: 8px; }
+.history button { display: grid; gap: 5px; min-height: 66px; border: 1px solid var(--outline); border-radius: var(--radius-md); padding: 10px; color: var(--foreground); background: var(--surface-low); font: inherit; text-align: left; cursor: pointer; }
+.history button span { color: var(--muted); font-size: .78rem; }
+.history > .secondary { justify-self: start; }
+.mobileSwitch { display: none; }
+@media (max-width:760px) {
+  .page { gap: 12px; padding-bottom: calc(85px + env(safe-area-inset-bottom)); }
+  .card,.history { padding: 14px; border-radius: 18px; }
+  .timeFields,.generation { gap: 9px; }
+  .skillCards { gap: 7px; }
+  .skillCards > button { min-height: 100px; padding: 10px; }
+  .stickyVideo { position: sticky; top: 0; z-index: 4; justify-self: stretch; width: auto; margin-inline: -7px; }
+  .stickyVideo iframe { display: block; width: 100%; aspect-ratio: 16 / 9; }
+  .readingLayout { display: block; }
+  .mobileSwitch { display: flex; gap: 8px; }
+  .mobileSwitch button { flex: 1; }
+  .passage { position: static; max-height: none; }
+  .mobileHiddenPassage,.mobileHiddenQuestions { display: none; }
+}
+@media (max-width:380px) { .timeFields { grid-template-columns: 1fr; } }
+@media (prefers-reduced-motion: reduce) { .page button:active:not(:disabled) { transform: none; } }

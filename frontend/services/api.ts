@@ -10,6 +10,67 @@ import type {
   WritingUsage,
 } from "@/types/writing";
 import type { SpeakingAttempt, SpeakingAttemptList, SpeakingFeedback, SpeakingPrompt, SpeakingPromptList, SpeakingUsage } from "@/types/speaking";
+import type { IELTSAttempt, IELTSSource, IELTSTestSet, IELTSSkill } from "@/types/ielts";
+
+export type IELTSPage<T> = { items: T[]; total: number; limit: number; offset: number; has_more: boolean };
+
+export async function createIELTSSource(data: { source_type: "text" | "video"; text?: string; video_url?: string; start_seconds?: number; end_seconds?: number; transcript_ticket?: string }): Promise<IELTSSource> {
+  return requestJson<IELTSSource>("/api/v1/ielts/sources", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
+}
+
+export async function createIELTSTestSet(sourceId: number, skills: "reading" | "listening" | "both", count: 5 | 10, idempotencyKey: string): Promise<IELTSTestSet> {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), 125000);
+  try {
+    return await requestJson<IELTSTestSet>("/api/v1/ielts/test-sets", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ source_id: sourceId, skills, count_per_skill: count, idempotency_key: idempotencyKey }), signal: controller.signal });
+  } catch (cause) {
+    if (controller.signal.aborted) throw new Error("Generation timed out. Open your practice history to check whether the test completed.");
+    throw cause;
+  } finally {
+    window.clearTimeout(timeout);
+  }
+}
+
+export async function getIELTSTestSets(limit = 20, offset = 0): Promise<IELTSPage<IELTSTestSet>> {
+  return requestJson<IELTSPage<IELTSTestSet>>(`/api/v1/ielts/test-sets?${new URLSearchParams({ limit: String(limit), offset: String(offset) })}`);
+}
+
+export async function createIELTSSample(): Promise<IELTSTestSet> {
+  return requestJson<IELTSTestSet>("/api/v1/ielts/sample", { method: "POST" });
+}
+
+export async function getIELTSTestSet(id: number): Promise<IELTSTestSet> {
+  return requestJson<IELTSTestSet>(`/api/v1/ielts/test-sets/${id}`);
+}
+
+export async function deleteIELTSTestSet(id: number): Promise<void> {
+  return requestNoContent(`/api/v1/ielts/test-sets/${id}`, { method: "DELETE" });
+}
+
+export async function getIELTSReading(id: number): Promise<{ text: string; segments: TranscriptSegment[] }> {
+  return requestJson<{ text: string; segments: TranscriptSegment[] }>(`/api/v1/ielts/test-sets/${id}/reading`);
+}
+
+export async function startIELTSAttempt(id: number, skill: IELTSSkill): Promise<IELTSAttempt> {
+  return requestJson<IELTSAttempt>(`/api/v1/ielts/test-sets/${id}/attempts`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ skill }) });
+}
+
+export async function saveIELTSAnswers(id: number, answers: Record<string, string>): Promise<IELTSAttempt> {
+  return requestJson<IELTSAttempt>(`/api/v1/ielts/attempts/${id}/answers`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ answers }) });
+}
+
+export async function submitIELTSAttempt(id: number): Promise<IELTSAttempt> {
+  return requestJson<IELTSAttempt>(`/api/v1/ielts/attempts/${id}/submit`, { method: "POST" });
+}
+
+export async function getIELTSAttempts(limit = 20, offset = 0): Promise<IELTSPage<IELTSAttempt>> {
+  return requestJson<IELTSPage<IELTSAttempt>>(`/api/v1/ielts/attempts?${new URLSearchParams({ limit: String(limit), offset: String(offset) })}`);
+}
+
+export async function getIELTSAttempt(id: number): Promise<IELTSAttempt> {
+  return requestJson<IELTSAttempt>(`/api/v1/ielts/attempts/${id}`);
+}
 
 export type HealthResponse = {
   status: "ok";
@@ -106,6 +167,7 @@ export type VideoTranscript = {
   language_code: string | null;
   caption_type: string | null;
   segments: TranscriptSegment[];
+  ielts_source_ticket?: string | null;
 };
 
 export type WordDefinition = {

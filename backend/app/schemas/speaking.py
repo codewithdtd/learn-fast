@@ -114,9 +114,9 @@ class SpeakingAttemptList(StrictModel):
 
 class SpeakingUsageRead(StrictModel):
     usage_date: date
-    daily_limit: int
+    daily_limit: int | None
     used: int
-    remaining: int
+    remaining: int | None
 
 
 class SpeakingGradeRequest(StrictModel):

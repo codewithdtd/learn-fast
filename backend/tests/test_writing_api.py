@@ -46,10 +46,7 @@ def test_attempt_creation_requires_authentication(api_client: TestClient) -> Non
     assert api_client.post("/api/v1/writing/attempts", json={"prompt_id": 1}).status_code == 401
 
 
-@pytest.mark.parametrize("authenticated", [False, True])
 @pytest.mark.parametrize("method,path,payload", [
-    ("GET", "/prompts", None),
-    ("GET", "/prompts/1", None),
     ("GET", "/usage", None),
     ("GET", "/attempts", None),
     ("GET", "/attempts/1", None),
@@ -58,19 +55,19 @@ def test_attempt_creation_requires_authentication(api_client: TestClient) -> Non
     ("PATCH", "/attempts/1", {"version": 1, "draft_text": "A draft."}),
     ("POST", "/attempts/1/grade", {"version": 1}),
 ])
-def test_all_writing_endpoints_reject_guests_and_non_admins(
-    api_client, db_session, monkeypatch, authenticated, method, path, payload
+def test_private_writing_endpoints_require_authentication(
+    api_client, db_session, method, path, payload
 ):
-    _, headers = make_user(db_session, "member", is_admin=False)
-    monkeypatch.setattr(writing_service, "grade_writing", lambda *_: pytest.fail("AI called without admin rights"))
-    monkeypatch.setattr(writing_service, "generate_writing_prompt", lambda: pytest.fail("AI called without admin rights"))
-    response = api_client.request(method, "/api/v1/writing" + path,
-                                  headers=headers if authenticated else {}, json=payload)
-    assert response.status_code == (403 if authenticated else 401)
-    if authenticated:
-        assert "Administrator" in response.json()["detail"]
+    response = api_client.request(method, "/api/v1/writing" + path, json=payload)
+    assert response.status_code == 401
     assert db_session.scalar(select(WritingAttempt.id)) is None
     assert db_session.scalar(select(WritingAIUsage.id)) is None
+
+
+def test_writing_prompt_catalog_is_available_for_preview(api_client, db_session):
+    _, headers = make_user(db_session, "preview_member", is_admin=False)
+    assert api_client.get("/api/v1/writing/prompts").status_code == 200
+    assert api_client.get("/api/v1/writing/prompts/1", headers=headers).status_code == 200
 
 
 def test_draft_save_uses_version_and_private_owner_scope(api_client: TestClient, db_session) -> None:
@@ -176,7 +173,7 @@ def test_daily_quota_blocks_provider_before_another_call(api_client: TestClient,
 
     from app.core.config import settings
 
-    _owner, headers = make_user(db_session, "quota")
+    _owner, headers = make_user(db_session, "quota", is_admin=False)
     created = api_client.post("/api/v1/writing/attempts", headers=headers, json={"prompt_id": 1}).json()
     saved = api_client.patch(
         f"/api/v1/writing/attempts/{created['id']}", headers=headers,

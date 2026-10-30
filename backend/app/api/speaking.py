@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
@@ -17,6 +17,8 @@ from app.schemas.speaking import (
     SpeakingUsageRead,
 )
 from app.services import speaking as speaking_service
+from app.services.guest_ai_quota import account_trial_used, provider_trial
+from app.repositories.speaking import SpeakingRepository
 
 router = APIRouter(prefix="/speaking", tags=["speaking"])
 
@@ -37,15 +39,18 @@ def create_attempt(
 
 @router.post("/attempts/random", response_model=SpeakingAttemptRead, status_code=status.HTTP_201_CREATED)
 def generate_random_attempt(
+    request: Request,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> SpeakingAttemptRead:
-    return speaking_service.generate_random_attempt(db, current_user.id)
+    with provider_trial(db, request, "speaking_topic", current_user):
+        return speaking_service.generate_random_attempt(db, current_user.id)
 
 
 @router.post("/attempts/{attempt_id}/transcribe", response_model=SpeakingAttemptRead)
 def transcribe_attempt(
     attempt_id: int,
+    request: Request,
     audio: Annotated[UploadFile, File(...)],
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -57,7 +62,8 @@ def transcribe_attempt(
     # Endpoint đồng bộ chạy trong worker pool để chờ Gemini không chặn event loop.
     audio_bytes = audio.file.read(settings.speaking_max_audio_bytes + 1)
     audio.file.close()
-    return speaking_service.transcribe(db, current_user.id, attempt_id, audio_bytes, mime_type)
+    with provider_trial(db, request, "speaking_transcription", current_user):
+        return speaking_service.transcribe(db, current_user.id, attempt_id, audio_bytes, mime_type, is_admin=current_user.is_superuser)
 
 
 @router.patch("/attempts/{attempt_id}", response_model=SpeakingAttemptRead)
@@ -74,10 +80,15 @@ def save_transcript(
 def grade_attempt(
     attempt_id: int,
     payload: SpeakingGradeRequest,
+    request: Request,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> SpeakingAttemptRead:
-    return speaking_service.grade_attempt(db, current_user.id, attempt_id, payload.version)
+    attempt = SpeakingRepository(db).get_attempt(attempt_id, current_user.id)
+    if attempt is None or attempt.status == "graded":
+        return speaking_service.grade_attempt(db, current_user.id, attempt_id, payload.version)
+    with provider_trial(db, request, "speaking_feedback", current_user):
+        return speaking_service.grade_attempt(db, current_user.id, attempt_id, payload.version)
 
 
 @router.get("/attempts", response_model=SpeakingAttemptList)
@@ -98,6 +109,11 @@ def read_attempt(
 
 @router.get("/usage", response_model=SpeakingUsageRead)
 def usage(
+    request: Request,
     current_user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ) -> SpeakingUsageRead:
-    return speaking_service.usage(db, current_user.id)
+    usage = speaking_service.usage(db, current_user.id, is_admin=current_user.is_superuser)
+    if current_user.is_superuser:
+        return usage
+    used = int(account_trial_used(db, current_user, "speaking_transcription", request))
+    return SpeakingUsageRead(usage_date=usage.usage_date, daily_limit=1, used=used, remaining=1 - used)

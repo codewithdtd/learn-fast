@@ -14,7 +14,7 @@ from app.schemas.ai import (
 )
 from app.services.ai_client import extract_chunks_from_text, generate_ai_cards
 from app.services.ai_sheet_service import get_exclusion_phrases, save_ai_generated_sheet
-from app.services.guest_ai_quota import consume_guest_ai_trial
+from app.services.guest_ai_quota import provider_trial
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +37,6 @@ def generate_cards_endpoint(
     if current_user is None or not current_user.is_superuser:
         if request.target_sheet_id is not None or request.target_workbook_id is not None:
             raise HTTPException(status_code=400, detail="Guest previews cannot target a saved workbook or sheet.")
-        consume_guest_ai_trial(db, http_request, "flashcard_generation")
         exclusion_phrases: set[str] = set()
     else:
         exclusion_phrases = get_exclusion_phrases(
@@ -46,12 +45,13 @@ def generate_cards_endpoint(
             sheet_id=request.target_sheet_id,
             workbook_id=request.target_workbook_id,
         )
-    return generate_ai_cards(
-        topic=request.topic,
-        total_count=request.count,
-        level=request.level,
-        existing_phrases=exclusion_phrases,
-    )
+    with provider_trial(db, http_request, "flashcard_generation", current_user):
+        return generate_ai_cards(
+            topic=request.topic,
+            total_count=request.count,
+            level=request.level,
+            existing_phrases=exclusion_phrases,
+        )
 
 
 @router.post(
@@ -70,7 +70,6 @@ def mine_chunks_endpoint(
     if current_user is None or not current_user.is_superuser:
         if request.target_sheet_id is not None or request.target_workbook_id is not None:
             raise HTTPException(status_code=400, detail="Guest previews cannot target a saved workbook or sheet.")
-        consume_guest_ai_trial(db, http_request, "flashcard_generation")
         exclusion_phrases: set[str] = set()
     else:
         exclusion_phrases = get_exclusion_phrases(
@@ -79,10 +78,11 @@ def mine_chunks_endpoint(
             sheet_id=request.target_sheet_id,
             workbook_id=request.target_workbook_id,
         )
-    sheet_name, cards = extract_chunks_from_text(
-        text=request.text,
-        existing_phrases=exclusion_phrases,
-    )
+    with provider_trial(db, http_request, "flashcard_generation", current_user):
+        sheet_name, cards = extract_chunks_from_text(
+            text=request.text,
+            existing_phrases=exclusion_phrases,
+        )
     return AIGeneratedSheetResponse(
         sheet_name=sheet_name,
         cards=cards,

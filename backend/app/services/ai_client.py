@@ -101,8 +101,9 @@ def call_9router_chat(
     timeout: Optional[float] = None,
     max_tokens: Optional[int] = None,
     json_output: bool = False,
+    response_metadata: Optional[dict[str, Any]] = None,
 ) -> str:
-    """Thực hiện HTTP POST gọi endpoint OpenAI-compatible của 9Router local."""
+    """Gọi endpoint OpenAI-compatible; metadata tùy chọn không làm thay đổi chuỗi content trả về."""
     url = f"{settings.ai_base_url.rstrip('/')}/chat/completions"
     headers = {
         "Authorization": f"Bearer {settings.ai_api_key}",
@@ -129,20 +130,36 @@ def call_9router_chat(
             content_type = resp.headers.get("content-type", "")
             if "text/event-stream" in content_type:
                 full_content: list[str] = []
+                completion_tokens = None
+                finish_reason = None
                 for line in resp.text.splitlines():
                     line = line.strip()
                     if line.startswith("data: ") and line != "data: [DONE]":
                         try:
                             chunk = json.loads(line[6:])
-                            delta_content = chunk.get("choices", [{}])[0].get("delta", {}).get("content", "")
+                            choice = chunk.get("choices", [{}])[0]
+                            delta_content = choice.get("delta", {}).get("content", "")
                             if delta_content:
                                 full_content.append(delta_content)
+                            if choice.get("finish_reason") is not None:
+                                finish_reason = choice["finish_reason"]
+                            completion_tokens = (chunk.get("usage") or {}).get("completion_tokens", completion_tokens)
                         except json.JSONDecodeError:
                             continue
-                return "".join(full_content)
+                content = "".join(full_content)
+                if response_metadata is not None:
+                    response_metadata.update({"finish_reason": finish_reason, "completion_tokens": completion_tokens})
+                return content
             else:
                 data = resp.json()
-                return data["choices"][0]["message"]["content"]
+                choice = data["choices"][0]
+                content = choice["message"]["content"]
+                if response_metadata is not None:
+                    response_metadata.update({
+                        "finish_reason": choice.get("finish_reason"),
+                        "completion_tokens": (data.get("usage") or {}).get("completion_tokens"),
+                    })
+                return content
     except httpx.ConnectError as err:
         logger.error(f"Cannot connect to 9router at {url}: {err}")
         raise HTTPException(

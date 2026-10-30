@@ -75,7 +75,7 @@ def _get_owned(repo: SpeakingRepository, user_id: int, attempt_id: int, *, lock:
     return attempt
 
 
-def transcribe(db: Session, user_id: int, attempt_id: int, audio: bytes, mime_type: str) -> SpeakingAttemptRead:
+def transcribe(db: Session, user_id: int, attempt_id: int, audio: bytes, mime_type: str, *, is_admin: bool = False) -> SpeakingAttemptRead:
     repo = SpeakingRepository(db)
     attempt = _get_owned(repo, user_id, attempt_id, lock=True)
     if not audio:
@@ -85,13 +85,14 @@ def transcribe(db: Session, user_id: int, attempt_id: int, audio: bytes, mime_ty
     if mime_type not in {"audio/webm", "audio/mp4", "audio/mpeg", "audio/mp3", "audio/wav", "audio/ogg", "audio/aac", "audio/m4a", "audio/opus"}:
         raise HTTPException(status_code=415, detail="This recording format is not supported. Please record again using the browser's default format.")
     today = datetime.now(ZoneInfo(settings.speaking_timezone)).date()
-    quota = max(1, settings.speaking_daily_ai_quota)
+    # Admin không bị quota nội bộ chặn; provider vẫn áp dụng giới hạn riêng.
+    quota = None if is_admin else max(1, settings.speaking_daily_ai_quota)
     claimed = repo.claim_transcription(attempt, quota, today, timedelta(seconds=300))
     if claimed is None:
         current = _get_owned(repo, user_id, attempt_id)
         if current.status == "transcribing":
             raise HTTPException(status_code=409, detail="Transcription is already in progress.")
-        if repo.usage_count(user_id, today) >= quota and not current.quota_consumed:
+        if quota is not None and repo.usage_count(user_id, today) >= quota and not current.quota_consumed:
             raise HTTPException(status_code=429, detail="Daily speaking practice limit reached.")
         raise HTTPException(status_code=409, detail="This recording cannot be transcribed in its current state.")
     try:
@@ -163,8 +164,8 @@ def list_attempts(db: Session, user_id: int) -> SpeakingAttemptList:
     ) for item in items], total=total)
 
 
-def usage(db: Session, user_id: int) -> SpeakingUsageRead:
+def usage(db: Session, user_id: int, *, is_admin: bool = False) -> SpeakingUsageRead:
     today = datetime.now(ZoneInfo(settings.speaking_timezone)).date()
     used = SpeakingRepository(db).usage_count(user_id, today)
-    limit = max(1, settings.speaking_daily_ai_quota)
-    return SpeakingUsageRead(usage_date=today, daily_limit=limit, used=used, remaining=max(0, limit - used))
+    limit = None if is_admin else max(1, settings.speaking_daily_ai_quota)
+    return SpeakingUsageRead(usage_date=today, daily_limit=limit, used=used, remaining=None if limit is None else max(0, limit - used))

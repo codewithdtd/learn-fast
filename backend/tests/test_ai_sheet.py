@@ -80,10 +80,13 @@ def test_ai_generate_multi_batch():
 
 
 
-def test_generate_endpoint_requires_admin(api_client: TestClient):
-    """Yêu cầu quyền admin khi gọi endpoint sinh thẻ AI."""
-    resp = api_client.post("/api/v1/ai/generate", json={"topic": "Office", "count": 10})
-    assert resp.status_code == 401
+def test_generate_endpoint_allows_one_guest_trial(api_client: TestClient):
+    with patch("app.api.ai.generate_ai_cards", return_value={"sheet_name": "Preview", "cards": [], "total_generated": 0}) as provider:
+        resp = api_client.post("/api/v1/ai/generate", json={"topic": "Office", "count": 10})
+        repeated = api_client.post("/api/v1/ai/generate", json={"topic": "Office", "count": 10})
+    assert resp.status_code == 200
+    assert repeated.status_code == 429
+    assert provider.call_count == 1
 
 
 def test_generate_endpoint_success(api_client: TestClient, admin_headers: dict[str, str]):
@@ -264,10 +267,13 @@ def test_extract_chunks_from_text_success():
         assert cards[1].phrase == "see eye to eye on"
 
 
-def test_mine_chunks_endpoint_requires_admin(api_client: TestClient):
-    """Yêu cầu token admin khi gọi endpoint bóc tách câu văn /mine."""
-    resp = api_client.post("/api/v1/ai/mine", json={"text": "A quick test sentence."})
-    assert resp.status_code == 401
+def test_mine_chunks_endpoint_allows_one_guest_trial(api_client: TestClient):
+    with patch("app.api.ai.extract_chunks_from_text", return_value=("Preview", [])) as provider:
+        resp = api_client.post("/api/v1/ai/mine", json={"text": "A quick test sentence."})
+        repeated = api_client.post("/api/v1/ai/mine", json={"text": "A quick test sentence."})
+    assert resp.status_code == 200
+    assert repeated.status_code == 429
+    assert provider.call_count == 1
 
 
 def test_mine_chunks_endpoint_success(api_client: TestClient, admin_headers: dict[str, str]):
