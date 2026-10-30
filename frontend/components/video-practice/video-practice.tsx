@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, type FormEvent, type MouseEvent } from "react";
 import { useAuth } from "@/context/auth-context";
+import { saveIELTSPracticePrefill } from "@/lib/ielts-practice-prefill";
 import { isSpeechSupported, speakEnglish } from "@/lib/speech";
 import {
   createDictationGapPrompt,
@@ -412,6 +413,20 @@ export function VideoPractice() {
     : transcript.segments.length;
   const dictationComplete = eligibleDictationCount > 0 && Object.keys(firstTryResults).length >= eligibleDictationCount;
 
+  function openIELTSPractice() {
+    if (!transcript) return;
+    const ticket = transcript.ielts_source_ticket;
+    // Reuse only a server-signed transcript; if it is too large for a ticket, offer its text as Reading instead.
+    const prefill = ticket
+      ? { kind: "video" as const, video_url: videoUrl.trim(), transcript_ticket: ticket }
+      : { kind: "text" as const, text: transcript.segments.map((segment) => segment.text).join(" ").slice(0, 16000) };
+    if (!saveIELTSPracticePrefill(prefill)) {
+      setTranscriptError("This transcript could not be passed to IELTS Practice. Please try again.");
+      return;
+    }
+    window.location.assign("/ai-support?tab=ielts");
+  }
+
   return <section className={styles.root} aria-labelledby="video-practice-title">
     <header className={styles.intro}>
       <p className={styles.eyebrow}>LISTEN · REPEAT · REMEMBER</p>
@@ -444,6 +459,10 @@ export function VideoPractice() {
           <h3>{transcript.title || "YouTube video"}</h3>
           {transcript.author_name && <p>{transcript.author_name}</p>}
           <p>{transcript.segments.length} lines · {transcript.caption_type === "auto" ? "Auto-generated captions" : "Captions"}</p>
+          <button type="button" className={styles.secondary} onClick={openIELTSPractice}>
+            {transcript.ielts_source_ticket ? "Create IELTS tests from this video" : "Use transcript as a Reading passage"}
+          </button>
+          {!transcript.ielts_source_ticket && <p>This caption set is too large to reuse for Listening. Its text will open as a Reading source.</p>}
         </div>
         <p className={styles.captionNotice}>The active transcript line follows playback. On mobile, the player stays pinned at the top while you scroll.</p>
         {playerError && <p className={styles.error} role="alert">{playerError} <a href={videoUrl} target="_blank" rel="noreferrer">Open video on YouTube</a></p>}
