@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_user
+from app.api.deps import get_current_user, get_current_user_optional
 from app.core.database import get_db
 from app.models import User
 from app.repositories.personal_library import get_user_vocabulary_sheet
@@ -38,13 +38,15 @@ from app.services.reading import (
 )
 from app.services.translation_provider import TranslationProviderError, translate_english_to_vietnamese
 from app.services.video_practice import enforce_request_limit
+from app.services.guest_ai_quota import provider_trial
 
 
 router = APIRouter(prefix="/reading", tags=["reading"])
 
 
-def _enforce_provider_limit(request: Request) -> None:
-    enforce_request_limit(request.client.host if request.client else "unknown")
+def _enforce_provider_limit(request: Request, user: User | None) -> None:
+    if user is None or not user.is_superuser:
+        enforce_request_limit(request.client.host if request.client else "unknown")
 
 
 @router.get("/sources", response_model=list[ReadingSource])
@@ -57,10 +59,13 @@ def get_news_articles(
     request: Request,
     source: str = Query(default="all", max_length=20),
     category: str = Query(default="all", max_length=20),
+    db: Session = Depends(get_db),
+    current_user: User | None = Depends(get_current_user_optional),
 ) -> ReadingArticleList:
-    _enforce_provider_limit(request)
+    _enforce_provider_limit(request, current_user)
     try:
-        return fetch_news_articles(source, category)
+        with provider_trial(db, request, "news_feed", current_user):
+            return fetch_news_articles(source, category)
     except ValueError as error:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(error)) from error
     except NewsProviderError as error:
@@ -73,8 +78,10 @@ def get_news_article_content(
     source: str = Query(min_length=4, max_length=20),
     url: str = Query(min_length=12, max_length=2048),
     title: str = Query(default="", max_length=300),
+    db: Session = Depends(get_db),
+    current_user: User | None = Depends(get_current_user_optional),
 ) -> ReadingArticleContent:
-    _enforce_provider_limit(request)
+    _enforce_provider_limit(request, current_user)
     source_config = SOURCE_FEEDS.get(source)
     if source_config is None:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Choose a supported news source.")
@@ -88,19 +95,21 @@ def get_news_article_content(
         url=url,
     )
     try:
-        return fetch_news_article(source, article)
+        with provider_trial(db, request, "news_article", current_user):
+            return fetch_news_article(source, article)
     except NewsArticleUnavailable as error:
         return ReadingArticleContent(article=article, paragraphs=[], available=False, message=str(error))
 
 
 @router.post("/lookup", response_model=ReadingLookupResponse)
-def lookup_reading_selection(payload: ReadingLookupRequest, request: Request) -> ReadingLookupResponse:
-    _enforce_provider_limit(request)
+def lookup_reading_selection(payload: ReadingLookupRequest, request: Request, db: Session = Depends(get_db), current_user: User | None = Depends(get_current_user_optional)) -> ReadingLookupResponse:
+    _enforce_provider_limit(request, current_user)
     try:
-        return ReadingLookupResponse(
-            text=payload.text,
-            translation_vi=translate_english_to_vietnamese(payload.text),
-        )
+        with provider_trial(db, request, "translation_lookup", current_user):
+            return ReadingLookupResponse(
+                text=payload.text,
+                translation_vi=translate_english_to_vietnamese(payload.text),
+            )
     except ValueError as error:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(error)) from error
     except TranslationProviderError as error:

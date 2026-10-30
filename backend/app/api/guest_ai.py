@@ -2,12 +2,14 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.api.deps import get_current_user_optional
+from app.models.user import User
 from app.repositories.speaking import SpeakingRepository
 from app.repositories.writing import WritingRepository
 from app.schemas.guest_ai import GuestSentenceGrade, GuestSpeakingGrade, GuestWritingGrade
 from app.schemas.speaking import SpeakingFeedback, SpeakingPromptDraft
 from app.schemas.writing import AIWritingPromptDraft, WritingFeedbackRead
-from app.services.guest_ai_quota import consume_guest_ai_trial
+from app.services.guest_ai_quota import provider_trial
 from app.services.speaking import _snapshot as speaking_snapshot
 from app.services.speaking_ai import grade_speaking, generate_speaking_prompt
 from app.services.writing import _prompt_snapshot
@@ -20,25 +22,25 @@ router = APIRouter(prefix="/guest/ai", tags=["guest AI trials"])
 
 
 @router.post("/vocabulary-paragraph/topic", response_model=ParagraphGuestTask)
-def vocabulary_paragraph_topic(payload: ParagraphPracticeCreate, request: Request, db: Session = Depends(get_db)) -> ParagraphGuestTask:
-    words = select_words(db, payload, None)
-    consume_guest_ai_trial(db, request, "vocabulary_paragraph_topic")
-    return generate_task(words, payload.style, payload.sheet_id)
+def vocabulary_paragraph_topic(payload: ParagraphPracticeCreate, request: Request, db: Session = Depends(get_db), current_user: User | None = Depends(get_current_user_optional)) -> ParagraphGuestTask:
+    words = select_words(db, payload, current_user)
+    with provider_trial(db, request, "vocabulary_paragraph_topic", current_user):
+        return generate_task(words, payload.style, payload.sheet_id)
 
 
 @router.post("/vocabulary-paragraph/grade", response_model=WritingFeedbackRead)
-def vocabulary_paragraph_grade(payload: ParagraphGuestGrade, request: Request, db: Session = Depends(get_db)) -> WritingFeedbackRead:
-    consume_guest_ai_trial(db, request, "vocabulary_paragraph_feedback")
-    raw, _model = grade_writing(task_snapshot(payload.task), payload.draft_text)
-    return validate_and_anchor_feedback(raw, payload.draft_text)
+def vocabulary_paragraph_grade(payload: ParagraphGuestGrade, request: Request, db: Session = Depends(get_db), current_user: User | None = Depends(get_current_user_optional)) -> WritingFeedbackRead:
+    with provider_trial(db, request, "vocabulary_paragraph_feedback", current_user):
+        raw, _model = grade_writing(task_snapshot(payload.task), payload.draft_text)
+        return validate_and_anchor_feedback(raw, payload.draft_text)
 
 
 @router.post("/writing/topic", response_model=AIWritingPromptDraft)
 def writing_topic(
-    request: Request, db: Session = Depends(get_db)
+    request: Request, db: Session = Depends(get_db), current_user: User | None = Depends(get_current_user_optional)
 ) -> AIWritingPromptDraft:
-    consume_guest_ai_trial(db, request, "writing_topic")
-    return generate_writing_prompt()
+    with provider_trial(db, request, "writing_topic", current_user):
+        return generate_writing_prompt()
 
 
 @router.post("/writing/grade", response_model=WritingFeedbackRead)
@@ -46,21 +48,22 @@ def writing_grade(
     payload: GuestWritingGrade,
     request: Request,
     db: Session = Depends(get_db),
+    current_user: User | None = Depends(get_current_user_optional),
 ) -> WritingFeedbackRead:
     prompt = WritingRepository(db).get_prompt(payload.prompt_id)
     if prompt is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Writing topic not found.")
-    consume_guest_ai_trial(db, request, "writing_feedback")
-    raw, _model = grade_writing(_prompt_snapshot(prompt), payload.draft_text)
-    return validate_and_anchor_feedback(raw, payload.draft_text)
+    with provider_trial(db, request, "writing_feedback", current_user):
+        raw, _model = grade_writing(_prompt_snapshot(prompt), payload.draft_text)
+        return validate_and_anchor_feedback(raw, payload.draft_text)
 
 
 @router.post("/speaking/topic", response_model=SpeakingPromptDraft)
 def speaking_topic(
-    request: Request, db: Session = Depends(get_db)
+    request: Request, db: Session = Depends(get_db), current_user: User | None = Depends(get_current_user_optional)
 ) -> SpeakingPromptDraft:
-    consume_guest_ai_trial(db, request, "speaking_topic")
-    return generate_speaking_prompt()
+    with provider_trial(db, request, "speaking_topic", current_user):
+        return generate_speaking_prompt()
 
 
 @router.post("/speaking/grade", response_model=SpeakingFeedback)
@@ -68,13 +71,14 @@ def speaking_grade(
     payload: GuestSpeakingGrade,
     request: Request,
     db: Session = Depends(get_db),
+    current_user: User | None = Depends(get_current_user_optional),
 ) -> SpeakingFeedback:
     prompt = SpeakingRepository(db).get_prompt(payload.prompt_id)
     if prompt is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Speaking topic not found.")
-    consume_guest_ai_trial(db, request, "speaking_feedback")
-    feedback, _model = grade_speaking(speaking_snapshot(prompt), payload.transcript)
-    return feedback
+    with provider_trial(db, request, "speaking_feedback", current_user):
+        feedback, _model = grade_speaking(speaking_snapshot(prompt), payload.transcript)
+        return feedback
 
 
 @router.post("/sentence/grade", response_model=WritingFeedbackRead)
@@ -82,8 +86,8 @@ def sentence_grade(
     payload: GuestSentenceGrade,
     request: Request,
     db: Session = Depends(get_db),
+    current_user: User | None = Depends(get_current_user_optional),
 ) -> WritingFeedbackRead:
-    consume_guest_ai_trial(db, request, "sentence_feedback")
     prompt = {
         "prompt_en": payload.situation_en,
         "prompt_vi": payload.situation_vi,
@@ -97,5 +101,6 @@ def sentence_grade(
             "situation_vi": payload.situation_vi,
         }},
     }
-    raw, _model = grade_writing(prompt, payload.sentence)
-    return validate_and_anchor_feedback(raw, payload.sentence)
+    with provider_trial(db, request, "sentence_feedback", current_user):
+        raw, _model = grade_writing(prompt, payload.sentence)
+        return validate_and_anchor_feedback(raw, payload.sentence)

@@ -31,6 +31,8 @@ class TranscriptResponse(BaseModel):
     language_code: str | None = None
     caption_type: str | None = None
     segments: list[TranscriptSegment] = Field(min_length=1, max_length=1000)
+    # Ticket ký ngắn hạn giúp chuyển transcript sang IELTS mà không phải gọi lại provider.
+    ielts_source_ticket: str | None = None
 
 
 class WordLookupRequest(BaseModel):

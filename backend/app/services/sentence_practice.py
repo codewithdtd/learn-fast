@@ -27,7 +27,7 @@ example (one correct possible sentence, not a mandatory answer). Match both lang
 Vary everyday contexts across requests. Use simple language. Return JSON only matching the schema."""
 
 
-def create_sentence_attempt(db: Session, user_id: int, flashcard_id: int) -> WritingAttemptRead:
+def create_sentence_attempt(db: Session, user_id: int, flashcard_id: int, *, is_admin: bool = False) -> WritingAttemptRead:
     card = get_sentence_card(db, flashcard_id)
     if card is None:
         raise HTTPException(status_code=404, detail="Vocabulary card not found.")
@@ -38,7 +38,8 @@ def create_sentence_attempt(db: Session, user_id: int, flashcard_id: int) -> Wri
     repo = WritingRepository(db)
     day = datetime.now(ZoneInfo(settings.writing_timezone)).date()
     # Dùng chung quota tạo đề; commit trước network để nhiều worker không cùng vượt hạn mức.
-    if repo.consume_topic_generation_quota(user_id, day, max(1, settings.writing_topic_generation_daily_quota)) is None:
+    limit = None if is_admin else max(1, settings.writing_topic_generation_daily_quota)
+    if repo.consume_topic_generation_quota(user_id, day, limit) is None:
         db.rollback()
         raise HTTPException(status_code=429, detail="Today's AI task generation limit is reached. Try again tomorrow.")
     db.commit()

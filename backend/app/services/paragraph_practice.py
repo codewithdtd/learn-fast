@@ -112,7 +112,8 @@ def create_paragraph_attempt(db: Session, user: User, payload: ParagraphPractice
     repo = WritingRepository(db)
     day = datetime.now(ZoneInfo(settings.writing_timezone)).date()
     # Dùng chung quota tạo đề Writing; claim trước network để các request đồng thời không vượt giới hạn.
-    if repo.consume_topic_generation_quota(user.id, day, max(1, settings.writing_topic_generation_daily_quota)) is None:
+    limit = None if user.is_superuser else max(1, settings.writing_topic_generation_daily_quota)
+    if repo.consume_topic_generation_quota(user.id, day, limit) is None:
         db.rollback()
         raise HTTPException(status_code=429, detail="Today's AI task generation limit is reached. Try again tomorrow.")
     db.commit()

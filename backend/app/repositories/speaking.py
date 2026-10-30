@@ -50,7 +50,7 @@ class SpeakingRepository:
     def usage_count(self, user_id: int, usage_date: date) -> int:
         return self.db.scalar(select(SpeakingAIUsage.used_count).where(SpeakingAIUsage.user_id == user_id, SpeakingAIUsage.usage_date == usage_date)) or 0
 
-    def claim_transcription(self, attempt: SpeakingAttempt, quota: int, usage_date: date, stale_after: timedelta) -> SpeakingAttempt | None:
+    def claim_transcription(self, attempt: SpeakingAttempt, quota: int | None, usage_date: date, stale_after: timedelta) -> SpeakingAttempt | None:
         now = datetime.now(timezone.utc)
         if attempt.status in {"transcribing", "grading"}:
             started = attempt.processing_started_at
@@ -72,7 +72,7 @@ class SpeakingRepository:
             statement = insert.values(user_id=attempt.user_id, usage_date=usage_date, used_count=1).on_conflict_do_update(
                 index_elements=["user_id", "usage_date"],
                 set_={"used_count": SpeakingAIUsage.used_count + 1, "updated_at": now},
-                where=SpeakingAIUsage.used_count < quota,
+                where=SpeakingAIUsage.used_count < quota if quota is not None else None,
             ).returning(SpeakingAIUsage.used_count)
             if self.db.scalar(statement) is None:
                 self.db.rollback()

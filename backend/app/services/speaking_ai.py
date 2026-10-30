@@ -151,8 +151,8 @@ def grade_speaking(prompt: dict, transcript: str) -> tuple[SpeakingFeedback, str
             json_output=True,
         )
     except HTTPException as error:
-        # 9Router ánh xạ 429 từ provider thành 502; khôi phục nguyên nhân để UI hướng dẫn thử lại đúng.
-        busy = error.status_code == 502 and "HTTP 429" in str(error.detail)
+        # Nhận diện cả 429 trực tiếp và thông báo 502 cũ để UI hiển thị đúng giới hạn provider.
+        busy = error.status_code == 429 or (error.status_code == 502 and "HTTP 429" in str(error.detail))
         timeout = error.status_code == 504
         raise TranscriptionProviderError(
             "The feedback service is busy. Please try again shortly." if busy
