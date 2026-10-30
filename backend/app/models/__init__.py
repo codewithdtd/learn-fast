@@ -14,6 +14,9 @@ from app.models.enums import (
 )
 from app.models.flashcard import Flashcard
 from app.models.guest_ai_usage import GuestAIUsage
+from app.models.ielts_source import IELTSPracticeSource
+from app.models.ielts_test_set import IELTSPracticeTestSet
+from app.models.ielts_attempt import IELTSPracticeAttempt
 from app.models.notification import Notification
 from app.models.study_sheet import StudySheet
 from app.models.study_session import StudySession
@@ -32,6 +35,9 @@ from app.models.writing_usage import WritingAIUsage
 __all__ = [
     "Flashcard",
     "GuestAIUsage",
+    "IELTSPracticeSource",
+    "IELTSPracticeTestSet",
+    "IELTSPracticeAttempt",
     "Notification",
     "NotificationType",
     "SheetPriority",

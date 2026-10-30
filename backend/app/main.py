@@ -7,6 +7,7 @@ from app.api.calendar import router as calendar_router
 from app.api.dashboard import router as dashboard_router
 from app.api.flashcards import router as flashcards_router
 from app.api.health import router as health_router
+from app.api.ielts import router as ielts_router
 from app.api.guest_ai import router as guest_ai_router
 from app.api.notifications import router as notifications_router
 from app.api.quick_recall import router as quick_recall_router
@@ -30,6 +31,7 @@ for public_learning_router in (
     workbooks_router, sheets_router, flashcards_router,
     ai_router, writing_router, speaking_router, dashboard_router, calendar_router,
     video_practice_router, reading_router,
+    ielts_router,
 ):
     api_app.include_router(public_learning_router, prefix="/api/v1")
 api_app.include_router(guest_ai_router, prefix="/api/v1")

@@ -49,16 +49,22 @@ def test_chat_transport_enables_json_format_only_when_requested(monkeypatch, jso
 
     def handle(request):
         requests.append(json.loads(request.content))
-        return httpx.Response(200, json={"choices": [{"message": {"content": '{"ok":true}'}}]})
+        return httpx.Response(200, json={
+            "choices": [{"message": {"content": '{"ok":true}'}, "finish_reason": "length"}],
+            "usage": {"completion_tokens": 91},
+        })
 
     original_client = httpx.Client
     monkeypatch.setattr(ai_client.httpx, "Client", lambda **kwargs: original_client(
         transport=httpx.MockTransport(handle), **kwargs,
     ))
+    metadata = {}
     result = ai_client.call_9router_chat(
         [{"role": "user", "content": "JSON please"}], json_output=json_output,
+        response_metadata=metadata,
     )
     assert json.loads(result) == {"ok": True}
+    assert metadata == {"finish_reason": "length", "completion_tokens": 91}
     if json_output:
         assert requests[0]["response_format"] == {"type": "json_object"}
     else:
