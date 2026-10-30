@@ -33,7 +33,8 @@
 .skillCards > button > span { color: var(--primary); font-size: 1.45rem; }
 .skillCards small { color: var(--muted); }
 .skillCards .skillActive { border-color: var(--primary); background: var(--primary-soft); }
-.stickyVideo { position: sticky; top: 8px; z-index: 4; display: grid; gap: 5px; border: 1px solid var(--outline); border-radius: var(--radius-lg); padding: 7px; background: var(--surface); box-shadow: 0 4px 18px color-mix(in srgb,#000 12%,transparent); }
+.stickyVideo { position: static; z-index: auto; display: grid; gap: 5px; justify-self: start; width: min(100%, 760px); border: 1px solid var(--outline); border-radius: var(--radius-lg); padding: 7px; background: var(--surface); box-shadow: 0 4px 18px color-mix(in srgb,#000 12%,transparent); }
+.stickyVideo iframe { display: block; width: 100%; aspect-ratio: 16 / 9; border: 0; }
 .videoCaption { margin: 0; padding: 2px 7px 5px; color: var(--muted); font-size: .76rem; }
 .stickyVideo > button { justify-self: start; margin: 0 6px 5px; }
 .readingLayout { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); align-items: start; gap: 16px; }
@@ -71,7 +72,7 @@
   .timeFields,.generation { gap: 9px; }
   .skillCards { gap: 7px; }
   .skillCards > button { min-height: 100px; padding: 10px; }
-  .stickyVideo { top: 0; margin-inline: -7px; }
+  .stickyVideo { position: sticky; top: 0; z-index: 4; justify-self: stretch; width: auto; margin-inline: -7px; }
   .stickyVideo iframe { display: block; width: 100%; aspect-ratio: 16 / 9; }
   .readingLayout { display: block; }
   .mobileSwitch { display: flex; gap: 8px; }
