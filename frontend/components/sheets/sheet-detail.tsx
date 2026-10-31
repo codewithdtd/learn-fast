@@ -124,9 +124,9 @@ export function SheetDetailView({ sheetId }: SheetDetailProps) {
           <section className="sheet-detail-actions" aria-labelledby="sheet-actions-title">
             <div className="section-heading"><div><p className="eyebrow">More ways to practice</p><h2 id="sheet-actions-title">Learning modes</h2></div></div>
             <div className="sheet-action-grid">
-              <ActionCard href={`/ai-support?tab=sentences&sheet=${sheet.id}`} icon="review" title="Use this word" description="Write your own sentences and get bilingual AI feedback. Admin access required." tone="mint" />
-              <ActionCard href={`/sheets/${sheet.id}/paragraph-practice`} icon="review" title="Translate a story" description="Turn 5–10 expressions into a story or dialogue and get AI feedback." tone="gold" />
-              <ActionCard href={`/sheets/${sheet.id}/quick-recall`} icon="review" title="Practice Exercises" description="Check your recall with quizzes, translation and fill-in-the-blank exercises." tone="mint" />
+              <ActionCard href={`/ai-support?tab=sentences&sheet=${sheet.id}`} icon="writing" title="Use this word" description="Write your own sentences and get bilingual AI feedback. Admin access required." tone="mint" />
+              <ActionCard href={`/sheets/${sheet.id}/paragraph-practice`} icon="study" title="Translate a story" description="Turn 5–10 expressions into a story or dialogue and get AI feedback." tone="gold" />
+              <ActionCard href={`/sheets/${sheet.id}/quick-recall`} icon="refresh" title="Practice Exercises" description="Check your recall with quizzes, translation and fill-in-the-blank exercises." tone="mint" />
               <ActionCard href={`/sheets/${sheet.id}/table`} icon="books" title="Table View" description="Browse the full vocabulary list." tone="gold" />
             </div>
           </section>
@@ -160,7 +160,7 @@ export function SheetDetailView({ sheetId }: SheetDetailProps) {
   );
 }
 
-function ActionCard({ href, icon, title, description, tone }: { href: string; icon: "review" | "books"; title: string; description: string; tone: "mint" | "gold" }) {
+function ActionCard({ href, icon, title, description, tone }: { href: string; icon: "writing" | "study" | "refresh" | "books" | "review" | "play"; title: string; description: string; tone: "mint" | "gold" }) {
   return <Link href={href} className={`sheet-action-card ${tone}`}><span className="sheet-action-icon"><Icon name={icon} size={23} /></span><span><strong>{title}</strong><small>{description}</small></span><Icon name="arrow" size={20} /></Link>;
 }
 

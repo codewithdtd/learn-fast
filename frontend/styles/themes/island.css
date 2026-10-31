@@ -1267,15 +1267,28 @@
 }
 
 :root[data-theme="island"] .workbook-sheet-arrow {
-  color: #7a6655;
-  display: flex;
-  align-items: center;
-  transition: transform 0.15s ease, color 0.15s ease;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #eae3d8;
+  border: 1.5px solid #d4c7b2;
+  display: grid;
+  place-items: center;
+  color: #5e5145;
+  flex-shrink: 0;
+  transition: transform 0.15s ease, color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+}
+
+:root[data-theme="island"] .workbook-sheet-arrow svg {
+  display: block;
+  margin: auto;
 }
 
 :root[data-theme="island"] .workbook-sheet-row:hover .workbook-sheet-arrow {
+  background: #ded6c8;
+  border-color: #3b6132;
   color: #3b6132;
-  transform: translateX(4px);
+  transform: scale(1.08);
 }
 
 :root[data-theme="island"] .workbook-review-callout {
@@ -1417,6 +1430,31 @@
   border-color: #3b6132;
 }
 
+:root[data-theme="island"] .sheet-detail-primary-action .sheet-action-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  background: #f4efe6;
+  border: 1.5px solid #d4c7b2;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  color: #284422;
+}
+
+:root[data-theme="island"] .sheet-detail-primary-action .sheet-action-icon svg {
+  color: #284422;
+  stroke: #284422;
+  display: block;
+  margin: auto;
+}
+
+:root[data-theme="island"] .sheet-detail-primary-action > svg.icon {
+  color: #ffffff;
+  stroke: #ffffff;
+  flex-shrink: 0;
+}
+
 :root[data-theme="island"] .sheet-action-icon {
   width: 46px;
   height: 46px;
@@ -1426,6 +1464,14 @@
   display: grid;
   place-items: center;
   flex-shrink: 0;
+  color: #3b6132;
+}
+
+:root[data-theme="island"] .sheet-action-icon svg {
+  color: #3b6132;
+  stroke: #3b6132;
+  display: block;
+  margin: auto;
 }
 
 :root[data-theme="island"] .sheet-action-card strong {
