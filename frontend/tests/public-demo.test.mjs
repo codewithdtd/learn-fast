@@ -9,7 +9,7 @@ test("the public preview contains one self-contained sample sheet", () => {
   assert.equal(DEMO_SHEET.card_count, DEMO_CARDS.length);
   assert.equal(new Set(DEMO_CARDS.map((card) => card.id)).size, DEMO_CARDS.length);
   assert.ok(DEMO_CARDS.every((card) => card.phrase && card.meaning && card.example_en && card.example_vi));
-  assert.deepEqual(DEMO_VIEWS, ["overview", "flashcards", "table", "exercises"]);
+  assert.deepEqual(DEMO_VIEWS, ["overview", "flashcards", "table", "exercises", "calendar", "import", "ai"]);
 });
 
 test("every exercise is usable from the fixed sample without changing its data", () => {
