@@ -20,7 +20,7 @@
 .heroBanner {
   position: relative;
   overflow: hidden;
-  border: 2px solid #cdbfa9;
+  border: 2px solid #d4c7b2;
   border-radius: 28px;
   background: #d8e2d8;
   box-shadow: 0 6px 24px rgba(50, 35, 20, 0.08);
@@ -48,9 +48,9 @@
   align-items: center;
   justify-content: space-between;
   padding: 18px 28px;
-  background: rgba(235, 224, 207, 0.96);
+  background: rgba(244, 239, 230, 0.96);
   backdrop-filter: blur(8px);
-  border-top: 1.5px solid #cdbfa9;
+  border-top: 1.5px solid #d4c7b2;
   gap: 16px;
 }
 
@@ -98,7 +98,7 @@
   gap: 12px;
   padding: 8px 16px;
   border-radius: 20px;
-  background: #ded2be;
+  background: #e8e1d5;
   border: 1.5px solid #c9b69d;
   box-shadow: inset 0 2px 4px rgba(50, 35, 20, 0.06);
 }
@@ -160,8 +160,8 @@
    3. Card Container Style (Cozy Muted Parchment Card)
    -------------------------------------------------------------------------- */
 .cozyCard {
-  background: #ebe0cf;
-  border: 2px solid #cdbfa9;
+  background: #f4efe6;
+  border: 2px solid #d4c7b2;
   border-radius: 24px;
   padding: 22px;
   box-shadow: 0 4px 20px rgba(50, 35, 20, 0.07);
@@ -233,7 +233,7 @@
   justify-content: space-between;
   padding: 12px 14px;
   background: #e2d6c3;
-  border: 1.5px solid #cdbfa9;
+  border: 1.5px solid #d4c7b2;
   border-radius: 16px;
   margin-bottom: 16px;
 }
@@ -265,7 +265,7 @@
   font-family: monospace;
   font-weight: 600;
   padding: 4px 10px;
-  background: #ebe0cf;
+  background: #f4efe6;
   border: 1px solid #baa993;
   border-radius: 10px;
   color: #5c432f;
@@ -273,8 +273,8 @@
 
 /* Mini Calendar */
 .miniCalendar {
-  background: #dfd3c0;
-  border: 1.5px solid #cdbfa9;
+  background: #eae3d8;
+  border: 1.5px solid #d4c7b2;
   border-radius: 16px;
   padding: 12px;
   margin-bottom: 14px;
@@ -344,8 +344,8 @@
   align-items: center;
   padding: 8px;
   border-radius: 14px;
-  background: #dfd3c0;
-  border: 1px solid #cdbfa9;
+  background: #eae3d8;
+  border: 1px solid #d4c7b2;
   text-align: center;
 }
 
@@ -378,8 +378,8 @@
   gap: 6px;
   padding: 10px 14px;
   border-radius: 14px;
-  background: #dfd3c0;
-  border: 1.5px solid #cdbfa9;
+  background: #eae3d8;
+  border: 1.5px solid #d4c7b2;
   text-decoration: none;
   color: inherit;
   transition: all 0.15s ease;
@@ -446,7 +446,7 @@
    6. Widget 3: Daily Practice Hero Card (Woodland Action)
    -------------------------------------------------------------------------- */
 .practiceCard {
-  background: linear-gradient(180deg, #ebe0cf 0%, #dfd3c0 100%);
+  background: linear-gradient(180deg, #f4efe6 0%, #eae3d8 100%);
   border: 2px solid #c9b69d;
   border-radius: 24px;
   padding: 22px;
@@ -499,8 +499,8 @@
   gap: 10px;
   padding: 10px 14px;
   border-radius: 14px;
-  background: #dfd3c0;
-  border: 1.5px solid #cdbfa9;
+  background: #eae3d8;
+  border: 1.5px solid #d4c7b2;
   font-size: 0.84rem;
   color: #543927;
   margin-bottom: 18px;
@@ -573,8 +573,8 @@
   gap: 12px;
   padding: 14px;
   border-radius: 18px;
-  background: #dfd3c0;
-  border: 1.5px solid #cdbfa9;
+  background: #eae3d8;
+  border: 1.5px solid #d4c7b2;
   text-decoration: none;
   color: inherit;
   transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
@@ -634,7 +634,7 @@
   padding: 6px 14px;
   border-radius: 12px;
   border: 1.5px solid #c9b69d;
-  background: #dfd3c0;
+  background: #eae3d8;
   color: #543927;
   font-size: 0.84rem;
   font-weight: 600;
@@ -663,8 +663,8 @@
   justify-content: space-between;
   padding: 10px 14px;
   border-radius: 14px;
-  background: #dfd3c0;
-  border: 1.5px solid #cdbfa9;
+  background: #eae3d8;
+  border: 1.5px solid #d4c7b2;
   gap: 10px;
 }
 
@@ -706,7 +706,7 @@
   justify-content: center;
   padding: 24px;
   text-align: center;
-  background: #dfd3c0;
+  background: #eae3d8;
   border: 1.5px dashed #baa993;
   border-radius: 16px;
   color: #6c5a4d;
