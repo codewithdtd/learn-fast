@@ -57,8 +57,8 @@ export function UserProfileMenu() {
         aria-label="User profile menu"
         type="button"
       >
-        <div className="auth-user-initials">
-          {initials}
+        <div className="auth-user-initials" style={{ overflow: "hidden" }}>
+          <img src="/avatar.jpg" alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} onError={(e) => { (e.currentTarget as HTMLElement).style.display = "none"; }} />
         </div>
         <span className="auth-user-name">
           {user.username}
@@ -87,8 +87,8 @@ export function UserProfileMenu() {
       {isMenuOpen && (
         <div className="auth-user-popover-menu" role="menu">
           <div className="auth-user-popover-header">
-            <div className="auth-popover-avatar">
-              {initials}
+            <div className="auth-popover-avatar" style={{ overflow: "hidden" }}>
+              <img src="/avatar.jpg" alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} onError={(e) => { (e.currentTarget as HTMLElement).style.display = "none"; }} />
             </div>
             <div className="auth-popover-info">
               <div className="flex items-center gap-1.5">

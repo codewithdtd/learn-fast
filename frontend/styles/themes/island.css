@@ -1,0 +1,190 @@
+/* Cozy Sanctuary (Island / Animal Crossing Theme - Matcha Milk / Soft Sage Sidebar & Muted Parchment Canvas) */
+:root[data-theme="island"] {
+  color-scheme: light;
+  --background: #ded2be;
+  --foreground: #34261b;
+  --surface: #ebe0cf;
+  --surface-low: #dfd3c0;
+  --surface-high: #d2c4ae;
+  --primary: #2b5633;
+  --primary-container: #1e3f24;
+  --primary-soft: #dbe7da;
+  --green: #315e2e;
+  --green-soft: #d0e4ce;
+  --gold: #916210;
+  --gold-soft: #ebdcb7;
+  --error: #8a2c22;
+  --error-soft: #eed2ce;
+  --muted: #5e5044;
+  --outline: #baa993;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --shadow-soft: 0 6px 20px rgb(50 35 20 / 8%);
+  --island-wood: #543927;
+  --island-wood-dark: #362215;
+  --island-sand: #c9b69d;
+  --island-sky: #4a738f;
+}
+
+:root[data-theme="island"] body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+:root[data-theme="island"] ::selection {
+  color: #fff;
+  background: var(--primary);
+}
+
+:root[data-theme="island"] :focus-visible {
+  outline: 2px solid #543927;
+  outline-offset: 2px;
+}
+
+:root[data-theme="island"] .app-content {
+  background: var(--background);
+}
+
+/* Sidebar phong cách Matcha Milk (Soft Sage Green) - Thanh thoát, dịu nhẹ, không bị tối */
+:root[data-theme="island"] .desktop-sidebar {
+  border-right: 2px solid #b5c7b3;
+  background: #cddbcd;
+  box-shadow: 4px 0 24px rgb(50 70 52 / 6%);
+}
+
+:root[data-theme="island"] .brand {
+  border-radius: 16px;
+  background: #62432a;
+  border: 2px solid #4a311d;
+  padding: 10px 14px;
+  color: #fff;
+  box-shadow: 0 4px 0 #3a2515;
+  margin-bottom: 20px;
+}
+
+:root[data-theme="island"] .brand-mark {
+  border: 2px solid #dfceb9;
+  color: #dfceb9;
+  background: transparent;
+  border-radius: 10px;
+}
+
+:root[data-theme="island"] .brand strong {
+  color: #f7efe4;
+  font-size: 1.05rem;
+}
+
+:root[data-theme="island"] .brand small {
+  color: #dfceb9;
+}
+
+:root[data-theme="island"] .nav-link {
+  color: #243d27;
+  border-radius: 16px;
+  font-weight: 600;
+  padding: 10px 16px;
+  transition: all 0.15s ease;
+}
+
+:root[data-theme="island"] .nav-link:hover {
+  color: #122415;
+  background: #bcd0bb;
+}
+
+:root[data-theme="island"] .nav-link.active {
+  background: #ebe0cf;
+  color: #1b381e;
+  font-weight: 700;
+  box-shadow: 0 3px 0 #baa993;
+}
+
+:root[data-theme="island"] .sidebar-action {
+  background: #bcd0bb;
+  color: #1b381e;
+  border: 1.5px solid #a3bca4;
+  border-radius: 14px;
+  font-weight: 600;
+}
+
+:root[data-theme="island"] .sidebar-action:hover {
+  background: #acc4ac;
+  color: #112613;
+}
+
+:root[data-theme="island"] .theme-toggle {
+  border: 1.5px solid #a3bca4;
+  color: #1b381e;
+  background: #bcd0bb;
+  border-radius: 14px;
+}
+
+/* Mobile Header & Bottom Nav (Đồng bộ Matcha Milk dịu mát) */
+:root[data-theme="island"] .mobile-header {
+  border-bottom: 2px solid #b5c7b3;
+  background: rgb(205 219 205 / 98%);
+  box-shadow: 0 4px 18px rgb(50 70 52 / 8%);
+  color: #1b381e;
+}
+
+:root[data-theme="island"] .mobile-brand {
+  color: #1b381e;
+}
+
+:root[data-theme="island"] .mobile-brand-mark {
+  border: 2px solid #543927;
+  color: #fff;
+  background: #543927;
+}
+
+:root[data-theme="island"] .mobile-bottom-nav {
+  border-top: 2px solid #b5c7b3;
+  background: rgb(205 219 205 / 98%);
+  box-shadow: 0 -4px 18px rgb(50 70 52 / 8%);
+}
+
+:root[data-theme="island"] .mobile-nav-link {
+  color: #304f34;
+}
+
+:root[data-theme="island"] .mobile-nav-link.active {
+  color: #1b381e;
+  background: #ebe0cf;
+  border-radius: 14px;
+  font-weight: 700;
+  box-shadow: 0 2px 0 #baa993;
+}
+
+:root[data-theme="island"] .button.primary {
+  border: 2px solid #1e3f24;
+  color: #fff;
+  background: #2b5633;
+  border-radius: 14px;
+  font-weight: 600;
+  box-shadow: 0 3px 0 #1e3f24;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+:root[data-theme="island"] .button.primary:hover:not(:disabled) {
+  background: #224729;
+  box-shadow: 0 4px 0 #17321c;
+}
+
+:root[data-theme="island"] .button.primary:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 #17321c;
+}
+
+:root[data-theme="island"] .button.secondary,
+:root[data-theme="island"] .button.light {
+  border: 2px solid #baa993;
+  color: var(--foreground);
+  background: #dfd3c0;
+  border-radius: 14px;
+  font-weight: 500;
+}
+
+:root[data-theme="island"] .button.secondary:hover:not(:disabled),
+:root[data-theme="island"] .button.light:hover:not(:disabled) {
+  background: #d2c4ae;
+  border-color: var(--island-wood);
+}
