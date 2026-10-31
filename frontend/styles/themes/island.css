@@ -286,6 +286,11 @@
   justify-content: center;
 }
 
+:root[data-theme="island"] .streak-icon img {
+  object-fit: contain;
+  filter: drop-shadow(0 3px 6px rgba(50, 35, 20, 0.15));
+}
+
 :root[data-theme="island"] .streak-info strong {
   color: #382c22;
   font-size: 1.15rem;
@@ -555,13 +560,19 @@
 
 :root[data-theme="island"] .study-badge {
   display: grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  background: transparent;
+  border-radius: 50%;
+  box-shadow: none;
+}
+
+:root[data-theme="island"] .study-badge img {
   width: 20px;
   height: 20px;
-  place-items: center;
-  border-radius: 50%;
-  background: #3b6132;
-  color: #fff;
-  box-shadow: 0 2px 4px rgb(59 97 50 / 30%);
+  object-fit: contain;
+  filter: drop-shadow(0 2px 3px rgba(30, 80, 40, 0.25));
 }
 
 :root[data-theme="island"] .cell-indicators {

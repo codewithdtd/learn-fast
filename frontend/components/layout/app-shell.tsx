@@ -9,7 +9,36 @@ import { ThemeToggle } from "./theme-toggle";
 
 type IconName = "home" | "books" | "import" | "study" | "calendar" | "review" | "arrow" | "clock" | "check" | "weak" | "refresh" | "search" | "flame" | "bookmark" | "eye" | "eyeOff" | "chevronDown" | "back" | "play" | "bell" | "writing" | "trash";
 
+// Bảng ánh xạ các icon đồ họa sống động (thay thế wireframe stroke SVG đơn sắc)
+const GRAPHIC_ICONS: Partial<Record<IconName, string>> = {
+  flame: "/icons/flame.png",
+  check: "/icons/check.png",
+  clock: "/icons/clock.png",
+  review: "/icons/review.png",
+};
+
 export function Icon({ name, size = 24 }: { name: IconName; size?: number }) {
+  const graphic = GRAPHIC_ICONS[name];
+  if (graphic) {
+    return (
+      <img
+        src={graphic}
+        alt=""
+        aria-hidden="true"
+        className={`icon-graphic icon-graphic-${name}`}
+        width={size}
+        height={size}
+        style={{
+          width: size,
+          height: size,
+          objectFit: "contain",
+          display: "inline-block",
+          verticalAlign: "middle",
+          flexShrink: 0,
+        }}
+      />
+    );
+  }
   const paths: Record<IconName, React.ReactNode> = {
     home: <><rect x="4" y="4" width="6" height="6" rx="1" /><rect x="14" y="4" width="6" height="6" rx="1" /><rect x="4" y="14" width="6" height="6" rx="1" /><rect x="14" y="14" width="6" height="6" rx="1" /></>,
     books: <><path d="M5 5.5A2.5 2.5 0 0 1 7.5 3H20v15H7.5A2.5 2.5 0 0 0 5 20.5z" /><path d="M5 5.5v15M5 20.5A2.5 2.5 0 0 1 7.5 18H20" /></>,
@@ -39,15 +68,16 @@ export function Icon({ name, size = 24 }: { name: IconName; size?: number }) {
 }
 
 const navItems: MobileNavEntry[] = [
-  { href: "/", label: "Dashboard", mobileLabel: "Home", icon: "home", primary: true },
-  { href: "/calendar", label: "Calendar & Check-in", mobileLabel: "Calendar", icon: "calendar", primary: true },
-  { href: "/workbooks", label: "Workbooks", mobileLabel: "Books", icon: "books", primary: true },
-  { href: "/import", label: "Import workbook", mobileLabel: "Import", icon: "import", primary: false },
+  { href: "/", label: "Dashboard", mobileLabel: "Home", icon: "home", imageSrc: "/icon-nav/dashboard.png", primary: true },
+  { href: "/calendar", label: "Calendar & Check-in", mobileLabel: "Calendar", icon: "calendar", imageSrc: "/icon-nav/calendar.png", primary: true },
+  { href: "/workbooks", label: "Workbooks", mobileLabel: "Books", icon: "books", imageSrc: "/icon-nav/quest.png", primary: true },
+  { href: "/import", label: "Import workbook", mobileLabel: "Import", icon: "import", imageSrc: "/icon-nav/import.png", primary: false },
   {
     href: "/ai-support",
     label: "AI Support",
     mobileLabel: "AI",
     icon: "writing",
+    imageSrc: "/icon-nav/creative-writing.png",
     primary: true,
     children: [
       { href: "/ai-support?tab=sentences", label: "Sentence practice" },
@@ -56,7 +86,7 @@ const navItems: MobileNavEntry[] = [
       { href: "/ai-support?tab=video", label: "Video practice" },
     ],
   },
-  { href: "/reading", label: "Read the news", mobileLabel: "Read", icon: "books", primary: true },
+  { href: "/reading", label: "Read the news", mobileLabel: "Read", icon: "books", imageSrc: "/icon-nav/newspaper.png", primary: true },
 ];
 
 
@@ -75,7 +105,16 @@ export function AppShell({
           <span><strong>DtdFLow</strong><small>Personal Mentor</small></span>
         </Link>
         <nav className="sidebar-nav" aria-label="Primary navigation">
-          {navItems.map((item) => <Link key={item.href} href={item.href} className={item.href === activeHref ? "nav-link active" : "nav-link"}><Icon name={item.icon} /><span>{item.label}</span></Link>)}
+          {navItems.map((item) => (
+            <Link key={item.href} href={item.href} className={item.href === activeHref ? "nav-link active" : "nav-link"}>
+              {item.imageSrc ? (
+                <img src={item.imageSrc} alt="" width={22} height={22} style={{ objectFit: "contain", flexShrink: 0 }} />
+              ) : (
+                <Icon name={item.icon} />
+              )}
+              <span>{item.label}</span>
+            </Link>
+          ))}
         </nav>
         <ThemeToggle />
         <Link href="/workbooks" className="sidebar-action">Browse Workbooks <Icon name="arrow" size={18} /></Link>
@@ -106,7 +145,18 @@ export function AppShell({
 
 
       <nav className="mobile-bottom-nav" aria-label="Mobile navigation">
-        {navItems.filter((item) => item.primary).map((item) => <Link key={item.href} href={item.href} aria-label={item.label} aria-current={item.href === activeHref ? "page" : undefined} className={item.href === activeHref ? "mobile-nav-link active" : "mobile-nav-link"}><span className="mobile-nav-icon"><Icon name={item.icon} size={22} /></span><span className="mobile-nav-label">{item.mobileLabel}</span></Link>)}
+        {navItems.filter((item) => item.primary).map((item) => (
+          <Link key={item.href} href={item.href} aria-label={item.label} aria-current={item.href === activeHref ? "page" : undefined} className={item.href === activeHref ? "mobile-nav-link active" : "mobile-nav-link"}>
+            <span className="mobile-nav-icon">
+              {item.imageSrc ? (
+                <img src={item.imageSrc} alt="" width={22} height={22} style={{ objectFit: "contain", display: "block" }} />
+              ) : (
+                <Icon name={item.icon} size={22} />
+              )}
+            </span>
+            <span className="mobile-nav-label">{item.mobileLabel}</span>
+          </Link>
+        ))}
       </nav>
     </div>
   );
