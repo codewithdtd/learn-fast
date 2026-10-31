@@ -819,3 +819,1488 @@
     padding: 18px 14px;
   }
 }
+
+
+/* ==========================================================================
+   Cozy Island Workbooks & Sheet Detail Pages — Muted Linen Aesthetics
+   ========================================================================== */
+
+/* 1. Workbook Library Page (/workbooks) */
+:root[data-theme="island"] .library-page {
+  width: min(100% - 48px, 1260px);
+  margin: 0 auto;
+  padding: 24px 0 60px;
+}
+
+:root[data-theme="island"] .library-header {
+  border: 2px solid #d4c7b2;
+  border-radius: 28px;
+  background: #f4efe6;
+  padding: 24px 28px;
+  box-shadow: 0 6px 20px rgb(50 35 20 / 6%);
+  margin-bottom: 24px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+:root[data-theme="island"] .library-eyebrow {
+  color: #3b6132;
+  font-weight: 800;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin: 0 0 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+:root[data-theme="island"] .library-eyebrow::before {
+  content: "📚 ";
+}
+
+:root[data-theme="island"] .library-header h1 {
+  color: #382c22;
+  font-size: 1.85rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin: 4px 0 0;
+}
+
+:root[data-theme="island"] .library-button {
+  border-radius: 14px;
+  padding: 10px 18px;
+  font-weight: 700;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+:root[data-theme="island"] .library-button-primary {
+  background: #3b6132;
+  color: #fff;
+  border: 2px solid #284422;
+  box-shadow: 0 3px 0 #284422;
+}
+
+:root[data-theme="island"] .library-button-primary:hover {
+  background: #31522a;
+  transform: translateY(-1px);
+}
+
+:root[data-theme="island"] .library-button-secondary {
+  background: #eae3d8;
+  color: #382c22;
+  border: 1.5px solid #d4c7b2;
+  box-shadow: 0 2px 0 #c7bca8;
+}
+
+:root[data-theme="island"] .library-button-secondary:hover {
+  background: #ded6c8;
+  border-color: #3b6132;
+  transform: translateY(-1px);
+}
+
+:root[data-theme="island"] .library-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+:root[data-theme="island"] .library-search {
+  flex: 1;
+  min-width: 240px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #f4efe6;
+  border: 2px solid #d4c7b2;
+  border-radius: 16px;
+  padding: 10px 16px;
+  box-shadow: inset 0 2px 4px rgb(50 35 20 / 4%);
+}
+
+:root[data-theme="island"] .library-search svg {
+  color: #7a6655;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+:root[data-theme="island"] .library-search input {
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: #382c22;
+  font-size: 14px;
+  outline: none;
+}
+
+:root[data-theme="island"] .library-search input::placeholder {
+  color: #8c7b6d;
+}
+
+:root[data-theme="island"] .library-count {
+  font-size: 12px;
+  font-weight: 800;
+  color: #5e5145;
+  background: #f4efe6;
+  border: 1.5px solid #d4c7b2;
+  padding: 8px 16px;
+  border-radius: 14px;
+}
+
+:root[data-theme="island"] .workbook-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 22px;
+}
+
+:root[data-theme="island"] .workbook-card {
+  background: #f4efe6;
+  border: 2px solid #d4c7b2;
+  border-radius: 24px;
+  padding: 22px;
+  box-shadow: 0 4px 18px rgb(50 35 20 / 6%);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+:root[data-theme="island"] .workbook-card:hover {
+  transform: translateY(-3px);
+  border-color: #3b6132;
+  box-shadow: 0 10px 24px rgb(50 35 20 / 10%);
+}
+
+:root[data-theme="island"] .workbook-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: #eae3d8;
+  border: 1.5px solid #d4c7b2;
+  display: grid;
+  place-items: center;
+  color: #3b6132;
+}
+
+:root[data-theme="island"] .workbook-card h2 {
+  color: #382c22;
+  font-size: 1.25rem;
+  font-weight: 800;
+  margin: 12px 0 4px;
+  line-height: 1.3;
+}
+
+:root[data-theme="island"] .workbook-file {
+  color: #7a6655;
+  font-size: 12px;
+  margin: 0 0 14px;
+}
+
+:root[data-theme="island"] .workbook-metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  background: #eae3d8;
+  border: 1.5px solid #d4c7b2;
+  border-radius: 16px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+}
+
+:root[data-theme="island"] .workbook-metrics div {
+  text-align: center;
+}
+
+:root[data-theme="island"] .workbook-metrics dt {
+  font-size: 10px;
+  font-weight: 800;
+  color: #7a6655;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+:root[data-theme="island"] .workbook-metrics dd {
+  font-size: 18px;
+  font-weight: 900;
+  color: #382c22;
+  margin: 2px 0 0;
+}
+
+:root[data-theme="island"] .workbook-imported {
+  font-size: 11px;
+  color: #7a6655;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+:root[data-theme="island"] .workbook-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1.5px solid #d4c7b2;
+}
+
+:root[data-theme="island"] .workbook-status {
+  font-size: 11px;
+  font-weight: 800;
+  color: #284422;
+  background: #dfe9dc;
+  border: 1px solid #8dbb75;
+  padding: 3px 10px;
+  border-radius: 8px;
+}
+
+:root[data-theme="island"] .library-card-link {
+  background: #3b6132;
+  color: #fff;
+  border-radius: 12px;
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+  box-shadow: 0 2px 0 #284422;
+  transition: all 0.15s ease;
+}
+
+:root[data-theme="island"] .library-card-link:hover {
+  background: #31522a;
+  transform: translateY(-1px);
+}
+
+/* 2. Workbook Detail Page (/workbooks/[workbookId]) */
+:root[data-theme="island"] .workbook-detail-page {
+  width: min(100% - 48px, 1260px);
+  margin: 0 auto;
+  padding: 24px 0 60px;
+}
+
+:root[data-theme="island"] .workbook-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #7a6655;
+  margin-bottom: 16px;
+}
+
+:root[data-theme="island"] .workbook-breadcrumb a {
+  color: #3b6132;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+:root[data-theme="island"] .workbook-breadcrumb a:hover {
+  text-decoration: underline;
+}
+
+:root[data-theme="island"] .workbook-detail-header {
+  border: 2px solid #d4c7b2;
+  border-radius: 28px;
+  background: #f4efe6;
+  padding: 24px 28px;
+  box-shadow: 0 6px 20px rgb(50 35 20 / 6%);
+  margin-bottom: 24px;
+}
+
+:root[data-theme="island"] .workbook-detail-header h1 {
+  color: #382c22;
+  font-size: 1.85rem;
+  font-weight: 800;
+  margin: 6px 0 4px;
+}
+
+:root[data-theme="island"] .workbook-detail-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  color: #7a6655;
+  font-size: 13px;
+}
+
+:root[data-theme="island"] .workbook-detail-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+:root[data-theme="island"] .workbook-snapshot {
+  border: 2px solid #d4c7b2;
+  border-radius: 24px;
+  background: #f4efe6;
+  padding: 24px 28px;
+  box-shadow: 0 6px 20px rgb(50 35 20 / 6%);
+  margin-bottom: 24px;
+}
+
+:root[data-theme="island"] .workbook-snapshot h2 {
+  color: #382c22;
+  font-size: 1.35rem;
+  font-weight: 800;
+  margin: 4px 0 14px;
+}
+
+:root[data-theme="island"] .workbook-progress-track {
+  height: 12px;
+  border-radius: 999px;
+  background: #eae3d8;
+  border: 1.5px solid #d4c7b2;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+:root[data-theme="island"] .workbook-progress-track span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #3b6132 0%, #7aa862 100%);
+  transition: width 0.3s ease;
+}
+
+:root[data-theme="island"] .workbook-snapshot-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 12px;
+}
+
+:root[data-theme="island"] .workbook-snapshot-stats div {
+  background: #eae3d8;
+  border: 1.5px solid #d4c7b2;
+  border-radius: 16px;
+  padding: 12px 14px;
+  text-align: center;
+}
+
+:root[data-theme="island"] .workbook-snapshot-stats dt {
+  font-size: 10px;
+  font-weight: 800;
+  color: #7a6655;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+:root[data-theme="island"] .workbook-snapshot-stats dd {
+  font-size: 20px;
+  font-weight: 900;
+  color: #382c22;
+  margin: 2px 0 0;
+}
+
+:root[data-theme="island"] .workbook-sheet-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+:root[data-theme="island"] .workbook-sheet-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  background: #f4efe6;
+  border: 2px solid #d4c7b2;
+  border-radius: 20px;
+  padding: 16px 20px;
+  text-decoration: none;
+  box-shadow: 0 3px 0 #c7bca8;
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+:root[data-theme="island"] .workbook-sheet-row:hover {
+  transform: translateY(-2px);
+  border-color: #3b6132;
+  box-shadow: 0 5px 0 #c7bca8;
+}
+
+:root[data-theme="island"] .workbook-sheet-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  background: #eae3d8;
+  border: 1.5px solid #d4c7b2;
+  display: grid;
+  place-items: center;
+  color: #3b6132;
+  flex-shrink: 0;
+}
+
+:root[data-theme="island"] .workbook-sheet-row.status-due .workbook-sheet-icon {
+  background: #edd5d1;
+  border-color: #e5bab4;
+  color: #8c2e24;
+}
+
+:root[data-theme="island"] .workbook-sheet-row.status-learned .workbook-sheet-icon {
+  background: #dfe9dc;
+  border-color: #8dbb75;
+  color: #284422;
+}
+
+:root[data-theme="island"] .workbook-sheet-title-row strong {
+  font-size: 15px;
+  font-weight: 700;
+  color: #382c22;
+}
+
+:root[data-theme="island"] .workbook-sheet-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+  color: #7a6655;
+  margin-top: 3px;
+}
+
+:root[data-theme="island"] .workbook-sheet-arrow {
+  color: #7a6655;
+  display: flex;
+  align-items: center;
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+
+:root[data-theme="island"] .workbook-sheet-row:hover .workbook-sheet-arrow {
+  color: #3b6132;
+  transform: translateX(4px);
+}
+
+:root[data-theme="island"] .workbook-review-callout {
+  background: #fbf6ec;
+  border: 2px solid #8f6215;
+  border-radius: 22px;
+  padding: 20px 24px;
+  box-shadow: 0 4px 16px rgb(143 98 21 / 10%);
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+:root[data-theme="island"] .workbook-review-callout h2 {
+  color: #5a3e10;
+  font-size: 1.25rem;
+  font-weight: 800;
+  margin: 0 0 4px;
+}
+
+:root[data-theme="island"] .workbook-review-callout p {
+  color: #7a5820;
+  font-size: 13px;
+  margin: 0;
+}
+
+/* 3. Sheet Detail Page (/sheets/[sheetId]) */
+:root[data-theme="island"] .sheet-detail-content {
+  width: min(100% - 48px, 1260px);
+  margin: 0 auto;
+  padding: 24px 0 60px;
+}
+
+:root[data-theme="island"] .sheet-detail-header {
+  border: 2px solid #d4c7b2;
+  border-radius: 28px;
+  background: #f4efe6;
+  padding: 24px 28px;
+  box-shadow: 0 6px 20px rgb(50 35 20 / 6%);
+  margin-bottom: 24px;
+}
+
+:root[data-theme="island"] .sheet-detail-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #7a6655;
+  margin-bottom: 12px;
+}
+
+:root[data-theme="island"] .sheet-detail-breadcrumb a {
+  color: #3b6132;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+:root[data-theme="island"] .sheet-detail-kicker {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #3b6132;
+  margin: 0 0 4px;
+}
+
+:root[data-theme="island"] .sheet-detail-name-row h1 {
+  color: #382c22;
+  font-size: 1.85rem;
+  font-weight: 800;
+  margin: 0;
+}
+
+:root[data-theme="island"] .sheet-detail-hero-card {
+  border: 2px solid #d4c7b2;
+  border-radius: 24px;
+  background: linear-gradient(180deg, #f4efe6 0%, #eae3d8 100%);
+  padding: 24px 28px;
+  box-shadow: 0 6px 20px rgb(50 35 20 / 6%);
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+:root[data-theme="island"] .sheet-detail-hero-copy h2 {
+  color: #382c22;
+  font-size: 1.45rem;
+  font-weight: 800;
+  margin: 4px 0 4px;
+}
+
+:root[data-theme="island"] .sheet-detail-primary-action {
+  background: #3b6132;
+  color: #fff;
+  border: 2px solid #284422;
+  border-radius: 18px;
+  padding: 14px 22px;
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  text-decoration: none;
+  font-weight: 700;
+  box-shadow: 0 3px 0 #284422;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+:root[data-theme="island"] .sheet-detail-primary-action:hover {
+  background: #31522a;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 0 #284422;
+}
+
+:root[data-theme="island"] .sheet-action-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+:root[data-theme="island"] .sheet-action-card {
+  background: #f4efe6;
+  border: 2px solid #d4c7b2;
+  border-radius: 20px;
+  padding: 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  text-decoration: none;
+  box-shadow: 0 3px 0 #c7bca8;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+:root[data-theme="island"] .sheet-action-card:hover {
+  transform: translateY(-2px);
+  border-color: #3b6132;
+}
+
+:root[data-theme="island"] .sheet-action-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  background: #eae3d8;
+  border: 1.5px solid #d4c7b2;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+:root[data-theme="island"] .sheet-action-card strong {
+  color: #382c22;
+  font-size: 14px;
+  display: block;
+}
+
+:root[data-theme="island"] .sheet-action-card small {
+  color: #7a6655;
+  font-size: 11px;
+}
+
+:root[data-theme="island"] .sheet-detail-panel {
+  border: 2px solid #d4c7b2;
+  border-radius: 24px;
+  background: #f4efe6;
+  padding: 24px 28px;
+  box-shadow: 0 6px 20px rgb(50 35 20 / 6%);
+  margin-bottom: 24px;
+}
+
+:root[data-theme="island"] .sheet-detail-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin: 16px 0;
+}
+
+:root[data-theme="island"] .sheet-stat {
+  background: #eae3d8;
+  border: 1.5px solid #d4c7b2;
+  border-radius: 14px;
+  padding: 10px 14px;
+  text-align: center;
+}
+
+:root[data-theme="island"] .sheet-stat dt {
+  font-size: 10px;
+  font-weight: 800;
+  color: #7a6655;
+  text-transform: uppercase;
+}
+
+:root[data-theme="island"] .sheet-stat dd {
+  font-size: 18px;
+  font-weight: 900;
+  color: #382c22;
+  margin: 2px 0 0;
+}
+
+
+/* ==========================================================================
+   4. Table View Page (/sheets/[sheetId]/table) — Cozy Island Muted Linen
+   ========================================================================== */
+:root[data-theme="island"] .table-view-page {
+  color: #382c22;
+}
+
+:root[data-theme="island"] .table-view-content {
+  width: min(100% - 48px, 1260px);
+  margin: 0 auto;
+  padding: 24px 0 60px;
+}
+
+:root[data-theme="island"] .table-view-header {
+  border: 2px solid #d4c7b2;
+  border-radius: 28px;
+  background: #f4efe6;
+  padding: 24px 28px;
+  box-shadow: 0 6px 20px rgb(50 35 20 / 6%);
+  margin-bottom: 24px;
+}
+
+:root[data-theme="island"] .table-view-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #7a6655;
+  margin-bottom: 12px;
+}
+
+:root[data-theme="island"] .table-view-breadcrumb a {
+  color: #3b6132;
+  font-weight: 700;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+:root[data-theme="island"] .table-view-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+:root[data-theme="island"] .table-view-heading h1 {
+  color: #382c22;
+  font-size: 1.85rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin: 4px 0;
+}
+
+:root[data-theme="island"] .table-view-subtitle {
+  color: #7a6655;
+  font-size: 13px;
+  margin: 0;
+}
+
+:root[data-theme="island"] .table-view-study-link {
+  background: #3b6132;
+  color: #fff !important;
+  border: 2px solid #284422;
+  border-radius: 16px;
+  padding: 12px 20px;
+  font-weight: 700;
+  font-size: 14px;
+  box-shadow: 0 3px 0 #284422;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.15s ease;
+}
+
+:root[data-theme="island"] .table-view-study-link:hover {
+  background: #31522a;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 0 #284422;
+}
+
+:root[data-theme="island"] .table-view-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 20px;
+  background: #f4efe6;
+  border: 2px solid #d4c7b2;
+  border-radius: 20px;
+  padding: 14px 18px;
+  box-shadow: 0 4px 14px rgb(50 35 20 / 4%);
+}
+
+:root[data-theme="island"] .table-view-search {
+  flex: 1;
+  min-width: 240px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #eae3d8;
+  border: 1.5px solid #d4c7b2;
+  border-radius: 14px;
+  padding: 9px 14px;
+}
+
+:root[data-theme="island"] .table-view-search svg {
+  color: #7a6655;
+  flex-shrink: 0;
+}
+
+:root[data-theme="island"] .table-view-search input {
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: #382c22;
+  font-size: 14px;
+  outline: none;
+}
+
+:root[data-theme="island"] .table-view-search input::placeholder {
+  color: #8c7b6d;
+}
+
+:root[data-theme="island"] .table-view-filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+:root[data-theme="island"] .table-view-filter {
+  background: #eae3d8;
+  color: #5e5145;
+  border: 1.5px solid #d4c7b2;
+  border-radius: 12px;
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+:root[data-theme="island"] .table-view-filter:hover {
+  background: #ded6c8;
+  color: #382c22;
+}
+
+:root[data-theme="island"] .table-view-filter.active {
+  background: #3b6132;
+  color: #fff;
+  border-color: #284422;
+  box-shadow: 0 2px 0 #284422;
+}
+
+:root[data-theme="island"] .table-view-filter-count {
+  font-size: 11px;
+  font-weight: 800;
+  opacity: 0.85;
+  background: rgba(0, 0, 0, 0.08);
+  padding: 2px 6px;
+  border-radius: 8px;
+}
+
+:root[data-theme="island"] .table-view-filter.active .table-view-filter-count {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+:root[data-theme="island"] .table-view-inline-note {
+  background: #eae3d8;
+  border: 1.5px solid #d4c7b2;
+  border-radius: 14px;
+  padding: 10px 16px;
+  color: #7a6655;
+  font-size: 12px;
+  margin: 0 0 16px;
+}
+
+/* Vocabulary Table Container */
+:root[data-theme="island"] .vocabulary-table {
+  background: #f4efe6;
+  border: 2px solid #d4c7b2;
+  border-radius: 22px;
+  overflow: hidden;
+  box-shadow: 0 4px 18px rgb(50 35 20 / 6%);
+}
+
+:root[data-theme="island"] .vocabulary-table-head {
+  background: #eae3d8;
+  border-bottom: 2px solid #d4c7b2;
+  color: #382c22;
+  font-weight: 800;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 12px 18px;
+}
+
+:root[data-theme="island"] .vocabulary-column-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+:root[data-theme="island"] .vocabulary-column-label {
+  color: #5e5145;
+  font-weight: 800;
+}
+
+:root[data-theme="island"] .vocabulary-column-visibility,
+:root[data-theme="island"] .vocabulary-example-toggle {
+  background: #f4efe6;
+  border: 1px solid #d4c7b2;
+  border-radius: 8px;
+  color: #5e5145;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+:root[data-theme="island"] .vocabulary-row {
+  border-bottom: 1px solid #e2d8c7;
+  padding: 14px 18px;
+  transition: background-color 0.12s ease;
+  background: #fcfaf7;
+}
+
+:root[data-theme="island"] .vocabulary-row:nth-child(even) {
+  background: #f6f1e8;
+}
+
+:root[data-theme="island"] .vocabulary-row:hover {
+  background: #eee6d8;
+}
+
+:root[data-theme="island"] .vocabulary-phrase-text {
+  font-weight: 800;
+  color: #382c22;
+  font-size: 15px;
+}
+
+:root[data-theme="island"] .vocabulary-meaning-text {
+  color: #4a3c30;
+  font-size: 14px;
+}
+
+:root[data-theme="island"] .vocabulary-example-item {
+  background: #eae3d8;
+  border: 1px solid #d4c7b2;
+  border-radius: 12px;
+  padding: 8px 12px;
+  margin-top: 6px;
+  font-size: 13px;
+  color: #382c22;
+}
+
+/* ==========================================================================
+   5. Study Setup Page (/sheets/[sheetId]/study)
+   ========================================================================== */
+:root[data-theme="island"] .study-setup-page {
+  color: #382c22;
+}
+
+:root[data-theme="island"] .study-setup-content {
+  width: min(100% - 48px, 1100px);
+  margin: 0 auto;
+  padding: 24px 0 60px;
+}
+
+:root[data-theme="island"] .study-setup-header {
+  border: 2px solid #d4c7b2;
+  border-radius: 28px;
+  background: #f4efe6;
+  padding: 24px 28px;
+  box-shadow: 0 6px 20px rgb(50 35 20 / 6%);
+  margin-bottom: 24px;
+}
+
+:root[data-theme="island"] .study-setup-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #7a6655;
+  margin-bottom: 12px;
+}
+
+:root[data-theme="island"] .study-setup-breadcrumb a {
+  color: #3b6132;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+:root[data-theme="island"] .study-setup-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #7a6655;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  margin-bottom: 12px;
+}
+
+:root[data-theme="island"] .study-setup-back:hover {
+  color: #3b6132;
+}
+
+:root[data-theme="island"] .study-setup-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+:root[data-theme="island"] .study-setup-title-row h1 {
+  color: #382c22;
+  font-size: 1.85rem;
+  font-weight: 800;
+  margin: 4px 0;
+}
+
+:root[data-theme="island"] .study-setup-status {
+  background: #ebf3e8;
+  color: #2b5424;
+  border: 1.5px solid #a8c79c;
+  padding: 6px 14px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: capitalize;
+}
+
+:root[data-theme="island"] .study-setup-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+:root[data-theme="island"] .study-choice-group {
+  border: 2px solid #d4c7b2;
+  border-radius: 24px;
+  background: #f4efe6;
+  padding: 22px 24px;
+  box-shadow: 0 4px 16px rgb(50 35 20 / 5%);
+  margin-bottom: 20px;
+}
+
+:root[data-theme="island"] .study-choice-group legend {
+  font-weight: 800;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #3b6132;
+  padding: 0 8px;
+}
+
+:root[data-theme="island"] .study-choice-card {
+  border: 2px solid #d4c7b2;
+  border-radius: 18px;
+  background: #eae3d8;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 2px 0 #c7bca8;
+}
+
+:root[data-theme="island"] .study-choice-card:hover {
+  background: #ded6c8;
+  border-color: #3b6132;
+  transform: translateY(-2px);
+}
+
+:root[data-theme="island"] .study-choice-card.is-selected {
+  background: #fffdf9;
+  border-color: #3b6132;
+  box-shadow: 0 3px 0 #3b6132;
+}
+
+:root[data-theme="island"] .study-choice-card input[type="radio"] {
+  accent-color: #3b6132;
+}
+
+:root[data-theme="island"] .study-choice-copy strong {
+  color: #382c22;
+  font-size: 14px;
+  display: block;
+}
+
+:root[data-theme="island"] .study-choice-copy small {
+  color: #7a6655;
+  font-size: 12px;
+}
+
+:root[data-theme="island"] .study-setup-summary {
+  border: 2px solid #d4c7b2;
+  border-radius: 24px;
+  background: #f4efe6;
+  padding: 24px;
+  box-shadow: 0 6px 20px rgb(50 35 20 / 6%);
+}
+
+:root[data-theme="island"] .study-setup-summary h2 {
+  color: #382c22;
+  font-size: 1.35rem;
+  font-weight: 800;
+  margin: 4px 0 16px;
+}
+
+:root[data-theme="island"] .study-setup-summary dl {
+  background: #eae3d8;
+  border: 1.5px solid #d4c7b2;
+  border-radius: 16px;
+  padding: 14px 16px;
+  margin: 0 0 20px;
+}
+
+:root[data-theme="island"] .study-setup-summary dl div {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px dashed #d4c7b2;
+  font-size: 13px;
+}
+
+:root[data-theme="island"] .study-setup-summary dl div:last-child {
+  border-bottom: none;
+}
+
+:root[data-theme="island"] .study-setup-summary dt {
+  color: #7a6655;
+}
+
+:root[data-theme="island"] .study-setup-summary dd {
+  color: #382c22;
+  font-weight: 700;
+}
+
+:root[data-theme="island"] .study-setup-summary button[type="submit"] {
+  background: #3b6132;
+  color: #fff;
+  border: 2px solid #284422;
+  border-radius: 16px;
+  padding: 14px 20px;
+  width: 100%;
+  font-size: 15px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+  box-shadow: 0 3px 0 #284422;
+  transition: all 0.15s ease;
+}
+
+:root[data-theme="island"] .study-setup-summary button[type="submit"]:hover {
+  background: #31522a;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 0 #284422;
+}
+
+/* ==========================================================================
+   6. Study Session & Flashcards (/study-sessions/[sessionId])
+   ========================================================================== */
+:root[data-theme="island"] .study-session-content {
+  width: min(100% - 48px, 920px);
+  margin: 0 auto;
+  padding: 24px 0 60px;
+}
+
+:root[data-theme="island"] .study-session-header {
+  border: 2px solid #d4c7b2;
+  border-radius: 28px;
+  background: #f4efe6;
+  padding: 22px 28px;
+  box-shadow: 0 6px 20px rgb(50 35 20 / 6%);
+  margin-bottom: 24px;
+}
+
+:root[data-theme="island"] .study-session-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #7a6655;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  margin-bottom: 10px;
+}
+
+:root[data-theme="island"] .study-session-back:hover {
+  color: #3b6132;
+}
+
+:root[data-theme="island"] .study-session-context h1 {
+  color: #382c22;
+  font-size: 1.85rem;
+  font-weight: 800;
+  margin: 4px 0;
+}
+
+:root[data-theme="island"] .study-session-progress {
+  border: 2px solid #d4c7b2;
+  border-radius: 22px;
+  background: #f4efe6;
+  padding: 16px 22px;
+  box-shadow: 0 4px 16px rgb(50 35 20 / 5%);
+  margin-bottom: 20px;
+}
+
+:root[data-theme="island"] .study-progress-track {
+  background: #eae3d8;
+  border-radius: 999px;
+  height: 10px;
+  overflow: hidden;
+  margin-top: 10px;
+  border: 1px solid #d4c7b2;
+}
+
+:root[data-theme="island"] .study-progress-track span {
+  background: linear-gradient(90deg, #3b6132 0%, #528645 100%);
+  height: 100%;
+  display: block;
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+/* Tactile Muted Linen Flashcard */
+:root[data-theme="island"] .study-flashcard-face {
+  border: 2.5px solid #d4c7b2;
+  border-radius: 28px;
+  background: #fdfbf7;
+  padding: 32px 36px;
+  box-shadow: 0 8px 0 #c7bca8, 0 16px 32px rgb(50 35 20 / 8%);
+  min-height: 280px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+:root[data-theme="island"] .study-flashcard-back {
+  background: #f8f3ea;
+}
+
+:root[data-theme="island"] .study-flashcard-topline {
+  color: #7a6655;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: flex;
+  justify-content: space-between;
+}
+
+:root[data-theme="island"] .study-flashcard-question {
+  color: #382c22;
+  font-size: 2.1rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  margin: 16px 0;
+}
+
+:root[data-theme="island"] .study-flashcard-answer-value {
+  color: #264420;
+  font-size: 1.8rem;
+  font-weight: 800;
+  line-height: 1.3;
+  margin: 14px 0;
+}
+
+:root[data-theme="island"] .study-flashcard-hint {
+  color: #8c7b6d;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+}
+
+:root[data-theme="island"] .study-example {
+  background: #eae3d8;
+  border: 1.5px solid #d4c7b2;
+  border-radius: 16px;
+  padding: 14px 18px;
+  margin-top: 16px;
+  color: #382c22;
+  font-size: 14px;
+}
+
+/* Flashcard Answer Actions */
+:root[data-theme="island"] .study-answer-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 22px;
+}
+
+:root[data-theme="island"] .study-answer-button {
+  border-radius: 20px;
+  padding: 16px 24px;
+  font-size: 15px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+:root[data-theme="island"] .study-answer-button.again {
+  background: #fbf0ee;
+  color: #8f2d1e;
+  border: 2px solid #df9c91;
+  box-shadow: 0 3px 0 #cc8276;
+}
+
+:root[data-theme="island"] .study-answer-button.again:hover:not(:disabled) {
+  background: #f7deda;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 0 #cc8276;
+}
+
+:root[data-theme="island"] .study-answer-button.remembered {
+  background: #ebf3e8;
+  color: #2b5424;
+  border: 2px solid #8abf7c;
+  box-shadow: 0 3px 0 #73a666;
+}
+
+:root[data-theme="island"] .study-answer-button.remembered:hover:not(:disabled) {
+  background: #dfedd9;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 0 #73a666;
+}
+
+:root[data-theme="island"] .study-card-navigation-button {
+  background: #f4efe6;
+  border: 1.5px solid #d4c7b2;
+  border-radius: 14px;
+  color: #5e5145;
+  padding: 8px 16px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 2px 0 #c7bca8;
+}
+
+:root[data-theme="island"] .study-card-navigation-button:hover:not(:disabled) {
+  background: #eae3d8;
+  color: #382c22;
+}
+
+/* ==========================================================================
+   7. Study Results & SRS Rating
+   ========================================================================== */
+:root[data-theme="island"] .study-result-content {
+  width: min(100% - 48px, 1100px);
+  margin: 0 auto;
+  padding: 24px 0 60px;
+}
+
+:root[data-theme="island"] .study-result-header {
+  border: 2px solid #d4c7b2;
+  border-radius: 28px;
+  background: #f4efe6;
+  padding: 24px 28px;
+  box-shadow: 0 6px 20px rgb(50 35 20 / 6%);
+  margin-bottom: 24px;
+}
+
+:root[data-theme="island"] .study-result-score-card {
+  border: 2px solid #d4c7b2;
+  border-radius: 24px;
+  background: linear-gradient(180deg, #fbf7ee 0%, #f4efe6 100%);
+  padding: 28px;
+  box-shadow: 0 6px 20px rgb(50 35 20 / 6%);
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+:root[data-theme="island"] .study-result-score-card strong {
+  font-size: 3rem;
+  font-weight: 900;
+  color: #3b6132;
+  letter-spacing: -0.03em;
+  display: block;
+  margin: 8px 0;
+}
+
+:root[data-theme="island"] .study-result-score-track {
+  background: #eae3d8;
+  border: 1px solid #d4c7b2;
+  border-radius: 999px;
+  height: 12px;
+  overflow: hidden;
+  max-width: 400px;
+  margin: 12px auto;
+}
+
+:root[data-theme="island"] .study-result-score-track span {
+  background: #3b6132;
+  height: 100%;
+  display: block;
+  border-radius: 999px;
+}
+
+:root[data-theme="island"] .study-result-panel {
+  border: 2px solid #d4c7b2;
+  border-radius: 24px;
+  background: #f4efe6;
+  padding: 24px 28px;
+  box-shadow: 0 6px 20px rgb(50 35 20 / 6%);
+  margin-bottom: 24px;
+}
+
+:root[data-theme="island"] .study-result-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+:root[data-theme="island"] .study-result-stat {
+  background: #eae3d8;
+  border: 1.5px solid #d4c7b2;
+  border-radius: 16px;
+  padding: 12px;
+  text-align: center;
+}
+
+:root[data-theme="island"] .study-result-stat dt {
+  font-size: 10px;
+  font-weight: 800;
+  color: #7a6655;
+  text-transform: uppercase;
+}
+
+:root[data-theme="island"] .study-result-stat dd {
+  font-size: 20px;
+  font-weight: 900;
+  color: #382c22;
+  margin: 4px 0 0;
+}
+
+:root[data-theme="island"] .study-result-primary-action {
+  background: #3b6132;
+  color: #fff !important;
+  border: 2px solid #284422;
+  border-radius: 16px;
+  padding: 14px 20px;
+  font-weight: 800;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 3px 0 #284422;
+  text-decoration: none;
+  margin-bottom: 10px;
+}
+
+:root[data-theme="island"] .study-result-secondary-action {
+  background: #eae3d8;
+  color: #382c22;
+  border: 1.5px solid #d4c7b2;
+  border-radius: 14px;
+  padding: 10px 16px;
+  font-weight: 700;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 2px 0 #c7bca8;
+  text-decoration: none;
+  margin-bottom: 8px;
+}
+
+:root[data-theme="island"] .study-result-secondary-action:hover {
+  background: #ded6c8;
+  border-color: #3b6132;
+}
+
+/* ==========================================================================
+   8. Practice Exercises & Quick Recall (/sheets/[sheetId]/quick-recall)
+   ========================================================================== */
+:root[data-theme="island"] .quick-recall-page,
+:root[data-theme="island"] .paragraph-practice-page {
+  color: #382c22;
+}
+
+:root[data-theme="island"] .quick-recall-content,
+:root[data-theme="island"] .paragraph-practice-content {
+  width: min(100% - 48px, 1100px);
+  margin: 0 auto;
+  padding: 24px 0 60px;
+}
+
+:root[data-theme="island"] .recall-card,
+:root[data-theme="island"] .paragraph-card {
+  border: 2px solid #d4c7b2;
+  border-radius: 24px;
+  background: #f4efe6;
+  padding: 24px 28px;
+  box-shadow: 0 6px 20px rgb(50 35 20 / 6%);
+  margin-bottom: 24px;
+}
