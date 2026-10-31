@@ -1788,6 +1788,88 @@
   color: #382c22;
 }
 
+/* Table Card Action Buttons (Weak Flame, Bookmark, Edit, Delete) */
+:root[data-theme="island"] .flashcard-flag-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+:root[data-theme="island"] .flashcard-flag-button {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  border-radius: 50%;
+  background: #eae3d8;
+  border: 1.5px solid #d4c7b2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #7a6655;
+  padding: 0;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+:root[data-theme="island"] .flashcard-flag-button img,
+:root[data-theme="island"] .flashcard-flag-button svg {
+  display: block;
+  margin: auto;
+  flex-shrink: 0;
+}
+
+:root[data-theme="island"] .flashcard-flag-button:hover {
+  background: #ded6c8;
+  border-color: #3b6132;
+  transform: scale(1.08);
+}
+
+:root[data-theme="island"] .flashcard-flag-button.active.weak-flag {
+  background: #faece8;
+  border-color: #df9c91;
+  box-shadow: 0 2px 6px rgb(217 101 75 / 20%);
+}
+
+:root[data-theme="island"] .flashcard-flag-button.active.bookmark-flag {
+  background: #fff6e0;
+  border-color: #dfba60;
+  color: #a06e12;
+  box-shadow: 0 2px 6px rgb(169 104 19 / 20%);
+}
+
+:root[data-theme="island"] .flashcard-flag-button.active.bookmark-flag svg {
+  stroke: #a06e12;
+  fill: #a06e12;
+}
+
+:root[data-theme="island"] .vocabulary-edit-button {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  border-radius: 50%;
+  background: #eae3d8;
+  border: 1.5px solid #d4c7b2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #5e5145;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.15s ease;
+}
+
+:root[data-theme="island"] .vocabulary-edit-button svg {
+  display: block;
+  margin: auto;
+}
+
+:root[data-theme="island"] .vocabulary-edit-button:hover:not(:disabled) {
+  background: #ded6c8;
+  border-color: #3b6132;
+  color: #3b6132;
+  transform: scale(1.08);
+}
+
 /* ==========================================================================
    5. Study Setup Page (/sheets/[sheetId]/study)
    ========================================================================== */
