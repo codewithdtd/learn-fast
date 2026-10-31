@@ -11,7 +11,7 @@ import styles from "./writing.module.css";
 
 export function WritingTopicList() {
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [prompts, setPrompts] = useState<WritingPrompt[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -66,7 +66,7 @@ export function WritingTopicList() {
         <button className={styles.secondaryButton} disabled={isGenerating || startingId !== null} aria-busy={isGenerating} onClick={() => void generateRandomTopic()}>
           {isGenerating ? <><span className={styles.spinner} aria-hidden="true" /> Creating your topic...</> : <><span aria-hidden="true">✦</span> Generate a random topic with AI</>}
         </button>
-        <span aria-live="polite">{isGenerating ? "AI is preparing a topic and bilingual hints." : "Get one of up to three fresh topics per day, with step-by-step hints."}</span>
+        <span aria-live="polite">{isGenerating ? "AI is preparing a topic and bilingual hints." : isAuthenticated && user?.is_superuser ? "Create fresh topics with bilingual hints." : "One AI topic trial and one feedback trial are available."}</span>
       </div>
       {!isAuthenticated && <div className={styles.loginNotice} role="note"><strong>Sign in to save and review your writing.</strong><span>Your topics and hints are available before you sign in.</span></div>}
       {error && <div className={styles.errorNotice} role="alert">{error}</div>}

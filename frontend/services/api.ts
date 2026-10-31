@@ -527,14 +527,28 @@ export async function getReadingSources(): Promise<ReadingSource[]> {
   return requestJson<ReadingSource[]>("/api/v1/reading/sources");
 }
 
+const pendingReadingArticles = new Map<string, Promise<ReadingArticleList>>();
+const pendingReadingContent = new Map<string, Promise<ReadingArticleContent>>();
+
 export async function getReadingArticles(source = "all", category = "all"): Promise<ReadingArticleList> {
   const query = new URLSearchParams({ source, category });
-  return requestJson<ReadingArticleList>(`/api/v1/reading/articles?${query.toString()}`);
+  const key = `${getStoredAuthToken() ?? "guest"}:${query.toString()}`;
+  const existing = pendingReadingArticles.get(key);
+  if (existing) return existing;
+  // React có thể mount effect hai lần; gộp request đang chạy để không tiêu tốn hai lượt thử.
+  const pending = requestJson<ReadingArticleList>(`/api/v1/reading/articles?${query.toString()}`).finally(() => pendingReadingArticles.delete(key));
+  pendingReadingArticles.set(key, pending);
+  return pending;
 }
 
 export async function getReadingArticleContent(article: ReadingArticle): Promise<ReadingArticleContent> {
   const query = new URLSearchParams({ source: article.source_id, url: article.url, title: article.title });
-  return requestJson<ReadingArticleContent>(`/api/v1/reading/articles/content?${query.toString()}`);
+  const key = `${getStoredAuthToken() ?? "guest"}:${query.toString()}`;
+  const existing = pendingReadingContent.get(key);
+  if (existing) return existing;
+  const pending = requestJson<ReadingArticleContent>(`/api/v1/reading/articles/content?${query.toString()}`).finally(() => pendingReadingContent.delete(key));
+  pendingReadingContent.set(key, pending);
+  return pending;
 }
 
 export async function lookupReadingText(text: string): Promise<ReadingLookup> {
@@ -1119,8 +1133,9 @@ export async function getWritingHistory(page = 1): Promise<WritingAttemptList> {
   return requestJson<WritingAttemptList>(`/api/v1/writing/attempts?page=${page}&page_size=20`);
 }
 
-export async function getWritingUsage(): Promise<WritingUsage> {
-  return requestWritingJson<WritingUsage>("/api/v1/writing/usage");
+export async function getWritingUsage(format?: string): Promise<WritingUsage> {
+  const feature = format === "sentence" ? "sentence_feedback" : format === "vocabulary_translation" ? "vocabulary_paragraph_feedback" : "writing_feedback";
+  return requestWritingJson<WritingUsage>(`/api/v1/writing/usage?feature=${feature}`);
 }
 
 export async function getSpeakingPrompts(): Promise<SpeakingPromptList> {
@@ -1240,7 +1255,8 @@ async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
   const headers = new Headers(init?.headers || {});
   if (token && !headers.has("Authorization")) {
     headers.set("Authorization", `Bearer ${token}`);
-  } else if (!token && !headers.has("X-Guest-Token")) {
+  }
+  if (!headers.has("X-Guest-Token")) {
     const guestToken = getGuestTrialToken();
     if (guestToken) headers.set("X-Guest-Token", guestToken);
   }
@@ -1261,7 +1277,8 @@ async function requestNoContent(path: string, init?: RequestInit): Promise<void>
   const headers = new Headers(init?.headers || {});
   if (token && !headers.has("Authorization")) {
     headers.set("Authorization", `Bearer ${token}`);
-  } else if (!token && !headers.has("X-Guest-Token")) {
+  }
+  if (!headers.has("X-Guest-Token")) {
     const guestToken = getGuestTrialToken();
     if (guestToken) headers.set("X-Guest-Token", guestToken);
   }

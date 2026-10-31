@@ -276,9 +276,10 @@ export function SpeakingPractice() {
   return <main className={styles.page}>
     <div className={styles.heading}>
       <div><p className={styles.eyebrow}>SPEAK ONE ANSWER AT A TIME</p><h2>Speaking practice</h2><p>Answer a short everyday or IELTS Part 1 question, then learn from your transcript.</p></div>
-      {usage && <div className={styles.quota} aria-label={`${usage.remaining} of ${usage.daily_limit} practice attempts remaining`}><strong>{usage.remaining}</strong><span>of {usage.daily_limit} today</span></div>}
+      {usage && <div className={styles.quota} aria-label={usage.remaining === null ? "Unlimited practice for administrators" : `${usage.remaining} transcription trial remaining`}><strong>{usage.remaining === null ? "∞" : usage.remaining}</strong><span>{usage.remaining === null ? "Admin access" : "transcription trial left"}</span></div>}
     </div>
     <div className={styles.notice}><strong>Transcript-based feedback</strong><span>AI reviews your answer’s relevance, organization, vocabulary, and grammar. It does not score pronunciation or provide an official IELTS band.</span></div>
+    {usage && usage.remaining !== null && <div className={styles.notice} role="note"><strong>One-time trials</strong><span>One AI topic, one transcription, and one feedback review are available per user.</span></div>}
     {error && <div className={styles.error} role="alert">{error}</div>}
     {notice && <div className={styles.success} role="status" aria-live="polite">{notice}</div>}
 
@@ -289,7 +290,7 @@ export function SpeakingPractice() {
       <div className={styles.hints}><strong>Ideas to help you answer</strong><ul>{attempt.prompt_snapshot.hints.map((hint, index) => <li key={`${attempt.id}-hint-${index}`}><span>{hint.en}</span><span lang="vi">{hint.vi}</span></li>)}</ul></div>
 
       {!attempt.transcript && <div className={styles.recording}>
-        <div className={styles.recordRow}><button type="button" className={recording ? styles.stopButton : styles.recordButton} disabled={busy || (usage !== null && usage.remaining <= 0 && !attempt.quota_consumed)} onClick={() => recording ? stopRecording() : void startRecording()} aria-label={recording ? "Stop recording" : "Start recording"}>{recording ? "Stop recording" : "Start recording"}</button><span aria-live="polite">{recording ? `Recording · ${Math.floor(elapsed / 60)}:${String(elapsed % 60).padStart(2, "0")} / 2:00` : "Maximum recording time: 2 minutes"}</span></div>
+        <div className={styles.recordRow}><button type="button" className={recording ? styles.stopButton : styles.recordButton} disabled={busy || usage?.remaining === 0} onClick={() => recording ? stopRecording() : void startRecording()} aria-label={recording ? "Stop recording" : "Start recording"}>{recording ? "Stop recording" : "Start recording"}</button><span aria-live="polite">{recording ? `Recording · ${Math.floor(elapsed / 60)}:${String(elapsed % 60).padStart(2, "0")} / 2:00` : "Maximum recording time: 2 minutes"}</span></div>
         {recording && <button type="button" className={styles.textButton} onClick={() => stopRecording(true)}>Cancel recording</button>}
         {recordedAudio && <div className={styles.uploadBox}>
           {previewUrl && <audio controls preload="metadata" src={previewUrl} aria-label="Preview your recorded answer" />}
@@ -311,7 +312,7 @@ export function SpeakingPractice() {
       {attempt.feedback && <FeedbackPanel feedback={attempt.feedback} />}
     </section> : <>
       <section className={styles.topicSection} aria-labelledby="speaking-topics-title"><div className={styles.sectionHeader}><div><p className={styles.eyebrow}>BEGINNER-FRIENDLY QUESTIONS</p><h3 id="speaking-topics-title">Choose a topic</h3><p className={styles.topicIntro}>Pick a practice question or let AI create a fresh one with bilingual hints.</p></div><button type="button" className={styles.generateTopicButton} disabled={busy || loading} onClick={() => void generateTopic()} aria-busy={busy}>{busy ? <><span className={styles.generateIcon} aria-hidden="true">◌</span>Creating topic…</> : <><span className={styles.generateIcon} aria-hidden="true">✦</span>Generate a topic with AI</>}</button></div>
-        {loading ? <div className={styles.loading} role="status">Loading speaking topics…</div> : prompts.length === 0 ? <div className={styles.empty}>No speaking topics are available yet.</div> : <div className={styles.topicGrid}>{prompts.map((prompt) => <article key={prompt.id} className={styles.topicCard}><span className={styles.category}>{prompt.category === "ielts_part1" ? "IELTS PART 1" : "CONVERSATION"}</span><h4>{prompt.title_en}</h4><p>{prompt.question_en}</p><p className={styles.translation} lang="vi">{prompt.question_vi}</p><button type="button" className={styles.secondaryButton} disabled={busy || (usage !== null && usage.remaining <= 0)} onClick={() => void startAttempt(prompt)}>{busy ? "Starting…" : "Practice this question"}</button></article>)}</div>}
+        {loading ? <div className={styles.loading} role="status">Loading speaking topics…</div> : prompts.length === 0 ? <div className={styles.empty}>No speaking topics are available yet.</div> : <div className={styles.topicGrid}>{prompts.map((prompt) => <article key={prompt.id} className={styles.topicCard}><span className={styles.category}>{prompt.category === "ielts_part1" ? "IELTS PART 1" : "CONVERSATION"}</span><h4>{prompt.title_en}</h4><p>{prompt.question_en}</p><p className={styles.translation} lang="vi">{prompt.question_vi}</p><button type="button" className={styles.secondaryButton} disabled={busy} onClick={() => void startAttempt(prompt)}>{busy ? "Starting…" : "Practice this question"}</button></article>)}</div>}
       </section>
     </>}
 

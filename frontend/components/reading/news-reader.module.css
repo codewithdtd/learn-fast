@@ -42,6 +42,11 @@
 .articleBody ::selection { color: var(--foreground); background: color-mix(in srgb, var(--primary) 28%, transparent); }
 .originalLink { display: inline-flex; align-items: center; gap: 7px; min-height: 44px; color: var(--primary); font-size: .86rem; font-weight: 800; text-decoration: underline; text-underline-offset: 3px; }
 .originalLink:focus-visible,.footerSource a:focus-visible { outline: 3px solid var(--primary); outline-offset: 3px; }
+.practiceActions { display: grid; justify-items: start; gap: 6px; margin: 22px 0 8px; border: 1px solid var(--outline); border-radius: var(--radius-md); padding: 12px; background: var(--surface-low); }
+.practiceActions button { min-height: 44px; border: 1px solid var(--primary); border-radius: var(--radius-md); padding: 9px 13px; color: var(--on-primary, #fff); background: var(--primary); font: inherit; font-weight: 780; cursor: pointer; }
+.practiceActions button:hover { filter: brightness(.96); }
+.practiceActions button:focus-visible { outline: 3px solid var(--primary); outline-offset: 3px; }
+.practiceActions span { color: var(--muted); font-size: .78rem; line-height: 1.45; }
 .footerSource { width: min(100%, 760px); margin: 26px auto 0; border-top: 1px solid var(--outline); padding-top: 12px; color: var(--muted); font-size: .78rem; }
 .footerSource a { color: var(--primary); font-weight: 750; }
 .unavailableArticle { width: min(100%, 760px); margin: 0 auto; border: 1px solid var(--outline); border-radius: var(--radius-md); padding: 16px; background: var(--surface-low); }

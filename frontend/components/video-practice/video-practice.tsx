@@ -403,6 +403,7 @@ export function VideoPractice() {
         </button>
       </form>
       <p className={styles.note}>Transcript captions are provided by an external service. Videos without accessible captions cannot be used yet. The transcript and your dictation stay in this page only.</p>
+      {!isAdmin && <p className={styles.note} role="note">You can try one video transcript and one translation lookup. The translation trial is shared with reading practice.</p>}
       {transcriptError && <p className={styles.error} role="alert">{transcriptError}</p>}
     </section>;
   }
@@ -432,6 +433,7 @@ export function VideoPractice() {
       <p className={styles.eyebrow}>LISTEN · REPEAT · REMEMBER</p>
       <h2 id="video-practice-title">YouTube video practice</h2>
       <p>Your transcript and answers are temporary and will clear when you leave this page.</p>
+      {!isAdmin && <p className={styles.note} role="note">You have one translation lookup shared with reading practice.</p>}
     </header>
     <div className={styles.modeSwitch} role="group" aria-label="Choose a practice mode">
       <button type="button" className={styles.modeButton} aria-pressed={mode === "shadowing"} onClick={() => setMode("shadowing")}>Shadowing</button>

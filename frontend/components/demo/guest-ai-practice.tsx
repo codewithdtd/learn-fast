@@ -11,8 +11,9 @@ import type { WritingFeedback, WritingPrompt } from "@/types/writing";
 import type { SpeakingFeedback, SpeakingPrompt } from "@/types/speaking";
 import styles from "./public-demo.module.css";
 import { VideoPractice } from "@/components/video-practice/video-practice";
+import { IELTSPractice } from "@/components/ielts/ielts-practice";
 
-type GuestAITab = "cards" | "writing" | "speaking" | "sentence" | "video";
+type GuestAITab = "cards" | "writing" | "speaking" | "sentence" | "video" | "ielts";
 
 export function GuestAIPractice({ initialVideo = false }: { initialVideo?: boolean }) {
   const [tab, setTab] = useState<GuestAITab>(initialVideo ? "video" : "cards");
@@ -55,10 +56,11 @@ export function GuestAIPractice({ initialVideo = false }: { initialVideo?: boole
     <div><p className={styles.eyebrow}>AI FEATURES · GUEST TRIALS</p><h2 id="guest-ai-heading">Try the AI tools</h2>
       <p>Each AI tool has one guest trial. Your drafts and feedback stay in this page and are not saved to an account.</p></div>
     <div className={styles.aiTabs} role="tablist" aria-label="Guest AI tools">
-      {([ ["cards", "Flashcards"], ["writing", "Writing"], ["speaking", "Speaking"], ["sentence", "Sentences"], ["video", "Video"] ] as const).map(([value, label]) =>
+      {([ ["cards", "Flashcards"], ["writing", "Writing"], ["speaking", "Speaking"], ["sentence", "Sentences"], ["video", "Video"], ["ielts", "IELTS Practice"] ] as const).map(([value, label]) =>
         <button key={value} type="button" role="tab" aria-selected={tab === value} onClick={() => { setTab(value); setError(null); }}>{label}</button>)}
     </div>
     {error && <p className={styles.error} role="alert">{error}</p>}
+    {tab === "ielts" && <IELTSPractice />}
     {tab === "cards" && <div className={styles.aiPanel}>
       <p>Generate a small vocabulary sample. It will not be added to a workbook.</p>
       <button className={styles.primary} type="button" disabled={busy || cards !== null} onClick={() => void run(() => generateAICards({ count: 5, topic: "Everyday English conversations", level: "Beginner A1-A2" }), (result) => setCards(result.cards))}>{busy ? "Generating…" : cards ? "Guest trial used" : "Generate sample cards"}</button>

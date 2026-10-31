@@ -43,7 +43,7 @@ export function WritingAttemptView({ attemptId }: { attemptId: number }) {
   useEffect(() => {
     if (!isAuthenticated) return;
     const load = getWritingAttempt(attemptId);
-    Promise.all([load, getWritingUsage()]).then(([loaded, quota]) => {
+    load.then(async (loaded) => [loaded, await getWritingUsage(loaded.prompt_snapshot.format)] as const).then(([loaded, quota]) => {
       setAttempt(loaded); setDraft(loaded.draft_text); lastSavedText.current = loaded.draft_text; setUsage(quota);
     }).catch((cause: unknown) => {
       if (cause instanceof ApiRequestError && cause.status === 401) setAuthOpen(true);
@@ -100,7 +100,7 @@ export function WritingAttemptView({ attemptId }: { attemptId: number }) {
         if (cancelled) return;
         acceptReviewStatus(updated);
         if (updated.status !== "grading") {
-          const quota = await getWritingUsage().catch(() => null);
+          const quota = await getWritingUsage(updated.prompt_snapshot.format).catch(() => null);
           if (!cancelled && quota) setUsage(quota);
           return;
         }
@@ -143,14 +143,14 @@ export function WritingAttemptView({ attemptId }: { attemptId: number }) {
       const graded = await gradeWritingAttempt(current.id, current.version, controller.signal);
       setAttempt(graded); setDraft(graded.draft_text); lastSavedText.current = graded.draft_text;
       playJourneyCompletionSound("writing-" + graded.id + "-" + graded.version);
-      const quota = await getWritingUsage().catch(() => null);
+      const quota = await getWritingUsage(graded.prompt_snapshot.format).catch(() => null);
       if (quota) setUsage(quota);
       window.setTimeout(() => document.getElementById("feedback-title")?.focus(), 0);
     } catch (cause) {
       if (controller.signal.aborted) return;
       const refreshed = await getWritingAttempt(current.id).catch(() => null);
       if (refreshed) setAttempt(refreshed);
-      setUsage(await getWritingUsage().catch(() => usage));
+      setUsage(await getWritingUsage(current.prompt_snapshot.format).catch(() => usage));
       setError(cause instanceof Error ? cause.message : "Feedback could not be generated. Your draft is saved.");
     } finally {
       feedbackStarting.current = false;
@@ -198,7 +198,7 @@ export function WritingAttemptView({ attemptId }: { attemptId: number }) {
   return (
     <main className={`${styles.page} ${isSentence ? styles.sentencePage : ""}`}>
       <div className={styles.pageHeading}><div><Link href={paragraphContext ? `/sheets/${paragraphContext.sheet_id}/paragraph-practice` : isSentence ? `/ai-support?tab=sentences${sentenceContext ? `&sheet=${sentenceContext.sheet_id}` : ""}` : "/ai-support?tab=writing"} className={styles.backLink}>{paragraphContext ? "← Choose expressions" : isSentence ? "← Choose another word" : "← All topics"}</Link><p className={styles.eyebrow}>{paragraphContext ? "VOCABULARY TRANSLATION" : isSentence ? "ACTIVE VOCABULARY PRACTICE" : `${prompt.difficulty} WRITING PRACTICE`}</p><h1>{prompt.title_en}</h1><p lang="vi">{prompt.title_vi}</p></div><Link className={styles.historyLink} href="/writing/history">Practice history</Link></div>
-      <div className={styles.assignmentCard}><p className={styles.eyebrow}>YOUR TASK</p><h2>{prompt.prompt_en}</h2>{paragraphContext ? <VietnamesePassage text={prompt.prompt_vi} style={paragraphContext.style} /> : <p lang="vi">{prompt.prompt_vi}</p>}{sentenceContext && <p><strong>Target expression: {sentenceContext.phrase}</strong> · <span lang="vi">{sentenceContext.meaning}</span></p>}<div className={styles.assignmentMeta}><span>{paragraphContext?.style === "dialogue" ? "Translate the full conversation" : isSentence ? "One original sentence" : `Suggested length: ${prompt.target_word_count} words`}</span><span>Maximum: {isSentence ? "60 words / 600 characters" : "300 words"}</span>{usage && <span>{usage.remaining === null ? "Unlimited feedback reviews today" : `${usage.remaining} of ${usage.daily_limit} feedback reviews left today`}</span>}</div></div>
+      <div className={styles.assignmentCard}><p className={styles.eyebrow}>YOUR TASK</p><h2>{prompt.prompt_en}</h2>{paragraphContext ? <VietnamesePassage text={prompt.prompt_vi} style={paragraphContext.style} /> : <p lang="vi">{prompt.prompt_vi}</p>}{sentenceContext && <p><strong>Target expression: {sentenceContext.phrase}</strong> · <span lang="vi">{sentenceContext.meaning}</span></p>}<div className={styles.assignmentMeta}><span>{paragraphContext?.style === "dialogue" ? "Translate the full conversation" : isSentence ? "One original sentence" : `Suggested length: ${prompt.target_word_count} words`}</span><span>Maximum: {isSentence ? "60 words / 600 characters" : "300 words"}</span>{usage && <span>{usage.remaining === null ? "Unlimited feedback reviews for admins" : `${usage.remaining} feedback trial remaining`}</span>}</div></div>
       {error && <div className={styles.errorNotice} role="alert">{error}</div>}
       {isSentence && attempt.revision_of_id && <div className={styles.warningNotice} role="status">Write an improved sentence from memory. Your previous answer and feedback remain in history.</div>}
       {pollingError && <div className={styles.errorNotice} role="alert"><span>{pollingError}</span><button className={styles.secondaryButton} onClick={() => void refreshReviewStatus()}>Refresh review status</button></div>}
@@ -209,7 +209,7 @@ export function WritingAttemptView({ attemptId }: { attemptId: number }) {
           {attempt.status !== "graded" && <div className={styles.submitBar}><div><strong>Ready to review?</strong><span>Your saved {writingUnit} will be sent to the configured AI provider.</span></div><button className={styles.primaryButton} disabled={!canGrade || saveState === "saving" || !draft.trim() || (isSentence && draft.trim().split(/\s+/).length > 60)} onClick={() => void submitForFeedback()}>{isGrading || attempt.status === "grading" ? pollingError ? "Review status unavailable" : "Reviewing…" : attempt.status === "failed" ? "Try feedback again" : "Submit for feedback"}</button></div>}
           {attempt.status === "graded" && attempt.feedback && <><WritingFeedbackView sentence={isSentence} feedback={attempt.feedback} sourceText={attempt.submitted_text ?? ""} /><div className={styles.rewriteBar}><div><strong>{isSentence ? "Now write it again from memory" : "Ready for another try?"}</strong><span>Your current score and feedback will stay in history. Each new review uses a feedback turn.</span></div><button className={styles.primaryButton} disabled={isCreating} onClick={() => void startRewrite()}>{isCreating ? "Creating…" : "Start a rewrite"}</button>{isSentence && <button className={styles.secondaryButton} disabled={isCreating} onClick={() => void startNewSituation()}>Try a new situation</button>}</div></>}
           {attempt.status === "graded" && !attempt.feedback && <div className={styles.errorNotice}>Saved feedback is unavailable for this attempt.</div>}
-          {usage?.remaining === 0 && attempt.status !== "graded" && <p className={styles.quotaNotice}>You have used today&apos;s feedback limit. You can still save your draft and return tomorrow.</p>}
+          {usage?.remaining === 0 && attempt.status !== "graded" && <p className={styles.quotaNotice}>Your one-time feedback trial has been used. Only an administrator can request further reviews.</p>}
         </div>
         <div className={styles.hintsColumn}>{paragraphContext ? <section className={styles.card}><p className={styles.eyebrow}>YOUR EXPRESSIONS</p><h2>Use these naturally</h2><p>Translate the Vietnamese text and use these expressions where they fit.</p><div className={styles.targetWords}>{paragraphContext.words.map((word) => <div key={word.id}><strong>{word.phrase}</strong><span lang="vi">{word.meaning}</span></div>)}</div></section> : isSentence && sentenceContext ? <SentenceHints key={attempt.id} context={sentenceContext} /> : <WritingHints prompt={prompt} />}</div>
       </div>

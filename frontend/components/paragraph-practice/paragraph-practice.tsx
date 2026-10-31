@@ -12,7 +12,7 @@ import styles from "./paragraph-practice.module.css";
 
 export function ParagraphPractice({ sheetId }: { sheetId: string }) {
   const router = useRouter();
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { isAuthenticated, isLoading: authLoading, user } = useAuth();
   const [sheet, setSheet] = useState<SheetDetail | null>(null);
   const [cards, setCards] = useState<FlashcardListItem[] | null>(null);
   const [selected, setSelected] = useState<number[]>([]);
@@ -88,7 +88,7 @@ export function ParagraphPractice({ sheetId }: { sheetId: string }) {
       </section>
       <section className={styles.panel}><div className={styles.sectionTitle}><div><span className={styles.step}>02</span><h2>Choose your format</h2><p>AI creates a Vietnamese text that uses the meaning of your selected expressions.</p></div></div>
         <div className={styles.formats} role="group" aria-label="Passage format"><button type="button" className={styles.format} aria-pressed={style === "paragraph"} disabled={busy} onClick={() => setStyle("paragraph")}><strong>✦ Short story</strong><span>A connected paragraph</span></button><button type="button" className={styles.format} aria-pressed={style === "dialogue"} disabled={busy} onClick={() => setStyle("dialogue")}><strong>☏ Conversation</strong><span>A short dialogue</span></button></div>
-        <p className={styles.note}>{isAuthenticated ? "Creating a passage and requesting feedback use your Writing AI limits. Your work is saved to your account." : "Guest trial: one passage and one review. Your work stays on this page and is not saved to an account."}</p>
+        <p className={styles.note}>{isAuthenticated && user?.is_superuser ? "Your work is saved to your account." : isAuthenticated ? "One passage and one review trial. Your work is saved to your account." : "Guest trial: one passage and one review. Your work stays on this page and is not saved to an account."}</p>
         <button type="button" className={styles.primary} disabled={busy || authLoading || selected.length < 5} aria-busy={busy} onClick={() => void createTask()}>{busy ? "Creating your passage…" : "Create my passage →"}</button>
       </section>
     </>}
