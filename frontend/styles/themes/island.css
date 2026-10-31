@@ -188,3 +188,623 @@
   background: #ded6c8;
   border-color: var(--island-wood);
 }
+
+
+/* ==========================================================================
+   Cozy Island Calendar Page Styles — Muted Linen & Cottagecore Aesthetics
+   ========================================================================== */
+
+:root[data-theme="island"] .calendar-page-layout {
+  width: min(100% - 48px, 1260px);
+  margin: 0 auto;
+  padding: 24px 0 60px;
+}
+
+/* 1. Header Banner & Streak Stats Ribbon */
+:root[data-theme="island"] .calendar-header-banner {
+  border: 2px solid #d4c7b2;
+  border-radius: 28px;
+  background: #f4efe6;
+  padding: 24px 28px;
+  box-shadow: 0 6px 20px rgb(50 35 20 / 6%);
+  margin-bottom: 24px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+:root[data-theme="island"] .banner-title-block .eyebrow {
+  color: #3b6132;
+  font-weight: 800;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin: 0 0 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+:root[data-theme="island"] .banner-title-block .eyebrow::before {
+  content: "🍃 ";
+}
+
+:root[data-theme="island"] .banner-title-block h1 {
+  color: #382c22;
+  font-size: 1.85rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin: 4px 0 8px;
+}
+
+:root[data-theme="island"] .banner-subtext {
+  color: #5e5145;
+  font-size: 0.94rem;
+  margin: 0;
+  max-width: 580px;
+}
+
+:root[data-theme="island"] .streak-stats-ribbon {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+:root[data-theme="island"] .streak-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #eae3d8;
+  border: 1.5px solid #d4c7b2;
+  border-radius: 18px;
+  padding: 12px 18px;
+  box-shadow: 0 3px 0 #c7bca8;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+:root[data-theme="island"] .streak-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 0 #c7bca8;
+}
+
+:root[data-theme="island"] .streak-card.highlight {
+  background: #fbf6ec;
+  border: 2px solid #8f6215;
+  box-shadow: 0 3px 0 #c49942;
+}
+
+:root[data-theme="island"] .streak-card.highlight .streak-icon {
+  color: #d18f1a;
+}
+
+:root[data-theme="island"] .streak-icon {
+  color: #3b6132;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+:root[data-theme="island"] .streak-info strong {
+  color: #382c22;
+  font-size: 1.15rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+:root[data-theme="island"] .streak-info span {
+  color: #7a6655;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* 2. Month Due Forecast Ribbon */
+:root[data-theme="island"] .month-due-forecast-ribbon {
+  border: 2px solid #d4c7b2;
+  border-radius: 22px;
+  background: #f4efe6;
+  padding: 16px 22px;
+  box-shadow: 0 4px 16px rgb(50 35 20 / 5%);
+  margin-bottom: 24px;
+}
+
+:root[data-theme="island"] .forecast-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+:root[data-theme="island"] .forecast-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #382c22;
+}
+
+:root[data-theme="island"] .forecast-title svg {
+  color: #3b6132;
+}
+
+:root[data-theme="island"] .forecast-count {
+  font-size: 11px;
+  font-weight: 800;
+  color: #3b6132;
+  background: #dfe9dc;
+  border: 1px solid #8dbb75;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+:root[data-theme="island"] .forecast-pills-row {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: thin;
+}
+
+:root[data-theme="island"] .forecast-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1.5px solid #d4c7b2;
+  border-radius: 14px;
+  padding: 6px 14px;
+  background: #eae3d8;
+  color: #382c22;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 2px 0 #c7bca8;
+  transition: all 0.15s ease;
+}
+
+:root[data-theme="island"] .forecast-pill:hover {
+  background: #ded6c8;
+  border-color: #3b6132;
+  transform: translateY(-1px);
+}
+
+:root[data-theme="island"] .forecast-pill.active {
+  background: #3b6132;
+  border-color: #284422;
+  color: #fff;
+  box-shadow: 0 2px 0 #284422;
+}
+
+:root[data-theme="island"] .forecast-pill.today {
+  border-color: #8f6215;
+}
+
+:root[data-theme="island"] .forecast-pill-badge {
+  font-size: 10px;
+  font-weight: 800;
+  background: #edd5d1;
+  color: #8c2e24;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+
+:root[data-theme="island"] .forecast-pill.active .forecast-pill-badge {
+  background: rgba(255, 255, 255, 0.25);
+  color: #fff;
+}
+
+/* 3. Main Grid */
+:root[data-theme="island"] .calendar-main-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.75fr) minmax(0, 1.25fr);
+  gap: 24px;
+  align-items: start;
+}
+
+/* 4. Month Calendar Panel */
+:root[data-theme="island"] .calendar-month-panel {
+  border: 2px solid #d4c7b2;
+  border-radius: 24px;
+  background: #f4efe6;
+  padding: 24px 28px;
+  box-shadow: 0 6px 20px rgb(50 35 20 / 6%);
+}
+
+:root[data-theme="island"] .month-navigation-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+:root[data-theme="island"] .month-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+:root[data-theme="island"] .month-title-wrap h2 {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #382c22;
+}
+
+:root[data-theme="island"] .button-subtle-pill {
+  border: 1.5px solid #d4c7b2;
+  border-radius: 999px;
+  background: #eae3d8;
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #3b6132;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+:root[data-theme="island"] .button-subtle-pill:hover {
+  background: #3b6132;
+  color: #fff;
+  border-color: #284422;
+}
+
+:root[data-theme="island"] .btn-icon {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border: 1.5px solid #d4c7b2;
+  border-radius: 12px;
+  background: #eae3d8;
+  color: #382c22;
+  cursor: pointer;
+  box-shadow: 0 2px 0 #c7bca8;
+  transition: all 0.15s ease;
+}
+
+:root[data-theme="island"] .btn-icon:hover {
+  background: #3b6132;
+  color: #fff;
+  border-color: #284422;
+  transform: translateY(-1px);
+}
+
+:root[data-theme="island"] .btn-icon:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 0 #284422;
+}
+
+:root[data-theme="island"] .calendar-weekdays-header {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  margin-bottom: 12px;
+  font-size: 11px;
+  font-weight: 800;
+  color: #7a6655;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+:root[data-theme="island"] .calendar-days-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+}
+
+:root[data-theme="island"] .calendar-day-cell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 86px;
+  border: 1.5px solid #d4c7b2;
+  border-radius: 14px;
+  background: #eae3d8;
+  padding: 8px 10px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+
+:root[data-theme="island"] .calendar-day-cell:hover {
+  border-color: #3b6132;
+  box-shadow: 0 6px 14px rgb(50 35 20 / 10%);
+  transform: translateY(-2px);
+}
+
+:root[data-theme="island"] .calendar-day-cell.empty {
+  background: transparent;
+  border: none;
+  cursor: default;
+}
+
+:root[data-theme="island"] .calendar-day-cell.today {
+  border: 2px solid #3b6132;
+  box-shadow: inset 0 0 0 1px #3b6132;
+}
+
+:root[data-theme="island"] .calendar-day-cell.selected {
+  outline: 3px solid #5a4535;
+  outline-offset: 1px;
+  background: #faf6ee;
+}
+
+:root[data-theme="island"] .calendar-day-cell.studied {
+  background: #e1ece0;
+  border-color: #8dbb75;
+}
+
+:root[data-theme="island"] .calendar-day-cell.future {
+  opacity: 0.6;
+}
+
+:root[data-theme="island"] .calendar-day-cell.has-due {
+  border-color: #e5bab4;
+}
+
+:root[data-theme="island"] .day-number {
+  font-size: 13px;
+  font-weight: 800;
+  color: #382c22;
+}
+
+:root[data-theme="island"] .study-badge {
+  display: grid;
+  width: 20px;
+  height: 20px;
+  place-items: center;
+  border-radius: 50%;
+  background: #3b6132;
+  color: #fff;
+  box-shadow: 0 2px 4px rgb(59 97 50 / 30%);
+}
+
+:root[data-theme="island"] .cell-indicators {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+:root[data-theme="island"] .due-indicator-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  font-weight: 800;
+  color: #8c2e24;
+  background: #edd5d1;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+
+:root[data-theme="island"] .cards-count-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #7a6655;
+}
+
+:root[data-theme="island"] .calendar-legend-bar {
+  display: flex;
+  gap: 20px;
+  margin-top: 22px;
+  padding-top: 16px;
+  border-top: 1.5px solid #d4c7b2;
+  font-size: 12px;
+  color: #5e5145;
+  font-weight: 600;
+}
+
+:root[data-theme="island"] .legend-dot.studied {
+  background: #3b6132;
+}
+
+:root[data-theme="island"] .legend-dot.due {
+  background: #8c2e24;
+}
+
+:root[data-theme="island"] .legend-dot.today {
+  border: 2px solid #3b6132;
+  background: #f4efe6;
+}
+
+/* 5. Selected Day Inspector */
+:root[data-theme="island"] .calendar-inspector-panel .inspector-card {
+  border: 2px solid #d4c7b2;
+  border-radius: 24px;
+  background: #f4efe6;
+  padding: 24px 28px;
+  box-shadow: 0 6px 20px rgb(50 35 20 / 6%);
+}
+
+:root[data-theme="island"] .inspector-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+:root[data-theme="island"] .inspector-header .eyebrow {
+  color: #3b6132;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  margin: 0 0 2px;
+  letter-spacing: 0.05em;
+}
+
+:root[data-theme="island"] .inspector-header .eyebrow::before {
+  content: "📅 ";
+}
+
+:root[data-theme="island"] .inspector-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #382c22;
+}
+
+:root[data-theme="island"] .today-chip {
+  font-size: 11px;
+  font-weight: 800;
+  color: #284422;
+  background: #dfe9dc;
+  border: 1px solid #8dbb75;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+:root[data-theme="island"] .section-title-with-badge h4 {
+  color: #5e5145;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+:root[data-theme="island"] .count-tag {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #eae3d8;
+  color: #382c22;
+  border: 1px solid #d4c7b2;
+}
+
+:root[data-theme="island"] .count-tag.highlight {
+  background: #edd5d1;
+  color: #8c2e24;
+  border-color: #e5bab4;
+}
+
+:root[data-theme="island"] .empty-schedule-box {
+  background: #eae3d8;
+  border: 1.5px dashed #c7bca8;
+  border-radius: 14px;
+  padding: 16px;
+  color: #5e5145;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+:root[data-theme="island"] .due-sheet-item-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: #eae3d8;
+  border: 1.5px solid #d4c7b2;
+  border-radius: 16px;
+  padding: 14px 16px;
+  box-shadow: 0 2px 0 #c7bca8;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+:root[data-theme="island"] .due-sheet-item-card:hover {
+  border-color: #3b6132;
+  transform: translateY(-1px);
+}
+
+:root[data-theme="island"] .due-sheet-title-row strong {
+  font-size: 14px;
+  font-weight: 700;
+  color: #382c22;
+}
+
+:root[data-theme="island"] .priority-badge.priority-high {
+  background: #edd5d1;
+  color: #8c2e24;
+}
+
+:root[data-theme="island"] .priority-badge.priority-normal {
+  background: #dfe9dc;
+  color: #284422;
+}
+
+:root[data-theme="island"] .priority-badge.priority-low {
+  background: #eeddbb;
+  color: #8f6215;
+}
+
+:root[data-theme="island"] .due-sheet-subtext {
+  font-size: 12px;
+  color: #5e5145;
+}
+
+:root[data-theme="island"] .due-sheet-time {
+  font-size: 11px;
+  color: #7a6655;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+:root[data-theme="island"] .session-history-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #eae3d8;
+  border: 1.5px solid #d4c7b2;
+  border-radius: 14px;
+  padding: 12px 16px;
+  text-decoration: none;
+  box-shadow: 0 2px 0 #c7bca8;
+  transition: all 0.15s ease;
+}
+
+:root[data-theme="island"] .session-history-row:hover {
+  background: #ded6c8;
+  border-color: #3b6132;
+  transform: translateY(-1px);
+}
+
+:root[data-theme="island"] .session-row-info strong {
+  font-size: 13px;
+  color: #382c22;
+}
+
+:root[data-theme="island"] .session-row-info span {
+  font-size: 11px;
+  color: #7a6655;
+}
+
+:root[data-theme="island"] .session-row-score {
+  font-size: 14px;
+  font-weight: 800;
+  color: #3b6132;
+}
+
+/* 6. Mobile Responsive Overrides */
+@media (max-width: 1023px) {
+  :root[data-theme="island"] .calendar-page-layout {
+    width: min(100% - 24px, 760px);
+    padding: 16px 0 40px;
+  }
+  :root[data-theme="island"] .calendar-header-banner {
+    padding: 18px 20px;
+  }
+  :root[data-theme="island"] .streak-stats-ribbon {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 639px) {
+  :root[data-theme="island"] .streak-stats-ribbon {
+    grid-template-columns: 1fr;
+  }
+  :root[data-theme="island"] .calendar-month-panel {
+    padding: 16px 12px;
+  }
+  :root[data-theme="island"] .calendar-inspector-panel .inspector-card {
+    padding: 18px 14px;
+  }
+}
