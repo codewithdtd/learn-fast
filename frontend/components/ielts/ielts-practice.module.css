@@ -1,3 +1,84 @@
+/* Cozy Island Theme */
+:global(:root[data-theme="island"]) .page { color: #382c22; }
+:global(:root[data-theme="island"]) .kicker { color: #3b6132; }
+:global(:root[data-theme="island"]) .heading h2 { color: #382c22; font-weight: 800; }
+:global(:root[data-theme="island"]) .card,
+:global(:root[data-theme="island"]) .history,
+:global(:root[data-theme="island"]) .stickyVideo,
+:global(:root[data-theme="island"]) .question {
+  border: 2px solid #d4c7b2;
+  border-radius: 22px;
+  background: #f4efe6;
+  box-shadow: 0 4px 18px rgb(50 35 20 / 6%);
+}
+:global(:root[data-theme="island"]) .choiceRow button,
+:global(:root[data-theme="island"]) .secondary,
+:global(:root[data-theme="island"]) .evidenceButton,
+:global(:root[data-theme="island"]) .mobileSwitch button {
+  background: #eae3d8;
+  border: 1.5px solid #d4c7b2;
+  border-radius: 14px;
+  color: #382c22;
+  box-shadow: 0 2px 0 #c7bca8;
+}
+:global(:root[data-theme="island"]) .choiceRow .selected,
+:global(:root[data-theme="island"]) .mobileSwitch button[aria-pressed="true"] {
+  background: #3b6132;
+  border-color: #284422;
+  color: #ffffff;
+  box-shadow: 0 2px 0 #284422;
+}
+:global(:root[data-theme="island"]) .skillCards > button {
+  background: #fdfbf7;
+  border: 2px solid #d4c7b2;
+  border-radius: 20px;
+}
+:global(:root[data-theme="island"]) .skillCards > button > span {
+  color: #3b6132;
+}
+:global(:root[data-theme="island"]) .skillCards .skillActive {
+  background: #ebf3e8;
+  border-color: #3b6132;
+  box-shadow: 0 3px 0 #284422;
+}
+:global(:root[data-theme="island"]) .passage {
+  background: #fdfbf7;
+  border: 2px solid #d4c7b2;
+  border-radius: 20px;
+  color: #382c22;
+  line-height: 1.8;
+}
+:global(:root[data-theme="island"]) .field input,
+:global(:root[data-theme="island"]) .field textarea,
+:global(:root[data-theme="island"]) .field select {
+  background: #fdfbf7;
+  border: 1.5px solid #d4c7b2;
+  border-radius: 14px;
+  color: #382c22;
+}
+:global(:root[data-theme="island"]) .primary {
+  background: #3b6132;
+  border: 2px solid #284422;
+  border-radius: 14px;
+  color: #ffffff;
+  box-shadow: 0 3px 0 #284422;
+}
+:global(:root[data-theme="island"]) .primary:hover:not(:disabled) {
+  background: #31522a;
+  transform: translateY(-1px);
+}
+:global(:root[data-theme="island"]) .number {
+  background: #3b6132;
+  color: #ffffff;
+  border-radius: 12px;
+}
+:global(:root[data-theme="island"]) .progress {
+  background: #eae3d8;
+  border: 1.5px solid #d4c7b2;
+  border-radius: 16px;
+  color: #3b6132;
+}
+
 .page { display: grid; gap: 18px; padding-bottom: 70px; color: var(--foreground); }
 .heading { display: grid; gap: 7px; padding: 8px 2px 4px; }
 .kicker { color: var(--primary); font-size: .72rem; font-weight: 850; letter-spacing: .11em; text-transform: uppercase; }

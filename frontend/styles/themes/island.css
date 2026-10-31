@@ -2432,3 +2432,37 @@
   box-shadow: 0 6px 20px rgb(50 35 20 / 6%);
   margin-bottom: 24px;
 }
+
+
+/* ==========================================================================
+   9. AI Support Hub & Practice Sub-pages (/ai-support, /writing/*)
+   ========================================================================== */
+:root[data-theme="island"] .writing-page,
+:root[data-theme="island"] .writing-history-page,
+:root[data-theme="island"] .writing-attempt-page {
+  color: #382c22;
+}
+
+:root[data-theme="island"] .writing-editor-textarea {
+  background: #fdfbf7;
+  border: 2px solid #d4c7b2;
+  border-radius: 18px;
+  color: #382c22;
+  padding: 18px;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+:root[data-theme="island"] .writing-editor-textarea:focus {
+  border-color: #3b6132;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 97, 50, 0.15);
+}
+
+:root[data-theme="island"] .criterion-card {
+  background: #f4efe6;
+  border: 2px solid #d4c7b2;
+  border-radius: 20px;
+  padding: 18px 22px;
+  box-shadow: 0 4px 14px rgb(50 35 20 / 4%);
+}

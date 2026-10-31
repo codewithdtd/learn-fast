@@ -4,6 +4,35 @@
 :global(:root[data-theme="journey"]) .header h1 { color: #17304a; }
 :global(:root[data-theme="journey"]) .tabs { border-color: #aebfd4; border-radius: 18px; box-shadow: 0 3px 0 #d6e2f0; }
 :global(:root[data-theme="journey"]) .tabs .activeTab { color: #173f91; background: #e4edff; }
+
+/* Cozy Island Theme */
+:global(:root[data-theme="island"]) .hub { color: #382c22; }
+:global(:root[data-theme="island"]) .header { border-bottom: 2px solid #d4c7b2; padding-bottom: 18px; }
+:global(:root[data-theme="island"]) .header h1 { color: #382c22; font-weight: 800; letter-spacing: -0.03em; }
+:global(:root[data-theme="island"]) .eyebrow { color: #3b6132; }
+:global(:root[data-theme="island"]) .tabs {
+  background: #f4efe6;
+  border: 2px solid #d4c7b2;
+  border-radius: 20px;
+  box-shadow: 0 4px 14px rgb(50 35 20 / 4%);
+  padding: 6px;
+}
+:global(:root[data-theme="island"]) .tabs button {
+  color: #7a6655;
+  border-radius: 14px;
+  font-weight: 800;
+  transition: all 0.15s ease;
+}
+:global(:root[data-theme="island"]) .tabs button:hover {
+  color: #382c22;
+  background: #eae3d8;
+}
+:global(:root[data-theme="island"]) .tabs .activeTab {
+  background: #3b6132;
+  color: #ffffff !important;
+  box-shadow: 0 2px 0 #284422;
+}
+
 .header { padding: 8px 0 18px; }
 .header h1 { margin: 4px 0 6px; font-size: clamp(1.7rem, 5vw, 2.3rem); letter-spacing: -.04em; }
 .header p:last-child { max-width: 620px; margin: 0; color: var(--muted); line-height: 1.55; }
@@ -29,4 +58,12 @@
   :global(:root[data-theme="journey"]) .tabs { display: flex; width: 100%; gap: 4px; overflow-x: auto; overscroll-behavior-x: contain; border: 0; border-bottom: 1px solid #c2d2e7; border-radius: 0; margin-bottom: 12px; padding: 0 0 8px; background: transparent; box-shadow: none; scrollbar-width: none; }
   :global(:root[data-theme="journey"]) .tabs::-webkit-scrollbar { display: none; }
   :global(:root[data-theme="journey"]) .tabs button { min-width: 82px; min-height: 44px; flex: 1 0 auto; border-radius: 12px; white-space: nowrap; }
+
+  :global(:root[data-theme="island"]) .hub { width: calc(100% - 32px); padding-top: 14px; }
+  :global(:root[data-theme="island"]) .header { min-height: 0; border: 0; padding: 0 0 12px; }
+  :global(:root[data-theme="island"]) .header h1 { font-size: 1.55rem; }
+  :global(:root[data-theme="island"]) .header p:last-child { font-size: .85rem; }
+  :global(:root[data-theme="island"]) .tabs { display: flex; width: 100%; gap: 4px; overflow-x: auto; overscroll-behavior-x: contain; border: 1.5px solid #d4c7b2; border-radius: 16px; margin-bottom: 12px; padding: 4px; background: #f4efe6; scrollbar-width: none; }
+  :global(:root[data-theme="island"]) .tabs::-webkit-scrollbar { display: none; }
+  :global(:root[data-theme="island"]) .tabs button { min-width: 82px; min-height: 40px; flex: 1 0 auto; border-radius: 12px; white-space: nowrap; }
 }
