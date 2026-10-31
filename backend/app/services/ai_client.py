@@ -174,9 +174,10 @@ def call_9router_chat(
         )
     except httpx.HTTPStatusError as err:
         logger.error(f"9router returned HTTP {err.response.status_code}: {err.response.text}")
+        provider_rate_limited = err.response.status_code == 429
         raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"The AI service returned an error (HTTP {err.response.status_code}). Please try again.",
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS if provider_rate_limited else status.HTTP_502_BAD_GATEWAY,
+            detail="The AI provider is rate limited. Please try again later." if provider_rate_limited else f"The AI service returned an error (HTTP {err.response.status_code}). Please try again.",
         )
     except Exception as err:
         logger.error(f"Unexpected error when calling 9router: {err}")

@@ -10,6 +10,70 @@
 :global(:root[data-theme="journey"]) .primary { border-color: #1b4293; color: #fff; background: #2457bc; }
 :global(:root[data-theme="journey"]) .segmentLine,
 :global(:root[data-theme="journey"]) .gapSentence { border-color: #c2d2e7; border-radius: 14px; background: #f8faff; }
+
+/* Cozy Island Theme */
+:global(:root[data-theme="island"]) .root { color: #382c22; }
+:global(:root[data-theme="island"]) .linkForm,
+:global(:root[data-theme="island"]) .dictationCard,
+:global(:root[data-theme="island"]) .lookupCard {
+  border: 2px solid #d4c7b2;
+  border-radius: 22px;
+  background: #f4efe6;
+  box-shadow: 0 4px 18px rgb(50 35 20 / 6%);
+}
+:global(:root[data-theme="island"]) .field input,
+:global(:root[data-theme="island"]) .field select,
+:global(:root[data-theme="island"]) .answerInput,
+:global(:root[data-theme="island"]) .gapInput input {
+  border: 1.5px solid #d4c7b2;
+  border-radius: 14px;
+  background: #fdfbf7;
+  color: #382c22;
+  font-size: 16px;
+}
+:global(:root[data-theme="island"]) .primary {
+  border: 2px solid #284422;
+  color: #fff;
+  background: #3b6132;
+  border-radius: 14px;
+  box-shadow: 0 3px 0 #284422;
+}
+:global(:root[data-theme="island"]) .secondary,
+:global(:root[data-theme="island"]) .playButton,
+:global(:root[data-theme="island"]) .wordButton {
+  border: 1.5px solid #d4c7b2;
+  border-radius: 14px;
+  background: #eae3d8;
+  color: #382c22;
+  box-shadow: 0 2px 0 #c7bca8;
+}
+:global(:root[data-theme="island"]) .modeSwitch {
+  background: #eae3d8;
+  border: 1.5px solid #d4c7b2;
+  border-radius: 16px;
+  padding: 4px;
+}
+:global(:root[data-theme="island"]) .modeButton[aria-pressed="true"] {
+  background: #3b6132;
+  color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 2px 0 #284422;
+}
+:global(:root[data-theme="island"]) .segment {
+  border: 1.5px solid #d4c7b2;
+  border-radius: 16px;
+  background: #fdfbf7;
+}
+:global(:root[data-theme="island"]) .segment[data-active="true"] {
+  border-color: #3b6132;
+  background: #ebf3e8;
+}
+:global(:root[data-theme="island"]) .segmentLine,
+:global(:root[data-theme="island"]) .gapSentence {
+  border: 1.5px solid #d4c7b2;
+  border-radius: 14px;
+  background: #fdfbf7;
+}
 .intro { display: grid; gap: 6px; }
 .eyebrow { margin: 0; color: var(--muted); font-size: .7rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
 .intro h2 { margin: 0; font-size: clamp(1.45rem, 4vw, 1.9rem); letter-spacing: -.035em; }

@@ -7,6 +7,8 @@ import { useEffect, useState } from "react";
 import { DashboardCheckinBanner } from "@/components/dashboard/dashboard-checkin-banner";
 import { DashboardLearningChart } from "@/components/dashboard/dashboard-learning-chart";
 import { JourneyDashboard, JourneyExplore } from "@/components/dashboard/journey-dashboard";
+import { CozyDashboardView } from "@/components/dashboard/island/cozy-dashboard-view";
+import { setTheme, useTheme } from "@/hooks/use-theme";
 import { Icon } from "@/components/layout/app-shell";
 import { useAuth } from "@/context/auth-context";
 import { formatDate, formatLabel } from "@/lib/format";
@@ -22,6 +24,7 @@ import {
 
 export function DashboardView() {
   const { user } = useAuth();
+  const activeTheme = useTheme();
   const [dashboard, setDashboard] = useState<DashboardSummary | null>(null);
   const [streak, setStreak] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -55,6 +58,15 @@ export function DashboardView() {
   if (!dashboard) return null;
 
   const displayName = user?.full_name?.trim() ? user.full_name.trim().split(" ")[0] : "Learner";
+
+  // Khi chọn theme "Cozy Island", hiển thị trải nghiệm Dashboard Hòn đảo mộc mạc
+  if (activeTheme === "island") {
+    return (
+      <main className="dashboard-page" style={{ padding: "0 4px" }}>
+        <CozyDashboardView dashboard={dashboard} streak={streak} userName={displayName} />
+      </main>
+    );
+  }
   const badgesCount = Math.max(1, Math.floor(streak / 2) + Math.min(5, dashboard.recent_sessions.length));
   const totalActiveCards =
     dashboard.active_sessions.reduce((acc, s) => acc + s.total_cards, 0) +
@@ -64,6 +76,28 @@ export function DashboardView() {
   return (
     <main className="dashboard-page">
       <JourneyDashboard userName={displayName} streak={streak} dashboard={dashboard} />
+      <div style={{ display: "flex", justifyContent: "flex-end", margin: "4px 0 12px" }}>
+        <button
+          type="button"
+          onClick={() => setTheme("island")}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "6px",
+            padding: "6px 14px",
+            borderRadius: "14px",
+            background: "#f4efe6",
+            border: "1.5px solid #3b6132",
+            color: "#261c14",
+            fontSize: "0.84rem",
+            fontWeight: 600,
+            cursor: "pointer",
+          }}
+          title="Switch to Cozy Island theme"
+        >
+          <span>🏝️</span> Switch to Cozy Island Dashboard
+        </button>
+      </div>
       <div data-journey-classic-only="true">
         <DashboardWelcomeHeader userName={displayName} />
         <DashboardGamifiedStatsBar streak={streak} cardsCount={totalActiveCards} badgesCount={badgesCount} />
@@ -287,8 +321,15 @@ function DashboardWelcomeHeader({ userName }: { userName: string }) {
   return (
     <div className="dashboard-welcome-header">
       <div className="welcome-avatar-wrap">
-        <div className="welcome-avatar" aria-hidden="true">
-          {initial}
+        <div className="welcome-avatar" aria-hidden="true" style={{ overflow: "hidden" }}>
+          <img
+            src="/avatar.jpg"
+            alt=""
+            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+            onError={(e) => {
+              (e.currentTarget as HTMLElement).style.display = "none";
+            }}
+          />
         </div>
         <div className="welcome-text">
           <h2>Hello, {userName}! 👋</h2>

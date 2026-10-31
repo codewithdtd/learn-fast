@@ -1,4 +1,4 @@
-export const THEMES = ["light", "dark", "retro", "playful", "journey"] as const;
+export const THEMES = ["light", "dark", "retro", "playful", "journey", "island"] as const;
 
 export type Theme = (typeof THEMES)[number];
 
@@ -11,6 +11,7 @@ export const THEME_OPTIONS: ReadonlyArray<{ id: Theme; label: string; descriptio
   { id: "retro", label: "Retro Farm", description: "Warm vintage" },
   { id: "playful", label: "Playful EdTech", description: "Bright and friendly" },
   { id: "journey", label: "Learning Journey", description: "Colorful learning" },
+  { id: "island", label: "Cozy Island", description: "Warm cottagecore sanctuary" },
 ];
 
 export function isTheme(value: unknown): value is Theme {

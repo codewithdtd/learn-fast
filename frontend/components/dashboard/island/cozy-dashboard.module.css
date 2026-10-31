@@ -1,0 +1,839 @@
+/* ==========================================================================
+   Cozy Island Sanctuary Dashboard — Scoped Styling (Animal Crossing Theme)
+   ========================================================================== */
+
+.islandRoot {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 8px 16px 48px;
+  color: #34261b;
+  font-family: inherit;
+}
+
+/* --------------------------------------------------------------------------
+   1. Hero Banner & Landscape Header
+   -------------------------------------------------------------------------- */
+.heroBanner {
+  position: relative;
+  overflow: hidden;
+  border: 2px solid #d4c7b2;
+  border-radius: 28px;
+  background: #d8e2d8;
+  box-shadow: 0 6px 24px rgba(50, 35, 20, 0.08);
+}
+
+.heroArtWrap {
+  width: 100%;
+  height: 220px;
+  overflow: hidden;
+  position: relative;
+  background: #cad8ca;
+}
+
+.heroArtImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 35%;
+  display: block;
+}
+
+.heroInfoRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 28px;
+  background: rgba(244, 239, 230, 0.96);
+  backdrop-filter: blur(8px);
+  border-top: 1.5px solid #d4c7b2;
+  gap: 16px;
+}
+
+.heroGreeting {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.heroGreetingIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 18px;
+  background: #cfe0cf;
+  border: 2px solid #a3bca6;
+  color: #1e3b22;
+  font-size: 26px;
+  box-shadow: 0 3px 0 #a3bca6;
+  flex-shrink: 0;
+}
+
+.heroGreetingText h1 {
+  margin: 0;
+  font-size: 1.55rem;
+  font-weight: 700;
+  color: #34261b;
+  letter-spacing: -0.015em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.heroGreetingText p {
+  margin: 4px 0 0;
+  font-size: 0.92rem;
+  color: #5e5044;
+}
+
+.islandStatusWidget {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  background: #e8e1d5;
+  border: 1.5px solid #c9b69d;
+  box-shadow: inset 0 2px 4px rgba(50, 35, 20, 0.06);
+}
+
+.statusItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #543927;
+}
+
+.statusDivider {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #bbaa95;
+}
+
+.statusAvatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #244828;
+  border: 2px solid #c9b69d;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(36, 72, 40, 0.25);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.statusAvatarImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* --------------------------------------------------------------------------
+   2. Main Layout Grid (Cards & Columns)
+   -------------------------------------------------------------------------- */
+.gridRow3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 22px;
+}
+
+.gridRow2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+}
+
+/* --------------------------------------------------------------------------
+   3. Card Container Style (Cozy Muted Parchment Card)
+   -------------------------------------------------------------------------- */
+.cozyCard {
+  background: #f4efe6;
+  border: 2px solid #d4c7b2;
+  border-radius: 24px;
+  padding: 22px;
+  box-shadow: 0 4px 20px rgba(50, 35, 20, 0.07);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.cozyCard:hover {
+  border-color: #baa993;
+  box-shadow: 0 8px 24px rgba(50, 35, 20, 0.1);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.cardHeaderTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cardHeaderIcon {
+  font-size: 20px;
+}
+
+.cardTitle {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #34261b;
+  margin: 0;
+}
+
+.cardActionLink {
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: #244828;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 12px;
+  border-radius: 10px;
+  background: #d8e5d7;
+  border: 1px solid #b8ceb7;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.cardActionLink:hover {
+  background: #c7dcc6;
+  color: #162f19;
+}
+
+.cardActionLink:focus-visible {
+  outline: 2px solid #244828;
+  outline-offset: 2px;
+}
+
+/* --------------------------------------------------------------------------
+   4. Widget 1: Overview & Mini Calendar
+   -------------------------------------------------------------------------- */
+.overviewStatsRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  background: #e2d6c3;
+  border: 1.5px solid #d4c7b2;
+  border-radius: 16px;
+  margin-bottom: 16px;
+}
+
+.starRatingWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ratingLabel {
+  font-size: 0.76rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #7a6655;
+}
+
+.starsRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 1.15rem;
+  color: #d18f1a;
+}
+
+.islandIdBadge {
+  font-size: 0.78rem;
+  font-family: monospace;
+  font-weight: 600;
+  padding: 4px 10px;
+  background: #f4efe6;
+  border: 1px solid #baa993;
+  border-radius: 10px;
+  color: #5c432f;
+}
+
+/* Mini Calendar */
+.miniCalendar {
+  background: #eae3d8;
+  border: 1.5px solid #d4c7b2;
+  border-radius: 16px;
+  padding: 12px;
+  margin-bottom: 14px;
+}
+
+.calendarMonthHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #543927;
+  margin-bottom: 8px;
+  padding: 0 4px;
+}
+
+.calendarGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  text-align: center;
+}
+
+.calendarDayName {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #7a6655;
+  padding-bottom: 4px;
+}
+
+.calendarDayCell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin: 0 auto;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: #4e3f34;
+  border-radius: 50%;
+  position: relative;
+}
+
+.calendarDayCell[data-active="true"] {
+  background: #244828;
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: 0 2px 5px rgba(36, 72, 40, 0.35);
+}
+
+.calendarDayCell[data-today="true"] {
+  border: 2px solid #d18f1a;
+  font-weight: 700;
+}
+
+.overviewPillsRow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: auto;
+}
+
+.overviewPill {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px;
+  border-radius: 14px;
+  background: #eae3d8;
+  border: 1px solid #d4c7b2;
+  text-align: center;
+}
+
+.overviewPillNumber {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #34261b;
+  line-height: 1.1;
+}
+
+.overviewPillLabel {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #6c5a4d;
+  margin-top: 3px;
+}
+
+/* --------------------------------------------------------------------------
+   5. Widget 2: Daily Quests (Uppgifter)
+   -------------------------------------------------------------------------- */
+.questList {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.questItem {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: #eae3d8;
+  border: 1.5px solid #d4c7b2;
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.15s ease;
+}
+
+.questItem:hover {
+  border-color: #244828;
+  background: #d8e2cf;
+  transform: translateY(-1px);
+}
+
+.questItem:focus-visible {
+  outline: 2px solid #244828;
+  outline-offset: 2px;
+}
+
+.questTopRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.questTitleWrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #34261b;
+}
+
+.questIcon {
+  font-size: 16px;
+}
+
+.questCount {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #5e5044;
+}
+
+.progressBarTrack {
+  width: 100%;
+  height: 8px;
+  border-radius: 10px;
+  background: #d0c2ad;
+  overflow: hidden;
+  border: 1px solid #c0b09b;
+}
+
+.progressBarFill {
+  height: 100%;
+  border-radius: 10px;
+  background: linear-gradient(90deg, #376832 0%, #244828 100%);
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.progressBarFill[data-complete="true"] {
+  background: linear-gradient(90deg, #d18f1a 0%, #b87a12 100%);
+}
+
+/* --------------------------------------------------------------------------
+   6. Widget 3: Daily Practice Hero Card (Woodland Action)
+   -------------------------------------------------------------------------- */
+.practiceCard {
+  background: linear-gradient(180deg, #f4efe6 0%, #eae3d8 100%);
+  border: 2px solid #c9b69d;
+  border-radius: 24px;
+  padding: 22px;
+  box-shadow: 0 4px 20px rgba(50, 35, 20, 0.08);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.practiceHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.practiceBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 12px;
+  background: #cfe0cf;
+  border: 1.5px solid #a3bca6;
+  color: #1b381e;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.practiceTitle {
+  font-size: 1.28rem;
+  font-weight: 700;
+  color: #34261b;
+  margin: 6px 0 4px;
+  line-height: 1.3;
+}
+
+.practiceSubtitle {
+  font-size: 0.88rem;
+  color: #5e5044;
+  margin: 0 0 16px;
+  line-height: 1.4;
+}
+
+.practiceStepsRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: #eae3d8;
+  border: 1.5px solid #d4c7b2;
+  font-size: 0.84rem;
+  color: #543927;
+  margin-bottom: 18px;
+}
+
+.practiceStepNumber {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #244828;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.practiceCtaBtn {
+  width: 100%;
+  padding: 12px 18px;
+  border-radius: 16px;
+  border: 2px solid #182e1b;
+  background: #244828;
+  color: #ffffff;
+  font-size: 0.96rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  box-shadow: 0 3px 0 #182e1b;
+  text-decoration: none;
+  transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.15s ease;
+}
+
+.practiceCtaBtn:hover:not(:disabled) {
+  background: #1e3b21;
+  box-shadow: 0 4px 0 #132415;
+}
+
+.practiceCtaBtn:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 #132415;
+}
+
+.practiceCtaBtn:focus-visible {
+  outline: 2px solid #543927;
+  outline-offset: 3px;
+}
+
+.practiceCtaBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* --------------------------------------------------------------------------
+   7. Widget 4: AI Skill Hub (4 Kỹ năng)
+   -------------------------------------------------------------------------- */
+.aiSkillsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.aiSkillTile {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 18px;
+  background: #eae3d8;
+  border: 1.5px solid #d4c7b2;
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.aiSkillTile:hover {
+  transform: translateY(-2px);
+  border-color: #244828;
+  background: #d8e2cf;
+  box-shadow: 0 4px 12px rgba(50, 35, 20, 0.08);
+}
+
+.aiSkillTile:focus-visible {
+  outline: 2px solid #244828;
+  outline-offset: 2px;
+}
+
+.aiSkillIconWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: #d4c5b0;
+  border: 1.5px solid #c0b09b;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.aiSkillInfo strong {
+  display: block;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #34261b;
+  margin-bottom: 2px;
+}
+
+.aiSkillInfo span {
+  display: block;
+  font-size: 0.78rem;
+  color: #5e5044;
+  line-height: 1.3;
+}
+
+/* --------------------------------------------------------------------------
+   8. Widget 5: Review & New Queue (Today's Sheets)
+   -------------------------------------------------------------------------- */
+.queueTabRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.queueTabBtn {
+  padding: 6px 14px;
+  border-radius: 12px;
+  border: 1.5px solid #c9b69d;
+  background: #eae3d8;
+  color: #543927;
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.queueTabBtn[data-active="true"] {
+  background: #244828;
+  border-color: #244828;
+  color: #ffffff;
+}
+
+.queueList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 280px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.queueItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: #eae3d8;
+  border: 1.5px solid #d4c7b2;
+  gap: 10px;
+}
+
+.queueItemInfo strong {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #34261b;
+}
+
+.queueItemInfo span {
+  display: block;
+  font-size: 0.78rem;
+  color: #6c5a4d;
+}
+
+.queueItemBtn {
+  padding: 6px 12px;
+  border-radius: 10px;
+  border: 1.5px solid #244828;
+  background: #d8e5d7;
+  color: #1b381e;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.queueItemBtn:hover {
+  background: #244828;
+  color: #ffffff;
+}
+
+.queueEmptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  text-align: center;
+  background: #eae3d8;
+  border: 1.5px dashed #baa993;
+  border-radius: 16px;
+  color: #6c5a4d;
+  font-size: 0.88rem;
+  gap: 8px;
+}
+
+/* --------------------------------------------------------------------------
+   9. Widget 6: Study Corkboard Memos (3 Sticky Notes)
+   -------------------------------------------------------------------------- */
+.corkboardWrap {
+  background: #dbcebb;
+  border: 2px solid #c7b59e;
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: inset 0 2px 6px rgba(50, 35, 20, 0.06);
+}
+
+.corkboardNotesGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.stickyNote {
+  position: relative;
+  border-radius: 14px;
+  padding: 18px;
+  box-shadow: 0 4px 12px rgba(50, 35, 20, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: transform 0.15s ease;
+}
+
+.stickyNote:hover {
+  transform: translateY(-2px);
+}
+
+.stickyTape {
+  position: absolute;
+  top: -9px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 54px;
+  height: 18px;
+  background: rgba(185, 170, 150, 0.65);
+  border: 1px solid rgba(160, 145, 125, 0.5);
+  border-radius: 2px;
+  backdrop-filter: blur(2px);
+}
+
+.stickyNoteTitle {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #4a3728;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+}
+
+.stickyTextarea {
+  width: 100%;
+  min-height: 90px;
+  border: none;
+  background: transparent;
+  resize: vertical;
+  font-family: inherit;
+  font-size: 0.84rem;
+  color: #34261b;
+  line-height: 1.5;
+  outline: none;
+}
+
+.stickyTextarea:focus {
+  outline: none;
+}
+
+.noteSand {
+  background: #ede2d1;
+  border: 1.5px solid #d4c3ac;
+}
+
+.noteSage {
+  background: #dbe5d8;
+  border: 1.5px solid #b8cbbe;
+}
+
+.noteWarm {
+  background: #ebdcd0;
+  border: 1.5px solid #d4c0b0;
+}
+
+/* --------------------------------------------------------------------------
+   10. Responsive Breakpoints
+   -------------------------------------------------------------------------- */
+@media (max-width: 1100px) {
+  .gridRow3 {
+    grid-template-columns: 1fr;
+  }
+
+  .gridRow2 {
+    grid-template-columns: 1fr;
+  }
+
+  .corkboardNotesGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .heroInfoRow {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .islandStatusWidget {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .aiSkillsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .overviewPillsRow {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}

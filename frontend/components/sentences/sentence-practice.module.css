@@ -3,6 +3,59 @@
 :global(:root[data-theme="journey"]) .card { border-color: #c2d2e7; border-radius: 20px; box-shadow: 0 4px 14px rgb(23 48 74 / 5%); }
 :global(:root[data-theme="journey"]) .word { border: 1px solid #a9d9d5; border-left: 4px solid #176b72; border-radius: 14px; background: #f1fbf9; }
 :global(:root[data-theme="journey"]) .primary { border-color: #1b4293; color: #fff; background: #2457bc; }
+
+/* Cozy Island Theme */
+:global(:root[data-theme="island"]) .root { color: #382c22; }
+:global(:root[data-theme="island"]) .card {
+  border: 2px solid #d4c7b2;
+  border-radius: 24px;
+  background: #f4efe6;
+  box-shadow: 0 4px 18px rgb(50 35 20 / 6%);
+}
+:global(:root[data-theme="island"]) .word {
+  border: 1.5px solid #d4c7b2;
+  border-left: 5px solid #3b6132;
+  border-radius: 16px;
+  background: #fdfbf7;
+}
+:global(:root[data-theme="island"]) .word h3 { color: #382c22; font-weight: 800; }
+:global(:root[data-theme="island"]) .field select,
+:global(:root[data-theme="island"]) .field input {
+  border: 1.5px solid #d4c7b2;
+  border-radius: 14px;
+  background: #fdfbf7;
+  color: #382c22;
+}
+:global(:root[data-theme="island"]) .steps,
+:global(:root[data-theme="island"]) .hint {
+  border: 1.5px solid #d4c7b2;
+  border-radius: 16px;
+  background: #eae3d8;
+  color: #5e5145;
+}
+:global(:root[data-theme="island"]) .primary {
+  background: #3b6132;
+  color: #ffffff;
+  border: 2px solid #284422;
+  border-radius: 14px;
+  box-shadow: 0 3px 0 #284422;
+  transition: all 0.15s ease;
+}
+:global(:root[data-theme="island"]) .primary:hover:not(:disabled) {
+  background: #31522a;
+  transform: translateY(-1px);
+}
+:global(:root[data-theme="island"]) .secondary {
+  background: #eae3d8;
+  color: #382c22;
+  border: 1.5px solid #d4c7b2;
+  border-radius: 14px;
+  box-shadow: 0 2px 0 #c7bca8;
+}
+:global(:root[data-theme="island"]) .secondary:hover:not(:disabled) {
+  background: #ded6c8;
+}
+
 .heading { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: start; gap: 1rem; }
 .heading h2 { margin: .4rem 0; font-size: clamp(1.6rem, 4vw, 2rem); letter-spacing: -.04em; }
 .heading p:last-child { max-width: 65ch; margin: 0; color: var(--muted); line-height: 1.6; }

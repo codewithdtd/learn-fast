@@ -12,6 +12,7 @@ const swatches: Record<Theme, string> = {
   retro: "linear-gradient(135deg, #805a37 50%, #ddbf8e 50%)",
   playful: "linear-gradient(135deg, #0284c7 50%, #c7d2fe 50%)",
   journey: "linear-gradient(135deg, #2457bc 50%, #f4f8fe 50%)",
+  island: "linear-gradient(135deg, #3b6132 50%, #f4efe6 50%)",
 };
 
 export function ThemeToggle({ compact = false }: { compact?: boolean }) {

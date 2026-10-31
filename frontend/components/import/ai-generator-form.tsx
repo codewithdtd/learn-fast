@@ -123,10 +123,6 @@ export function AIGeneratorForm() {
 
   async function handleGenerate(e: React.FormEvent) {
     e.preventDefault();
-    if (isAuthenticated && !isAdmin) {
-      setError("AI previews are available to guests, while saving AI content requires an administrator.");
-      return;
-    }
 
     if (generatorMode === "mine") {
       if (miningText.trim().length < 5) {
@@ -215,7 +211,7 @@ export function AIGeneratorForm() {
   }
   return (
     <div className="ai-generator-container">
-      {!isAdmin && !isAuthenticated && (
+      {!isAdmin && (
         <div className="admin-restriction-banner" role="alert">
           <div className="admin-restriction-icon">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -224,7 +220,7 @@ export function AIGeneratorForm() {
             </svg>
           </div>
           <div className="admin-restriction-text">
-              <strong>Guest AI preview</strong>
+              <strong>One-time AI preview</strong>
               <p>You can try AI generation once. Results stay in this preview; saving to a workbook requires an administrator.</p>
           </div>
         </div>
@@ -491,7 +487,7 @@ export function AIGeneratorForm() {
     <div className="ai-action-bar">
       <button
         type="submit"
-        disabled={isGenerating || (isAuthenticated && !isAdmin)}
+        disabled={isGenerating}
         className="ai-generate-submit-btn"
       >
         {isGenerating ? (

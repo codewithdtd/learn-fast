@@ -4,6 +4,7 @@ import { AuthProvider } from "@/context/auth-context";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import "./globals.css";
 import "@/styles/themes/journey.css";
+import "@/styles/themes/island.css";
 
 // Cấu hình Viewport chuẩn Mobile-First & iOS PWA Standalone
 // viewportFit: "cover" kích hoạt biến môi trường env(safe-area-inset-*) trên iOS (iPhone 15 Pro Max Dynamic Island)

@@ -43,6 +43,78 @@
 :global(:root[data-theme="journey"]) .historyList { border-color: #c2d2e7; border-radius: 20px; background: #fff; box-shadow: 0 4px 14px rgb(23 48 74 / 5%); }
 :global(:root[data-theme="journey"]) .editor { border-color: #879ab1; background: #f8faff; font-size: 16px; }
 :global(:root[data-theme="journey"]) .tabs { border: 1px solid #c2d2e7; background: #edf3fc; }
+
+/* Cozy Island Theme */
+:global(:root[data-theme="island"]) .page { color: #382c22; }
+:global(:root[data-theme="island"]) .pageHeading { border-bottom: 2px solid #d4c7b2; padding-bottom: 16px; }
+:global(:root[data-theme="island"]) .pageHeading h1 { color: #382c22; font-weight: 800; }
+:global(:root[data-theme="island"]) .dailyCard {
+  border: 2px solid #d4c7b2;
+  border-radius: 24px;
+  background: linear-gradient(135deg, #fbf7ee 0%, #f4efe6 100%);
+  box-shadow: 0 6px 20px rgb(50 35 20 / 6%);
+}
+:global(:root[data-theme="island"]) .dailyBadge {
+  background: #3b6132;
+  color: #fff;
+  border: 1px solid #284422;
+}
+:global(:root[data-theme="island"]) .topicCard,
+:global(:root[data-theme="island"]) .card,
+:global(:root[data-theme="island"]) .resultHeader,
+:global(:root[data-theme="island"]) .historyList,
+:global(:root[data-theme="island"]) .assignmentCard,
+:global(:root[data-theme="island"]) .detailPanel {
+  border: 2px solid #d4c7b2;
+  border-radius: 22px;
+  background: #f4efe6;
+  box-shadow: 0 4px 18px rgb(50 35 20 / 6%);
+}
+:global(:root[data-theme="island"]) .topicCard:hover {
+  border-color: #3b6132;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgb(50 35 20 / 10%);
+}
+:global(:root[data-theme="island"]) .editor {
+  border: 2px solid #d4c7b2;
+  border-radius: 18px;
+  background: #fdfbf7;
+  color: #382c22;
+  font-size: 16px;
+  box-shadow: inset 0 2px 4px rgb(50 35 20 / 3%);
+}
+:global(:root[data-theme="island"]) .primaryButton {
+  background: #3b6132;
+  color: #fff;
+  border: 2px solid #284422;
+  border-radius: 14px;
+  box-shadow: 0 3px 0 #284422;
+  font-weight: 800;
+  transition: all 0.15s ease;
+}
+:global(:root[data-theme="island"]) .primaryButton:hover:not(:disabled) {
+  background: #31522a;
+  transform: translateY(-1px);
+}
+:global(:root[data-theme="island"]) .secondaryButton {
+  background: #eae3d8;
+  color: #382c22;
+  border: 1.5px solid #d4c7b2;
+  border-radius: 14px;
+  box-shadow: 0 2px 0 #c7bca8;
+}
+:global(:root[data-theme="island"]) .countBadge,
+:global(:root[data-theme="island"]) .levelPill,
+:global(:root[data-theme="island"]) .statusPill {
+  background: #eae3d8;
+  color: #5e5145;
+  border: 1px solid #d4c7b2;
+}
+:global(:root[data-theme="island"]) .scoreCard {
+  background: #eae3d8;
+  border: 1.5px solid #d4c7b2;
+  border-radius: 16px;
+}
 .pageHeading > div > p:last-child { max-width: 640px; margin: 0; color: var(--muted); line-height: 1.6; }
 .randomTopicAction { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
 .randomTopicAction > span { color: var(--muted); font-size: 12px; line-height: 1.5; }

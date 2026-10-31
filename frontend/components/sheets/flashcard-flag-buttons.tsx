@@ -47,8 +47,10 @@ export function FlashcardFlagButtons({
         onClick={() => void changeFlag("weak", () => onWeakChange(!isWeak))}
         className={`flashcard-flag-button weak-flag ${isWeak ? "active" : ""}`}
       >
-        <Icon name="flame" size={19} />
-        {pendingFlag === "weak" ? "Saving…" : isWeak ? "Weak" : "Mark weak"}
+        <Icon name="flame" size={20} />
+        <span className="sr-only">
+          {pendingFlag === "weak" ? "Saving…" : isWeak ? "Weak" : "Mark weak"}
+        </span>
       </button>
       <button
         type="button"
@@ -59,12 +61,14 @@ export function FlashcardFlagButtons({
         onClick={() => void changeFlag("bookmark", () => onBookmarkChange(!isBookmarked))}
         className={`flashcard-flag-button bookmark-flag ${isBookmarked ? "active" : ""}`}
       >
-        <Icon name="bookmark" size={19} />
-        {pendingFlag === "bookmark"
-          ? "Saving…"
-          : isBookmarked
-            ? "Bookmarked"
-            : "Bookmark"}
+        <Icon name="bookmark" size={20} />
+        <span className="sr-only">
+          {pendingFlag === "bookmark"
+            ? "Saving…"
+            : isBookmarked
+              ? "Bookmarked"
+              : "Bookmark"}
+        </span>
       </button>
     </div>
   );

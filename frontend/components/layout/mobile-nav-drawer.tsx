@@ -14,6 +14,7 @@ export type MobileNavEntry = {
   mobileLabel: string;
   primary: boolean;
   icon: MobileNavIconName;
+  imageSrc?: string;
   children?: Array<{ href: string; label: string }>;
 };
 
@@ -94,7 +95,13 @@ export function MobileNavDrawer({ items, activeHref }: { items: MobileNavEntry[]
                   aria-current={item.href === activeHref ? "page" : undefined}
                   onClick={closeMenu}
                 >
-                  <span className={styles.icon} aria-hidden="true"><MobileIcon name={item.icon} /></span>
+                  <span className={styles.icon} aria-hidden="true">
+                    {item.imageSrc ? (
+                      <img src={item.imageSrc} alt="" width={22} height={22} style={{ objectFit: "contain", display: "block" }} />
+                    ) : (
+                      <MobileIcon name={item.icon} />
+                    )}
+                  </span>
                   <span>{item.label}</span>
                 </Link>
                 {item.children && <div className={styles.subnav} aria-label={`${item.label} tools`}>

@@ -132,7 +132,7 @@ function CalendarViewState({ dateParam }: { dateParam: string | null }) {
           <div className="streak-stats-ribbon">
             <div className="streak-card highlight">
               <span className="streak-icon">
-                <Icon name="flame" size={28} />
+                <Icon name="flame" size={32} />
               </span>
               <div className="streak-info">
                 <strong>{calendarData.current_streak} Day{calendarData.current_streak === 1 ? "" : "s"}</strong>
@@ -141,7 +141,7 @@ function CalendarViewState({ dateParam }: { dateParam: string | null }) {
             </div>
             <div className="streak-card">
               <span className="streak-icon">
-                <Icon name="check" size={26} />
+                <Icon name="check" size={30} />
               </span>
               <div className="streak-info">
                 <strong>
@@ -152,7 +152,7 @@ function CalendarViewState({ dateParam }: { dateParam: string | null }) {
             </div>
             <div className="streak-card">
               <span className="streak-icon">
-                <Icon name="review" size={26} />
+                <Icon name="review" size={30} />
               </span>
               <div className="streak-info">
                 <strong>{daysWithDue.length} Day{daysWithDue.length === 1 ? "" : "s"}</strong>
@@ -168,7 +168,7 @@ function CalendarViewState({ dateParam }: { dateParam: string | null }) {
         <section className="month-due-forecast-ribbon">
           <div className="forecast-header">
             <div className="forecast-title">
-              <Icon name="clock" size={18} />
+              <Icon name="clock" size={20} />
               <strong>Upcoming Reviews in {MONTH_NAMES[currentMonth - 1]}:</strong>
             </div>
             <span className="forecast-count">{daysWithDue.length} scheduled dates</span>

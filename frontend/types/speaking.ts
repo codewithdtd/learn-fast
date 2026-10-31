@@ -71,4 +71,4 @@ export type SpeakingAttemptSummary = {
 };
 
 export type SpeakingAttemptList = { items: SpeakingAttemptSummary[]; total: number };
-export type SpeakingUsage = { usage_date: string; daily_limit: number; used: number; remaining: number };
+export type SpeakingUsage = { usage_date: string; daily_limit: number | null; used: number; remaining: number | null };

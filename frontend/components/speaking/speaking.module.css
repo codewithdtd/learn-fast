@@ -6,6 +6,75 @@
 :global(:root[data-theme="journey"]) .feedback { border-color: #c2d2e7; border-radius: 20px; background: #fff; box-shadow: 0 4px 14px rgb(23 48 74 / 5%); }
 :global(:root[data-theme="journey"]) .transcriptCard textarea { border-color: #879ab1; background: #f8faff; font-size: 16px; }
 :global(:root[data-theme="journey"]) .primaryButton { border-color: #1b4293; color: #fff; background: #2457bc; }
+
+/* Cozy Island Theme */
+:global(:root[data-theme="island"]) .page { color: #382c22; }
+:global(:root[data-theme="island"]) .practiceCard,
+:global(:root[data-theme="island"]) .topicSection,
+:global(:root[data-theme="island"]) .history,
+:global(:root[data-theme="island"]) .feedback {
+  border: 2px solid #d4c7b2;
+  border-radius: 22px;
+  background: #f4efe6;
+  box-shadow: 0 4px 18px rgb(50 35 20 / 6%);
+}
+:global(:root[data-theme="island"]) .category {
+  color: #3b6132;
+  font-weight: 800;
+}
+:global(:root[data-theme="island"]) .hints {
+  background: #eae3d8;
+  border: 1.5px solid #d4c7b2;
+  border-radius: 16px;
+}
+:global(:root[data-theme="island"]) .recordButton {
+  background: #3b6132;
+  color: #ffffff;
+  border: 2px solid #284422;
+  border-radius: 14px;
+  box-shadow: 0 3px 0 #284422;
+}
+:global(:root[data-theme="island"]) .stopButton {
+  background: #faece8;
+  color: #8f2d1e;
+  border: 2px solid #df9c91;
+  border-radius: 14px;
+  box-shadow: 0 2px 0 #cc8276;
+}
+:global(:root[data-theme="island"]) .primaryButton {
+  background: #3b6132;
+  color: #ffffff;
+  border: 2px solid #284422;
+  border-radius: 14px;
+  box-shadow: 0 3px 0 #284422;
+}
+:global(:root[data-theme="island"]) .secondaryButton {
+  background: #eae3d8;
+  color: #382c22;
+  border: 1.5px solid #d4c7b2;
+  border-radius: 14px;
+  box-shadow: 0 2px 0 #c7bca8;
+}
+:global(:root[data-theme="island"]) .transcriptCard textarea {
+  border: 2px solid #d4c7b2;
+  border-radius: 16px;
+  background: #fdfbf7;
+  color: #382c22;
+  font-size: 16px;
+}
+:global(:root[data-theme="island"]) .uploadBox {
+  background: #eae3d8;
+  border: 1.5px dashed #d4c7b2;
+  border-radius: 16px;
+}
+:global(:root[data-theme="island"]) .quota {
+  background: #f4efe6;
+  border: 1.5px solid #d4c7b2;
+  border-radius: 16px;
+}
+:global(:root[data-theme="island"]) .quota strong {
+  color: #3b6132;
+}
 .heading,.sectionHeader,.practiceTop,.feedbackHeading,.transcriptActions { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
 .heading { align-items: flex-start; }
 .heading h2,.sectionHeader h3,.practiceTop h3,.feedbackHeading h3 { margin: 4px 0; letter-spacing: -.035em; }

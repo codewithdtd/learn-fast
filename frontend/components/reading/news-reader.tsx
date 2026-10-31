@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { AuthModal } from "@/components/auth/auth-modal";
 import { useAuth } from "@/context/auth-context";
 import { getReadingWordAtOffset } from "@/lib/reading-selection";
+import { saveIELTSPracticePrefill } from "@/lib/ielts-practice-prefill";
 import {
   addReadingVocabularyCard,
   createReadingVocabularySheet,
@@ -26,7 +27,8 @@ type TranslationState = { value: string; loading: boolean; error: string | null 
 const allCategory: ReadingCategory = { id: "all", name: "All topics" };
 
 export function NewsReader() {
-  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
+  const { isAuthenticated, isLoading: isAuthLoading, user } = useAuth();
+  const isAdmin = isAuthenticated && user?.is_superuser === true;
   const [sources, setSources] = useState<ReadingSource[]>([]);
   const [sourceId, setSourceId] = useState("all");
   const [categoryId, setCategoryId] = useState("all");
@@ -120,6 +122,16 @@ export function NewsReader() {
     else setTranslation({ value: "", loading: false, error: null });
   }, [translateSelection]);
 
+  function openIELTSPracticeFromArticle() {
+    if (!articleContent?.available) return;
+    const text = articleContent.paragraphs.join("\n\n").slice(0, 16000);
+    if (!saveIELTSPracticePrefill({ kind: "text", text })) {
+      setPageError("This article could not be passed to IELTS Practice. Please try again.");
+      return;
+    }
+    window.location.assign("/ai-support?tab=ielts");
+  }
+
   useEffect(() => {
     let active = true;
     void getReadingSources().then((value) => { if (active) setSources(value); })
@@ -127,6 +139,8 @@ export function NewsReader() {
     return () => { active = false; };
   }, []);
 
+  const requestSourceId = isAdmin ? sourceId : "all";
+  const requestCategoryId = isAdmin ? categoryId : "all";
   const loadArticles = useCallback(async () => {
     const requestId = ++articleRequestRef.current;
     setLoadingArticles(true);
@@ -135,11 +149,10 @@ export function NewsReader() {
     setArticleContent(null);
     clearLookup();
     try {
-      const result = await getReadingArticles(sourceId, categoryId);
+      const result = await getReadingArticles(requestSourceId, requestCategoryId);
       if (requestId !== articleRequestRef.current) return;
       setArticles(result.articles);
       setUnavailableSources(result.unavailable_sources);
-      if (result.articles[0]) setSelectedArticle(result.articles[0]);
     } catch (error) {
       if (requestId !== articleRequestRef.current) return;
       setArticles([]);
@@ -148,13 +161,13 @@ export function NewsReader() {
     } finally {
       if (requestId === articleRequestRef.current) setLoadingArticles(false);
     }
-  }, [categoryId, clearLookup, sourceId]);
+  }, [clearLookup, requestCategoryId, requestSourceId]);
 
   useEffect(() => {
     // Filter changes synchronize the article catalog with the remote RSS service.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    void loadArticles();
-  }, [loadArticles]);
+    if (!isAuthLoading) void loadArticles();
+  }, [isAuthLoading, loadArticles]);
 
   useEffect(() => {
     if (isAuthLoading || !isAuthenticated) return;
@@ -296,12 +309,19 @@ export function NewsReader() {
 
   const categories = [allCategory, ...sources.flatMap((source) => source.categories)]
     .filter((category, index, collection) => collection.findIndex((item) => item.id === category.id) === index);
+  // Với lượt preview, lọc danh sách đã tải để đổi bộ lọc không gọi RSS thêm lần nữa.
+  const selectedCategoryName = categories.find((category) => category.id === categoryId)?.name.toLowerCase();
+  const visibleArticles = isAdmin ? articles : articles.filter((article) =>
+    (sourceId === "all" || article.source_id === sourceId)
+    && (categoryId === "all" || article.category.toLowerCase() === selectedCategoryName),
+  );
 
   return <main className={styles.page}>
     <header className={styles.header}>
       <p className={styles.eyebrow}>READ · NOTICE · LEARN</p>
       <h1>Read the news in English</h1>
       <p>Explore English news about Vietnam. Select a word, phrase, or sentence to see its Vietnamese meaning.</p>
+      {!isAuthLoading && !isAdmin && <p className={styles.notice} role="note">One trial each: load the news list, open an article, and translate a selection. Translation is shared with video practice.</p>}
     </header>
     <section className={styles.controls} aria-label="Filter news">
       <label>Source<select value={sourceId} onChange={(event) => setSourceId(event.target.value)}>
@@ -317,10 +337,10 @@ export function NewsReader() {
 
     <div className={styles.layout}>
       <aside className={styles.articleList} aria-label="News articles">
-        <div className={styles.listHeading}><h2>Latest stories</h2><span>{articles.length}</span></div>
-        {loadingArticles ? <p className={styles.emptyState} role="status">Loading stories…</p> : articles.length === 0
+        <div className={styles.listHeading}><h2>Latest stories</h2><span>{visibleArticles.length}</span></div>
+        {loadingArticles ? <p className={styles.emptyState} role="status">Loading stories…</p> : visibleArticles.length === 0
           ? <p className={styles.emptyState}>No stories are available for these filters.</p>
-          : articles.map((article, index) => <button type="button" className={styles.articleChoice} data-selected={selectedArticle?.id === article.id} data-has-image={Boolean(article.image_url)} key={article.id || index} onClick={() => setSelectedArticle(article)}>
+          : visibleArticles.map((article, index) => <button type="button" className={styles.articleChoice} data-selected={selectedArticle?.id === article.id} data-has-image={Boolean(article.image_url)} key={article.id || index} onClick={() => setSelectedArticle(article)}>
             {article.image_url && <NewsImage key={article.id} className={styles.articleThumbnail} src={article.image_url} alt="" />}
             <span className={styles.articleMeta}>{article.source_name} · {article.category}</span>
             <strong>{article.title}</strong>
@@ -340,6 +360,10 @@ export function NewsReader() {
           {loadingContent || articleContent?.article.id !== selectedArticle.id ? <p className={styles.emptyState} role="status">Loading article…</p> : articleContent.available
             ? <section className={styles.articleBody} ref={articleBodyRef} aria-label="Article text" lang="en">
               {articleContent.paragraphs.map((paragraph, index) => <p key={index}>{paragraph}</p>)}
+              <div className={styles.practiceActions}>
+                <button type="button" onClick={openIELTSPracticeFromArticle}>Create a Reading practice from this article</button>
+                <span>The article text will be prefilled; review the word count before loading it.</span>
+              </div>
               <a className={styles.originalLink} href={selectedArticle.url} target="_blank" rel="noreferrer">Continue at {selectedArticle.source_name} <span aria-hidden="true">↗</span></a>
             </section>
           : !loadingContent && articleContent?.article.id === selectedArticle.id && <div className={styles.unavailableArticle}>

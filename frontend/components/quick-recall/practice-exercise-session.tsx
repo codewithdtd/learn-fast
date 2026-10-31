@@ -121,6 +121,7 @@ function ExerciseRound({ round, sheetId, onRestart, onConfigure }: { round: Roun
   const [remainingQuestions, setRemainingQuestions] = useState(round.questions);
   const [draft, setDraft] = useState("");
   const [response, setResponse] = useState<ExerciseResponse | null>(null);
+  const [wasOverridden, setWasOverridden] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -136,6 +137,29 @@ function ExerciseRound({ round, sheetId, onRestart, onConfigure }: { round: Roun
     else if (isMultipleChoice) headingRef.current?.focus();
     else inputRef.current?.focus();
   }, [question, hasAnswered, isMultipleChoice, isComplete]);
+
+  function handleOverrideAsCorrect() {
+    if (!response || !question) return;
+    setWasOverridden(true);
+    const updated: ExerciseResponse = {
+      ...response,
+      is_correct: true,
+      confidence_rating: 3,
+    };
+    setResponse(updated);
+    // Cập nhật câu trả lời này thành đúng trong danh sách responses để tính điểm chính xác
+    setResponses((current) => {
+      const exists = current.some((item) => item.question.cardId === question.cardId);
+      if (exists) {
+        return current.map((item) => item.question.cardId === question.cardId ? updated : item);
+      }
+      return [...current, updated];
+    });
+    // Tự động focus nút Next / Hoàn thành để người học có thể bấm Enter tiếp tục ngay
+    setTimeout(() => {
+      submitRef.current?.focus();
+    }, 50);
+  }
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -153,6 +177,7 @@ function ExerciseRound({ round, sheetId, onRestart, onConfigure }: { round: Roun
       }
       setResponse(null);
       setDraft("");
+      setWasOverridden(false);
       return;
     }
     if (!draft.trim()) return;
@@ -162,6 +187,7 @@ function ExerciseRound({ round, sheetId, onRestart, onConfigure }: { round: Roun
     setResponses((current) => current.some((item) => item.question.cardId === question.cardId)
       ? current : [...current, graded]);
     setResponse(graded);
+    setWasOverridden(false);
   }
 
   if (isComplete) return <ExerciseResults completionId={"exercise-" + sheetId + "-" + round.id} responses={responses} retryUntilCorrect={round.settings.mode === "translation"} onRestart={onRestart} onConfigure={onConfigure} />;
@@ -204,9 +230,26 @@ function ExerciseRound({ round, sheetId, onRestart, onConfigure }: { round: Roun
 
       {response && <div className={styles.feedback} data-correct={response.is_correct} id="exercise-feedback" role="status">
         <Icon name={response.is_correct ? "check" : "refresh"} size={22} />
-        <div><strong>{response.is_correct ? "Correct!" : "Not quite. Here is the expected answer:"}</strong>
+        <div>
+          <strong>
+            {wasOverridden
+              ? "Đã ghi nhận câu trả lời đúng!"
+              : response.is_correct
+                ? "Correct!"
+                : "Not quite. Here is the expected answer:"}
+          </strong>
           <p>{question.answer}</p>
           {!response.is_correct && round.settings.mode === "translation" && <p>This question is moving to the end of the queue. You will need to answer it correctly to finish.</p>}
+          {!response.is_correct && !isMultipleChoice && <div className={styles.overrideWrap}>
+            <button
+              type="button"
+              className={styles.overrideButton}
+              onClick={handleOverrideAsCorrect}
+              title="Đánh dấu câu trả lời của tôi là đúng nếu bạn viết tắt hoặc câu trả lời tương đương"
+            >
+              <Icon name="check" size={17} /> Tôi đã trả lời đúng
+            </button>
+          </div>}
         </div>
       </div>}
 

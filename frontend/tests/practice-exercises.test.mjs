@@ -31,6 +31,26 @@ test("reverse translation expects the English phrase", () => {
   assert.equal(gradeExerciseAnswer(question, "HELLO!").is_correct, true);
 });
 
+test("contractions and spacing tolerance in translation grading", () => {
+  const cardWithContraction = card(10, "it's sunny", "trời nắng");
+  const [qViToEn] = buildExerciseQuestions([cardWithContraction], { ...settings, direction: "vi_to_en" });
+  // it's vs it is vs its
+  assert.equal(gradeExerciseAnswer(qViToEn, "it is sunny").is_correct, true);
+  assert.equal(gradeExerciseAnswer(qViToEn, "it's sunny").is_correct, true);
+  assert.equal(gradeExerciseAnswer(qViToEn, "its sunny").is_correct, true);
+
+  // Missing spacing tolerance
+  const cardTakeCare = card(11, "take care", "bảo trọng");
+  const [qTakeCare] = buildExerciseQuestions([cardTakeCare], { ...settings, direction: "vi_to_en" });
+  assert.equal(gradeExerciseAnswer(qTakeCare, "takecare").is_correct, true);
+  assert.equal(gradeExerciseAnswer(qTakeCare, "take care").is_correct, true);
+
+  // Vietnamese missing space tolerance
+  const [qEnToVi] = buildExerciseQuestions([cardTakeCare], { ...settings, direction: "en_to_vi" });
+  assert.equal(gradeExerciseAnswer(qEnToVi, "bảotrọng").is_correct, true);
+  assert.equal(gradeExerciseAnswer(qEnToVi, "bảo trọng").is_correct, true);
+});
+
 test("multiple choice has one normalized correct answer and at most four distinct options", () => {
   const source = [...cards, card(4, "good morning", "chào buổi sáng"),
     card(5, "good night", "chúc ngủ ngon"), card(6, "greetings", "XIN CHÀO!")];
