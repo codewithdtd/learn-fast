@@ -2359,8 +2359,12 @@
 /* ==========================================================================
    6. Study Session & Flashcards (/study-sessions/[sessionId])
    ========================================================================== */
+:root[data-theme="island"] .study-session-page {
+  padding: 32px 28px 60px;
+}
+
 :root[data-theme="island"] .study-session-content {
-  width: min(100% - 48px, 920px);
+  width: min(100% - 24px, 980px);
   margin: 0 auto;
   padding: 24px 0 60px;
 }
@@ -2369,9 +2373,9 @@
   border: 2px solid #d4c7b2;
   border-radius: 28px;
   background: #f4efe6;
-  padding: 22px 28px;
+  padding: 20px 20px;
   box-shadow: 0 6px 20px rgb(50 35 20 / 6%);
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 :root[data-theme="island"] .study-session-back {
@@ -2400,9 +2404,9 @@
   border: 2px solid #d4c7b2;
   border-radius: 22px;
   background: #f4efe6;
-  padding: 16px 22px;
+  padding: 14px 16px;
   box-shadow: 0 4px 16px rgb(50 35 20 / 5%);
-  margin-bottom: 20px;
+  margin-bottom: 18px;
 }
 
 :root[data-theme="island"] .study-progress-track {
@@ -2422,18 +2426,22 @@
   transition: width 0.3s ease;
 }
 
-/* Tactile Muted Linen Flashcard */
+/* Tactile Muted Linen Flashcard - Slimmer 50% Horizontal Margins and Padding */
 :root[data-theme="island"] .study-flashcard-face {
   border: 2.5px solid #d4c7b2;
   border-radius: 28px;
   background: #fdfbf7;
-  padding: 32px 36px;
+  padding: 24px 18px;
   box-shadow: 0 8px 0 #c7bca8, 0 16px 32px rgb(50 35 20 / 8%);
   min-height: 280px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+:root[data-theme="island"] .study-flashcard-face .study-flashcard-body {
+  padding: 20px 8px 16px;
 }
 
 :root[data-theme="island"] .study-flashcard-back {
@@ -2448,6 +2456,8 @@
   letter-spacing: 0.05em;
   display: flex;
   justify-content: space-between;
+  padding: 0 4px 12px;
+  border-bottom: 1.5px solid #d4c7b2;
 }
 
 :root[data-theme="island"] .study-flashcard-question {
@@ -2480,8 +2490,8 @@
   background: #eae3d8;
   border: 1.5px solid #d4c7b2;
   border-radius: 16px;
-  padding: 14px 18px;
-  margin-top: 16px;
+  padding: 12px 14px;
+  margin-top: 14px;
   color: #382c22;
   font-size: 14px;
 }
@@ -2551,6 +2561,60 @@
 :root[data-theme="island"] .study-card-navigation-button:hover:not(:disabled) {
   background: #eae3d8;
   color: #382c22;
+}
+
+@media (max-width: 639px) {
+  :root[data-theme="island"] .study-session-content {
+    width: calc(100% - 12px);
+    padding: 16px 0 40px;
+  }
+
+  :root[data-theme="island"] .study-session-header {
+    padding: 16px 14px;
+    border-radius: 20px;
+  }
+
+  :root[data-theme="island"] .study-session-context h1 {
+    font-size: 1.45rem;
+  }
+
+  :root[data-theme="island"] .study-session-progress {
+    padding: 12px 14px;
+    border-radius: 18px;
+  }
+
+  :root[data-theme="island"] .study-flashcard-face {
+    padding: 18px 12px;
+    border-radius: 20px;
+  }
+
+  :root[data-theme="island"] .study-flashcard-face .study-flashcard-body {
+    padding: 14px 4px 10px;
+  }
+
+  :root[data-theme="island"] .study-flashcard-question {
+    font-size: 1.65rem;
+  }
+
+  :root[data-theme="island"] .study-flashcard-answer-value {
+    font-size: 1.45rem;
+  }
+
+  :root[data-theme="island"] .study-example {
+    padding: 10px 10px;
+    border-radius: 12px;
+  }
+
+  :root[data-theme="island"] .study-answer-actions {
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  :root[data-theme="island"] .study-answer-button {
+    padding: 12px 14px;
+    font-size: 14px;
+    border-radius: 16px;
+  }
 }
 
 /* ==========================================================================
