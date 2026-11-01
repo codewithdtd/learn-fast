@@ -62,7 +62,7 @@ export function DashboardView() {
   // Khi chọn theme "Cozy Island", hiển thị trải nghiệm Dashboard Hòn đảo mộc mạc
   if (activeTheme === "island") {
     return (
-      <main className="dashboard-page" style={{ padding: "0 4px" }}>
+      <main className="dashboard-page">
         <CozyDashboardView dashboard={dashboard} streak={streak} userName={displayName} />
       </main>
     );
