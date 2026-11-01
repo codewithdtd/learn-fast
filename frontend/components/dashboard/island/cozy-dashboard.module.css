@@ -837,3 +837,41 @@
     grid-template-columns: 1fr 1fr 1fr;
   }
 }
+
+@media (max-width: 639px) {
+  .islandRoot {
+    padding: 6px 4px 40px;
+    gap: 16px;
+  }
+
+  .heroBanner {
+    border-radius: 20px;
+  }
+
+  .heroArtWrap {
+    height: 160px;
+  }
+
+  .heroInfoRow {
+    padding: 12px 10px;
+    gap: 12px;
+  }
+
+  .corkboardPaper {
+    padding: 14px 10px;
+    border-radius: 20px;
+  }
+
+  .sheetCard {
+    padding: 12px 12px;
+  }
+
+  .overviewPillsRow {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .islandStatusWidget {
+    padding: 10px 12px;
+  }
+}

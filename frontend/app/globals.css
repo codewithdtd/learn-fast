@@ -2052,7 +2052,7 @@ a {
 
 @media (max-width: 639px) {
   .dashboard-page {
-    width: calc(100% - 32px);
+    width: calc(100% - 12px);
     padding-top: 24px;
   }
 
@@ -3365,7 +3365,7 @@ a {
 .study-flashcard-back .study-example { margin-top: 28px; }
 .study-reveal-button { margin: 0 auto 28px; }
 
-@media (max-width: 639px) { .study-flashcard-topline { padding: 14px 17px; } .study-flashcard-body { min-height: 390px; padding: 36px 22px 24px; } .study-flashcard-question { font-size: clamp(38px, 11vw, 54px); } .study-flashcard-hint { margin-top: auto; font-size: 14px; } .study-reveal-button { width: calc(100% - 44px); margin: 0 22px 22px; } }
+@media (max-width: 639px) { .study-flashcard-topline { padding: 14px 17px; } .study-flashcard-body { min-height: 390px; padding: 36px 22px 24px; } .study-flashcard-question { font-size: clamp(38px, 11vw, 54px); } .study-flashcard-hint { margin-top: auto; font-size: 14px; } .study-reveal-button { width: 100%; margin: 0 0 16px; } }
 
 /* Workbook Import */
 .import-page { min-height: 100%; padding: 48px 56px 72px; }
@@ -4298,7 +4298,7 @@ a {
 .study-session-state.error { border-color: #ffc5c5; background: #fff2f2; }
 
 @media (max-width: 1023px) { .study-session-page { padding: 36px 28px 92px; } }
-@media (max-width: 639px) { .study-session-page { padding: 24px 16px calc(92px + env(safe-area-inset-bottom)); } .study-session-header { margin-bottom: 18px; } .study-session-context { align-items: start; flex-direction: column; gap: 10px; margin-top: 16px; } .study-session-context h1 { font-size: 34px; } .study-session-context p:last-child { font-size: 14px; line-height: 1.45; } .study-session-id { font-size: 12px; } .study-session-progress { padding: 17px; } .study-session-progress dl { gap: 8px; } .study-session-progress dl div { padding: 10px; } .study-session-progress dd { font-size: 16px; } .study-session-practice-meta { align-items: start; flex-direction: column; gap: 5px; margin-bottom: 10px; } .study-keyboard-hint { display: none; } .study-flashcard-topline { padding: 13px 17px; font-size: 11px; } .study-flashcard-body { min-height: 270px; padding: 30px 22px 24px; } .study-flashcard-question { margin-top: 13px; font-size: 35px; } .study-flashcard-hint { margin-top: 36px; line-height: 1.5; } .study-flashcard-answer { margin-top: 30px; padding-top: 22px; } .study-flashcard-answer-value { font-size: 22px; } .study-reveal-button { width: calc(100% - 44px); margin: 0 22px 22px; } .study-answer-actions { gap: 10px; margin-top: 14px; } .study-answer-button { min-height: 52px; padding: 0 10px; font-size: 14px; } .study-answer-button span { display: none; } .study-session-finish, .study-session-state { padding: 40px 20px; } }
+@media (max-width: 639px) { .study-session-page { padding: 14px 6px calc(92px + env(safe-area-inset-bottom)); } .study-session-header { margin-bottom: 18px; } .study-session-context { align-items: start; flex-direction: column; gap: 10px; margin-top: 16px; } .study-session-context h1 { font-size: 34px; } .study-session-context p:last-child { font-size: 14px; line-height: 1.45; } .study-session-id { font-size: 12px; } .study-session-progress { padding: 17px; } .study-session-progress dl { gap: 8px; } .study-session-progress dl div { padding: 10px; } .study-session-progress dd { font-size: 16px; } .study-session-practice-meta { align-items: start; flex-direction: column; gap: 5px; margin-bottom: 10px; } .study-keyboard-hint { display: none; } .study-flashcard-topline { padding: 13px 17px; font-size: 11px; } .study-flashcard-body { min-height: 250px; padding: 20px 10px 16px; } .study-flashcard-question { margin-top: 13px; font-size: 35px; } .study-flashcard-hint { margin-top: 36px; line-height: 1.5; } .study-flashcard-answer { margin-top: 30px; padding-top: 22px; } .study-flashcard-answer-value { font-size: 22px; } .study-reveal-button { width: 100%; margin: 0 0 16px; } .study-answer-actions { gap: 10px; margin-top: 14px; } .study-answer-button { min-height: 52px; padding: 0 10px; font-size: 14px; } .study-answer-button span { display: none; } .study-session-finish, .study-session-state { padding: 40px 20px; } }
 
 /* Study Setup */
 .study-setup-page { min-height: 100%; padding: 48px 56px 72px; }
