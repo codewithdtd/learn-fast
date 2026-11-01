@@ -14,6 +14,7 @@ const GRAPHIC_ICONS: Partial<Record<IconName, string>> = {
   flame: "/icons/flame.png",
   check: "/icons/check.png",
   clock: "/icons/clock.png",
+  review: "/icons/review.png",
 };
 
 export function Icon({ name, size = 24 }: { name: IconName; size?: number }) {
