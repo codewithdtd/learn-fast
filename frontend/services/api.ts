@@ -996,6 +996,69 @@ export async function markAllNotificationsAsRead(): Promise<MarkReadResponse> {
   });
 }
 
+export type DeleteReadResponse = {
+  success: boolean;
+  deleted_count: number;
+};
+
+export async function deleteReadNotifications(olderThanDays = 0): Promise<DeleteReadResponse> {
+  return requestJson<DeleteReadResponse>(`/api/v1/notifications/read?older_than_days=${olderThanDays}`, {
+    method: "DELETE",
+  });
+}
+
+export async function deleteNotification(id: number): Promise<void> {
+  return requestNoContent(`/api/v1/notifications/${id}`, {
+    method: "DELETE",
+  });
+}
+
+export type StorageCleanupStats = {
+  read_notifications: number;
+  stale_unread_notifications: number;
+  guest_study_sessions: number;
+  abandoned_study_sessions: number;
+  guest_ai_usage_records: number;
+  guest_ielts_records: number;
+  empty_writing_drafts: number;
+  total_cleanable_records: number;
+};
+
+export type StorageCleanupRequest = {
+  clear_read_notifications?: boolean;
+  clear_stale_notifications?: boolean;
+  stale_notifications_days?: number;
+  clear_guest_sessions?: boolean;
+  guest_sessions_days?: number;
+  clear_abandoned_sessions?: boolean;
+  abandoned_sessions_days?: number;
+  clear_guest_ai_usage?: boolean;
+  guest_ai_usage_days?: number;
+  clear_guest_ielts?: boolean;
+  guest_ielts_days?: number;
+  clear_empty_drafts?: boolean;
+  empty_drafts_days?: number;
+};
+
+export type StorageCleanupResponse = {
+  success: boolean;
+  deleted_counts: Record<string, number>;
+  total_deleted: number;
+  message: string;
+};
+
+export async function getStorageCleanupStats(): Promise<StorageCleanupStats> {
+  return requestJson<StorageCleanupStats>("/api/v1/maintenance/storage-stats");
+}
+
+export async function executeStorageCleanup(data: StorageCleanupRequest = {}): Promise<StorageCleanupResponse> {
+  return requestJson<StorageCleanupResponse>("/api/v1/maintenance/cleanup", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
 export type AIGeneratedCardItem = {
   phrase: string;
   meaning: string;

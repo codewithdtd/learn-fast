@@ -29,3 +29,9 @@ class MarkReadResponse(BaseModel):
     """Kết quả sau khi đánh dấu đã đọc thông báo."""
     success: bool
     updated_count: int
+
+
+class DeleteReadResponse(BaseModel):
+    """Kết quả sau khi xóa các thông báo đã đọc để tiết kiệm dung lượng."""
+    success: bool
+    deleted_count: int

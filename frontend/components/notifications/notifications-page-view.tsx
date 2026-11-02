@@ -4,8 +4,11 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { Icon } from "@/components/layout/app-shell";
+import { StorageCleanupModal } from "@/components/maintenance/storage-cleanup-modal";
 import { formatDate } from "@/lib/format";
 import {
+  deleteNotification,
+  deleteReadNotifications,
   getNotifications,
   markAllNotificationsAsRead,
   markNotificationAsRead,
@@ -19,6 +22,8 @@ export function NotificationsPageView() {
   const [loadedFilter, setLoadedFilter] = useState<"all" | "unread" | null>(null);
   const [refreshVersion, setRefreshVersion] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [isDeletingRead, setIsDeletingRead] = useState(false);
+  const [isStorageModalOpen, setIsStorageModalOpen] = useState(false);
   const isLoading = loadedFilter !== filter;
 
   useEffect(() => {
@@ -62,6 +67,33 @@ export function NotificationsPageView() {
     }
   }
 
+  async function handleDeleteRead() {
+    setIsDeletingRead(true);
+    try {
+      await deleteReadNotifications();
+      setNotifications((prev) => prev.filter((n) => !n.is_read));
+    } catch {
+      // Ignore
+    } finally {
+      setIsDeletingRead(false);
+    }
+  }
+
+  async function handleDeleteOne(id: number) {
+    try {
+      await deleteNotification(id);
+      const target = notifications.find((n) => n.id === id);
+      setNotifications((prev) => prev.filter((n) => n.id !== id));
+      if (target && !target.is_read) {
+        setUnreadCount((prev) => Math.max(0, prev - 1));
+      }
+    } catch {
+      // Ignore
+    }
+  }
+
+  const hasReadNotifications = notifications.some((n) => n.is_read);
+
   return (
     <div className="notifications-full-page">
       <header className="dashboard-heading">
@@ -82,6 +114,28 @@ export function NotificationsPageView() {
               Mark all as read
             </button>
           )}
+
+          {hasReadNotifications && (
+            <button
+              type="button"
+              className="button secondary"
+              onClick={() => void handleDeleteRead()}
+              disabled={isDeletingRead}
+              title="Xóa tất cả các thông báo đã đọc để tiết kiệm dung lượng Neon"
+            >
+              {isDeletingRead ? "Đang xóa..." : "Dọn dẹp đã đọc"}
+            </button>
+          )}
+
+          <button
+            type="button"
+            className="button secondary"
+            onClick={() => setIsStorageModalOpen(true)}
+            title="Mở bảng điều khiển dọn dẹp dung lượng Neon PostgreSQL"
+          >
+            🧹 Tối ưu bộ nhớ Neon
+          </button>
+
           <Link href="/calendar" className="button primary">
             View Calendar & Schedule
           </Link>
@@ -147,7 +201,7 @@ export function NotificationsPageView() {
                   {item.notification_type === "srs_due" && <Icon name="review" size={18} />}
                   {item.notification_type === "daily_checkin" && <Icon name="flame" size={18} />}
                   {item.notification_type === "streak_milestone" && <Icon name="flame" size={18} />}
-                  {item.notification_type === "system" && <Icon name="bell" size={18} />}
+                  {item.notification_type === "system" && <Icon name="clock" size={18} />}
                 </span>
               </div>
               <div className="notif-page-body">
@@ -177,13 +231,28 @@ export function NotificationsPageView() {
                       Mark as read
                     </button>
                   )}
+                  <button
+                    type="button"
+                    className="button secondary small"
+                    onClick={() => void handleDeleteOne(item.id)}
+                    title="Xóa thông báo này"
+                    style={{ marginLeft: "auto", color: "#a84538" }}
+                  >
+                    Xóa
+                  </button>
                 </div>
               </div>
             </article>
           ))}
         </div>
       )}
+
+      {/* Storage Cleanup Modal */}
+      <StorageCleanupModal
+        isOpen={isStorageModalOpen}
+        onClose={() => setIsStorageModalOpen(false)}
+        onCleanupSuccess={() => setRefreshVersion((v) => v + 1)}
+      />
     </div>
   );
-
 }

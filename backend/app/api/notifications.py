@@ -1,79 +1,124 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy.orm import Session
-
-from app.api.deps import get_current_admin, get_current_user_optional
-from app.core.database import get_db
-from app.models import User
-from app.schemas.notification import MarkReadResponse, NotificationListResponse
-from app.services.notification import (
-    NotificationPersistenceError,
-    get_user_notifications,
-    mark_all_notifications_as_read,
-    mark_notification_as_read,
-)
-
-
-router = APIRouter(tags=["notifications"])
-
-
-@router.get("/notifications", response_model=NotificationListResponse)
-def list_notifications(
-    unread_only: bool = Query(False, description="Filter for unread notifications only"),
-    limit: int = Query(30, ge=1, le=100, description="Max notifications to retrieve"),
-    db: Session = Depends(get_db),
-    current_user: User | None = Depends(get_current_user_optional),
-) -> NotificationListResponse:
-    """
-    List notifications and unread count.
-    """
-    if current_user is None or not current_user.is_superuser:
-        return NotificationListResponse(items=[], unread_count=0, total_count=0)
-    try:
-        return get_user_notifications(db, unread_only=unread_only, limit=limit)
-    except NotificationPersistenceError as error:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Could not load notifications.",
-        ) from error
-
-
-@router.patch("/notifications/{notification_id}/read", status_code=status.HTTP_200_OK)
-def mark_read(
-    notification_id: int,
-    db: Session = Depends(get_db),
-    admin_user: User = Depends(get_current_admin),
-) -> dict[str, bool]:
-    """
-    Mark a specific notification as read.
-    """
-    try:
-        success = mark_notification_as_read(db, notification_id)
-        if not success:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Notification not found.",
-            )
-        return {"success": True}
-    except NotificationPersistenceError as error:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Could not update notification state.",
-        ) from error
-
-
-@router.post("/notifications/read-all", response_model=MarkReadResponse)
-def mark_all_read(
-    db: Session = Depends(get_db),
-    admin_user: User = Depends(get_current_admin),
-) -> MarkReadResponse:
-    """
-    Mark all notifications as read.
-    """
-    try:
-        return mark_all_notifications_as_read(db)
-    except NotificationPersistenceError as error:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Could not mark all notifications as read.",
-        ) from error
-
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy.orm import Session
+
+from app.api.deps import get_current_admin, get_current_user_optional
+from app.core.database import get_db
+from app.models import User
+from app.schemas.notification import DeleteReadResponse, MarkReadResponse, NotificationListResponse
+from app.services.notification import (
+    NotificationPersistenceError,
+    delete_notification,
+    delete_read_notifications,
+    get_user_notifications,
+    mark_all_notifications_as_read,
+    mark_notification_as_read,
+)
+
+
+router = APIRouter(tags=["notifications"])
+
+
+@router.get("/notifications", response_model=NotificationListResponse)
+def list_notifications(
+    unread_only: bool = Query(False, description="Filter for unread notifications only"),
+    limit: int = Query(30, ge=1, le=100, description="Max notifications to retrieve"),
+    db: Session = Depends(get_db),
+    current_user: User | None = Depends(get_current_user_optional),
+) -> NotificationListResponse:
+    """
+    List notifications and unread count.
+    """
+    if current_user is None or not current_user.is_superuser:
+        return NotificationListResponse(items=[], unread_count=0, total_count=0)
+    try:
+        return get_user_notifications(db, unread_only=unread_only, limit=limit)
+    except NotificationPersistenceError as error:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Could not load notifications.",
+        ) from error
+
+
+@router.patch("/notifications/{notification_id}/read", status_code=status.HTTP_200_OK)
+def mark_read(
+    notification_id: int,
+    db: Session = Depends(get_db),
+    admin_user: User = Depends(get_current_admin),
+) -> dict[str, bool]:
+    """
+    Mark a specific notification as read.
+    """
+    try:
+        success = mark_notification_as_read(db, notification_id)
+        if not success:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Notification not found.",
+            )
+        return {"success": True}
+    except NotificationPersistenceError as error:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Could not update notification state.",
+        ) from error
+
+
+@router.post("/notifications/read-all", response_model=MarkReadResponse)
+def mark_all_read(
+    db: Session = Depends(get_db),
+    admin_user: User = Depends(get_current_admin),
+) -> MarkReadResponse:
+    """
+    Mark all notifications as read.
+    """
+    try:
+        return mark_all_notifications_as_read(db)
+    except NotificationPersistenceError as error:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Could not mark all notifications as read.",
+        ) from error
+
+
+@router.delete("/notifications/read", response_model=DeleteReadResponse)
+def clear_read_notifications(
+    older_than_days: int = Query(0, ge=0, description="Optional minimum age in days for read notifications to be deleted"),
+    db: Session = Depends(get_db),
+    admin_user: User = Depends(get_current_admin),
+) -> DeleteReadResponse:
+    """
+    Xóa tất cả các thông báo đã đọc để giải phóng dung lượng Neon database.
+    """
+    try:
+        count = delete_read_notifications(db, older_than_days=older_than_days)
+        return DeleteReadResponse(success=True, deleted_count=count)
+    except NotificationPersistenceError as error:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Could not delete read notifications.",
+        ) from error
+
+
+@router.delete("/notifications/{notification_id}", status_code=status.HTTP_200_OK)
+def remove_notification(
+    notification_id: int,
+    db: Session = Depends(get_db),
+    admin_user: User = Depends(get_current_admin),
+) -> dict[str, bool]:
+    """
+    Xóa một thông báo đơn lẻ theo ID.
+    """
+    try:
+        success = delete_notification(db, notification_id)
+        if not success:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Notification not found.",
+            )
+        return {"success": True}
+    except NotificationPersistenceError as error:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Could not delete notification.",
+        ) from error
+
