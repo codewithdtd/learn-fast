@@ -382,6 +382,28 @@ export class WorkbookImportError extends Error {
 const apiBaseUrl =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
 
+/**
+ * Kiểm tra nhanh trạng thái sẵn sàng của backend (Cold Start probe).
+ * Endpoint /api/v1/health trả về HTTP 200 text/plain "ok".
+ * Trả về true nếu server đã phản hồi HTTP 200, false nếu server đang ngủ, timeout hoặc lỗi kết nối.
+ */
+export async function pingBackendHealth(timeoutMs = 5000): Promise<boolean> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(`${apiBaseUrl}/api/v1/health`, {
+      method: "GET",
+      signal: controller.signal,
+      cache: "no-store",
+    });
+    return response.ok;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export async function getHealth(): Promise<HealthResponse> {
   const response = await fetch(`${apiBaseUrl}/api/v1/health`);
 
@@ -389,18 +411,25 @@ export async function getHealth(): Promise<HealthResponse> {
     throw new Error(`Health check failed with status ${response.status}`);
   }
 
-  const body: unknown = await response.json();
-
-  if (
-    typeof body !== "object" ||
-    body === null ||
-    !("status" in body) ||
-    body.status !== "ok"
-  ) {
-    throw new Error("Health check returned an unexpected response");
+  const contentType = response.headers.get("content-type") || "";
+  if (contentType.includes("application/json")) {
+    const body: unknown = await response.json();
+    if (
+      typeof body === "object" &&
+      body !== null &&
+      "status" in body &&
+      body.status === "ok"
+    ) {
+      return body as HealthResponse;
+    }
+  } else {
+    const text = await response.text();
+    if (text.trim() === "ok") {
+      return { status: "ok" };
+    }
   }
 
-  return body as HealthResponse;
+  throw new Error("Health check returned an unexpected response");
 }
 
 export async function importWorkbook(
@@ -964,6 +993,69 @@ export async function markNotificationAsRead(id: number): Promise<{ success: boo
 export async function markAllNotificationsAsRead(): Promise<MarkReadResponse> {
   return requestJson<MarkReadResponse>("/api/v1/notifications/read-all", {
     method: "POST",
+  });
+}
+
+export type DeleteReadResponse = {
+  success: boolean;
+  deleted_count: number;
+};
+
+export async function deleteReadNotifications(olderThanDays = 0): Promise<DeleteReadResponse> {
+  return requestJson<DeleteReadResponse>(`/api/v1/notifications/read?older_than_days=${olderThanDays}`, {
+    method: "DELETE",
+  });
+}
+
+export async function deleteNotification(id: number): Promise<void> {
+  return requestNoContent(`/api/v1/notifications/${id}`, {
+    method: "DELETE",
+  });
+}
+
+export type StorageCleanupStats = {
+  read_notifications: number;
+  stale_unread_notifications: number;
+  guest_study_sessions: number;
+  abandoned_study_sessions: number;
+  guest_ai_usage_records: number;
+  guest_ielts_records: number;
+  empty_writing_drafts: number;
+  total_cleanable_records: number;
+};
+
+export type StorageCleanupRequest = {
+  clear_read_notifications?: boolean;
+  clear_stale_notifications?: boolean;
+  stale_notifications_days?: number;
+  clear_guest_sessions?: boolean;
+  guest_sessions_days?: number;
+  clear_abandoned_sessions?: boolean;
+  abandoned_sessions_days?: number;
+  clear_guest_ai_usage?: boolean;
+  guest_ai_usage_days?: number;
+  clear_guest_ielts?: boolean;
+  guest_ielts_days?: number;
+  clear_empty_drafts?: boolean;
+  empty_drafts_days?: number;
+};
+
+export type StorageCleanupResponse = {
+  success: boolean;
+  deleted_counts: Record<string, number>;
+  total_deleted: number;
+  message: string;
+};
+
+export async function getStorageCleanupStats(): Promise<StorageCleanupStats> {
+  return requestJson<StorageCleanupStats>("/api/v1/maintenance/storage-stats");
+}
+
+export async function executeStorageCleanup(data: StorageCleanupRequest = {}): Promise<StorageCleanupResponse> {
+  return requestJson<StorageCleanupResponse>("/api/v1/maintenance/cleanup", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
   });
 }
 
