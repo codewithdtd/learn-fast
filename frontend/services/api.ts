@@ -382,6 +382,28 @@ export class WorkbookImportError extends Error {
 const apiBaseUrl =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
 
+/**
+ * Kiểm tra nhanh trạng thái sẵn sàng của backend (Cold Start probe).
+ * Endpoint /api/v1/health trả về HTTP 200 text/plain "ok".
+ * Trả về true nếu server đã phản hồi HTTP 200, false nếu server đang ngủ, timeout hoặc lỗi kết nối.
+ */
+export async function pingBackendHealth(timeoutMs = 5000): Promise<boolean> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(`${apiBaseUrl}/api/v1/health`, {
+      method: "GET",
+      signal: controller.signal,
+      cache: "no-store",
+    });
+    return response.ok;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export async function getHealth(): Promise<HealthResponse> {
   const response = await fetch(`${apiBaseUrl}/api/v1/health`);
 
@@ -389,18 +411,25 @@ export async function getHealth(): Promise<HealthResponse> {
     throw new Error(`Health check failed with status ${response.status}`);
   }
 
-  const body: unknown = await response.json();
-
-  if (
-    typeof body !== "object" ||
-    body === null ||
-    !("status" in body) ||
-    body.status !== "ok"
-  ) {
-    throw new Error("Health check returned an unexpected response");
+  const contentType = response.headers.get("content-type") || "";
+  if (contentType.includes("application/json")) {
+    const body: unknown = await response.json();
+    if (
+      typeof body === "object" &&
+      body !== null &&
+      "status" in body &&
+      body.status === "ok"
+    ) {
+      return body as HealthResponse;
+    }
+  } else {
+    const text = await response.text();
+    if (text.trim() === "ok") {
+      return { status: "ok" };
+    }
   }
 
-  return body as HealthResponse;
+  throw new Error("Health check returned an unexpected response");
 }
 
 export async function importWorkbook(

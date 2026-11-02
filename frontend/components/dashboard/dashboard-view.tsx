@@ -10,6 +10,7 @@ import { JourneyDashboard, JourneyExplore } from "@/components/dashboard/journey
 import { CozyDashboardView } from "@/components/dashboard/island/cozy-dashboard-view";
 import { setTheme, useTheme } from "@/hooks/use-theme";
 import { Icon } from "@/components/layout/app-shell";
+import { StartupWarmupCountdown } from "@/components/shared/startup-warmup-countdown";
 import { useAuth } from "@/context/auth-context";
 import { formatDate, formatLabel } from "@/lib/format";
 import {
@@ -53,7 +54,7 @@ export function DashboardView() {
     return () => { isCurrent = false; };
   }, []);
 
-  if (isLoading) return <DashboardLoading />;
+  if (isLoading) return <DashboardLoading onRetry={() => void loadDashboard()} />;
   if (error && !dashboard) return <DashboardError message={error} onRetry={loadDashboard} />;
   if (!dashboard) return null;
 
@@ -313,8 +314,58 @@ function RecentActivityItem({ session }: { session: DashboardRecentSessionItem }
 function DashboardSectionHeading({ title, count, action }: { title: string; count?: number; action?: React.ReactNode }) { return <div className="dashboard-section-heading"><h2>{title}{count !== undefined && <span className="heading-count">{count}</span>}</h2>{action}</div>; }
 function sessionLabel(type: DashboardActiveSessionItem["session_type"]): string { if (type === "srs_review") return "Scheduled review"; if (type === "weak_cards") return "Weak-card practice"; return "Flashcard study"; }
 function EmptyState({ children }: { children: React.ReactNode }) { return <div className="empty-state">{children}</div>; }
-function DashboardLoading() { return <main className="dashboard-page"><div className="dashboard-skeleton" aria-label="Loading dashboard"><span /><span /><span /><span /><span /></div></main>; }
-function DashboardError({ message, onRetry }: { message: string; onRetry: () => Promise<void> }) { return <main className="dashboard-page"><section role="alert" className="error-card"><p>{message}</p><button type="button" className="button secondary" onClick={() => void onRetry()}>Try again</button></section></main>; }
+function DashboardLoading({ onRetry }: { onRetry?: () => void }) {
+  const [showWarmup, setShowWarmup] = useState(false);
+
+  useEffect(() => {
+    // Nếu nạp nhanh (< 900ms), giữ skeleton nhẹ để không làm giật giao diện.
+    // Nếu quá 900ms (dấu hiệu Render cold start), hiển thị bộ đếm ngược sinh động.
+    const timer = setTimeout(() => {
+      setShowWarmup(true);
+    }, 900);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (showWarmup) {
+    return (
+      <main className="dashboard-page">
+        <StartupWarmupCountdown context="dashboard" onReady={onRetry} />
+      </main>
+    );
+  }
+
+  return (
+    <main className="dashboard-page">
+      <div className="dashboard-skeleton" aria-label="Loading dashboard">
+        <span />
+        <span />
+        <span />
+        <span />
+        <span />
+      </div>
+    </main>
+  );
+}
+
+function DashboardError({ message, onRetry }: { message: string; onRetry: () => Promise<void> }) {
+  return (
+    <main className="dashboard-page">
+      <StartupWarmupCountdown
+        context="dashboard"
+        initialSeconds={30}
+        onReady={() => void onRetry()}
+      />
+      <section role="alert" className="error-card" style={{ marginTop: 16 }}>
+        <p style={{ margin: "0 0 10px", fontSize: "0.88rem", color: "var(--muted)" }}>
+          Thông báo kết nối: {message}
+        </p>
+        <button type="button" className="button secondary" onClick={() => void onRetry()}>
+          Thử tải lại Dashboard
+        </button>
+      </section>
+    </main>
+  );
+}
 
 function DashboardWelcomeHeader({ userName }: { userName: string }) {
   const initial = userName.trim() ? userName.trim().charAt(0).toUpperCase() : "L";
