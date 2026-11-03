@@ -2816,6 +2816,22 @@ a {
   line-height: 1.25;
 }
 
+.vocabulary-phrase-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.vocabulary-example-text-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .vocabulary-position {
   color: var(--muted);
   font-size: 12px;

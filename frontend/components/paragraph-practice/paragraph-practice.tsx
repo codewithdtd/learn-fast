@@ -7,6 +7,7 @@ import { useAuth } from "@/context/auth-context";
 import { generateVocabularyParagraph, getSheet, getSheetCards, gradeGuestVocabularyParagraph, type FlashcardListItem, type SheetDetail } from "@/services/api";
 import { WritingFeedbackView } from "@/components/writing/writing-feedback";
 import { VietnamesePassage } from "@/components/paragraph-practice/vietnamese-passage";
+import { AudioPronounceButton } from "@/components/shared/audio-pronounce-button";
 import type { ParagraphPracticeTask, WritingAttempt, WritingFeedback } from "@/types/writing";
 import styles from "./paragraph-practice.module.css";
 
@@ -83,7 +84,7 @@ export function ParagraphPractice({ sheetId }: { sheetId: string }) {
         <div className={styles.sectionTitle}><div><span className={styles.step}>01</span><h2>Choose your expressions</h2><p>Select 5–10 cards, or let us pick for you.</p></div><strong className={styles.counter}>{selected.length} / 10 selected</strong></div>
         <div className={styles.randomRow}><label>Random selection <select value={count} onChange={(event) => setCount(Number(event.target.value))} disabled={busy}>{Array.from({ length: Math.min(10, cards.length) - 4 }, (_, index) => index + 5).map((number) => <option key={number} value={number}>{number} words</option>)}</select></label><button className={styles.secondary} type="button" disabled={busy} onClick={chooseRandom}>Shuffle words</button><button className={styles.textButton} type="button" disabled={busy || !selected.length} onClick={() => setSelected([])}>Clear selection</button></div>
         <label className={styles.search}>Find an expression<input type="search" value={query} disabled={busy} onChange={(event) => setQuery(event.target.value)} placeholder="Search phrase or meaning" /></label>
-        <div className={styles.words} aria-label="Vocabulary selection">{choices.map((card) => <label key={card.id} className={styles.word} data-selected={selected.includes(card.id)}><input type="checkbox" checked={selected.includes(card.id)} disabled={busy || (!selected.includes(card.id) && selected.length >= 10)} onChange={() => toggle(card.id)} /><span><strong>{card.phrase}</strong><small lang="vi">{card.meaning}</small></span></label>)}</div>
+        <div className={styles.words} aria-label="Vocabulary selection">{choices.map((card) => <label key={card.id} className={styles.word} data-selected={selected.includes(card.id)}><input type="checkbox" checked={selected.includes(card.id)} disabled={busy || (!selected.includes(card.id) && selected.length >= 10)} onChange={() => toggle(card.id)} /><span><span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}><strong>{card.phrase}</strong><AudioPronounceButton text={card.phrase} size="sm" title="Listen" /></span><small lang="vi">{card.meaning}</small></span></label>)}</div>
         {!choices.length && <p>No expressions match your search.</p>}
       </section>
       <section className={styles.panel}><div className={styles.sectionTitle}><div><span className={styles.step}>02</span><h2>Choose your format</h2><p>AI creates a Vietnamese text that uses the meaning of your selected expressions.</p></div></div>
@@ -93,7 +94,7 @@ export function ParagraphPractice({ sheetId }: { sheetId: string }) {
       </section>
     </>}
     {guestTask && <>
-      <section className={styles.panel}><span className={styles.step}>{guestTask.style === "dialogue" ? "VIETNAMESE CONVERSATION" : "YOUR VIETNAMESE TEXT"}</span><h2>{guestTask.title_en}</h2><VietnamesePassage text={guestTask.paragraph_vi} style={guestTask.style} /><div className={styles.chips}>{guestTask.words.map((word) => <span key={word.id}><strong>{word.phrase}</strong> · {word.meaning}</span>)}</div></section>
+      <section className={styles.panel}><span className={styles.step}>{guestTask.style === "dialogue" ? "VIETNAMESE CONVERSATION" : "YOUR VIETNAMESE TEXT"}</span><h2>{guestTask.title_en}</h2><VietnamesePassage text={guestTask.paragraph_vi} style={guestTask.style} /><div className={styles.chips}>{guestTask.words.map((word) => <span key={word.id} style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}><strong>{word.phrase}</strong><AudioPronounceButton text={word.phrase} size="sm" title="Listen" /> · {word.meaning}</span>)}</div></section>
       <section className={styles.panel}><h2>Your English translation</h2><label className={styles.search}>Write your version<textarea rows={8} maxLength={4000} value={draft} disabled={busy || !!feedback} onChange={(event) => setDraft(event.target.value)} placeholder={guestTask.style === "dialogue" ? "Translate the conversation into English…" : "Write the story in English…"} /></label><p className={styles.note}>Use the target expressions naturally. Your guest result will disappear when you leave or refresh this page.</p><button className={styles.primary} disabled={busy || !draft.trim() || !!feedback} onClick={() => void gradeGuest()}>{busy ? "Reviewing…" : feedback ? "Review completed" : "Get AI feedback"}</button></section>
       {feedback && <WritingFeedbackView feedback={feedback} sourceText={submitted} />}
     </>}

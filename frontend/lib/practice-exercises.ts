@@ -17,6 +17,8 @@ export type ExerciseQuestion = {
   answer: string;
   hint: string | null;
   options: string[];
+  phrase?: string;
+  example_en?: string | null;
 };
 
 export type ExerciseResponse = {
@@ -140,7 +142,7 @@ function createClozeQuestion(card: FlashcardListItem): ExerciseQuestion | null {
   if (!firstMatch) return null;
   const prompt = example.replace(matcher, (_match, prefix: string) => `${prefix}____`);
   if (!normalizeExerciseAnswer(prompt.replaceAll("____", ""))) return null;
-  return { cardId: card.id, prompt, answer: firstMatch[2], hint: card.meaning, options: [] };
+  return { cardId: card.id, prompt, answer: firstMatch[2], hint: card.meaning, options: [], phrase: card.phrase, example_en: card.example_en };
 }
 
 export function createExercisePool(
@@ -183,7 +185,7 @@ export function createExercisePool(
     if (!promptKey || !normalizeExerciseAnswer(answer)
       || answersByPrompt.get(promptKey)?.size !== 1 || seen.has(promptKey)) return [];
     seen.add(promptKey);
-    return [{ cardId: card.id, prompt, answer, hint: null, options }];
+    return [{ cardId: card.id, prompt, answer, hint: null, options, phrase: card.phrase, example_en: card.example_en }];
   });
 }
 
