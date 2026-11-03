@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { AuthModal } from "@/components/auth/auth-modal";
+import { AudioPronounceButton } from "@/components/shared/audio-pronounce-button";
 import { useAuth } from "@/context/auth-context";
 import { getReadingWordAtOffset } from "@/lib/reading-selection";
 import { saveIELTSPracticePrefill } from "@/lib/ielts-practice-prefill";
@@ -43,6 +44,7 @@ export function NewsReader() {
   const [translation, setTranslation] = useState<TranslationState>({ value: "", loading: false, error: null });
   const [vocabularySheets, setVocabularySheets] = useState<ReadingVocabularySheet[]>([]);
   const [selectedSheetId, setSelectedSheetId] = useState("");
+  const [mobileTab, setMobileTab] = useState<"list" | "reader">("list");
   const [phraseToSave, setPhraseToSave] = useState("");
   const [meaningToSave, setMeaningToSave] = useState("");
   const [savingWord, setSavingWord] = useState(false);
@@ -335,12 +337,42 @@ export function NewsReader() {
     {pageError && <p className={styles.error} role="alert">{pageError} <button type="button" onClick={() => void loadArticles()}>Try again</button></p>}
     {unavailableSources.length > 0 && <p className={styles.notice} role="status">Some sources are temporarily unavailable: {unavailableSources.join(", ")}.</p>}
 
-    <div className={styles.layout}>
+    {/* Mobile view segmented control switcher */}
+    <div className={styles.mobileViewSwitcher} role="tablist" aria-label="Mobile reading view">
+      <button
+        type="button"
+        role="tab"
+        aria-selected={mobileTab === "list"}
+        className={styles.mobileTabButton}
+        data-active={mobileTab === "list"}
+        onClick={() => setMobileTab("list")}
+      >
+        📰 Stories ({visibleArticles.length})
+      </button>
+      <button
+        type="button"
+        role="tab"
+        aria-selected={mobileTab === "reader"}
+        className={styles.mobileTabButton}
+        data-active={mobileTab === "reader"}
+        onClick={() => setMobileTab("reader")}
+      >
+        📖 {selectedArticle ? "Reading" : "Reader"}
+      </button>
+    </div>
+
+    <div className={styles.layout} data-mobile-tab={mobileTab}>
       <aside className={styles.articleList} aria-label="News articles">
         <div className={styles.listHeading}><h2>Latest stories</h2><span>{visibleArticles.length}</span></div>
         {loadingArticles ? <p className={styles.emptyState} role="status">Loading stories…</p> : visibleArticles.length === 0
           ? <p className={styles.emptyState}>No stories are available for these filters.</p>
-          : visibleArticles.map((article, index) => <button type="button" className={styles.articleChoice} data-selected={selectedArticle?.id === article.id} data-has-image={Boolean(article.image_url)} key={article.id || index} onClick={() => setSelectedArticle(article)}>
+          : visibleArticles.map((article, index) => <button type="button" className={styles.articleChoice} data-selected={selectedArticle?.id === article.id} data-has-image={Boolean(article.image_url)} key={article.id || index} onClick={() => {
+            setSelectedArticle(article);
+            setMobileTab("reader");
+            if (typeof window !== "undefined" && window.innerWidth <= 760) {
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }
+          }}>
             {article.image_url && <NewsImage key={article.id} className={styles.articleThumbnail} src={article.image_url} alt="" />}
             <span className={styles.articleMeta}>{article.source_name} · {article.category}</span>
             <strong>{article.title}</strong>
@@ -349,7 +381,34 @@ export function NewsReader() {
           </button>)}
       </aside>
       <article className={styles.reader}>
-        {!selectedArticle ? <div className={styles.emptyReader}><span aria-hidden="true">📖</span><h2>Choose a story to read</h2><p>News stories will appear here.</p></div> : <>
+        {!selectedArticle ? (
+          <div className={styles.emptyReader}>
+            <span aria-hidden="true">📖</span>
+            <h2>Choose a story to read</h2>
+            <p>News stories will appear here.</p>
+            <button
+              type="button"
+              className={styles.chooseArticleButton}
+              onClick={() => setMobileTab("list")}
+            >
+              Browse stories ({visibleArticles.length}) →
+            </button>
+          </div>
+        ) : <>
+          <div className={styles.mobileBackRow}>
+            <button
+              type="button"
+              className={styles.mobileBackButton}
+              onClick={() => {
+                setMobileTab("list");
+                if (typeof window !== "undefined" && window.innerWidth <= 760) {
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }
+              }}
+            >
+              ← Choose another story
+            </button>
+          </div>
           {selectedArticle.image_url && <NewsImage key={`${selectedArticle.id}-hero`} className={styles.heroImage} src={selectedArticle.image_url} alt={selectedArticle.title} priority />}
           <div className={styles.readerHeader} ref={articleHeaderRef}>
             <p className={styles.articleMeta}>{selectedArticle.source_name} · {selectedArticle.category}{selectedArticle.published_at ? " · " + formatPublished(selectedArticle.published_at) : ""}</p>
@@ -384,7 +443,13 @@ export function NewsReader() {
       aria-live="polite"
     >
       <div className={styles.lookupTop}>
-        <div><span className={styles.eyebrow}>SELECTED TEXT</span><p lang="en">{lookupPopover.text}</p></div>
+        <div>
+          <span className={styles.eyebrow}>SELECTED TEXT</span>
+          <div className={styles.lookupTextRow}>
+            <p lang="en">{lookupPopover.text}</p>
+            <AudioPronounceButton text={lookupPopover.text} size="sm" title="Listen to selection" />
+          </div>
+        </div>
         <button type="button" className={styles.closeButton} onClick={() => { clearLookup(); window.getSelection()?.removeAllRanges(); }} aria-label="Close translation">×</button>
       </div>
       <div className={styles.translationResult}>

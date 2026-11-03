@@ -92,6 +92,10 @@
 .answerOption[data-state="incorrect"] { border-color: var(--error); background: var(--error-soft); }
 .optionNumber { display: inline-grid; width: 1.75rem; height: 1.75rem; flex: 0 0 auto; place-items: center; border: 1px solid var(--outline); border-radius: .5rem; font-size: .75rem; font-weight: 700; }
 .optionStatus { margin-left: auto; font-size: .75rem; font-weight: 700; }
+.questionPromptWrap { display: flex; align-items: center; gap: .625rem; flex-wrap: wrap; }
+.feedbackAnswerRow { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; margin-top: .375rem; }
+.feedbackAnswerRow p { margin: 0; }
+.correctAnswerWrap { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
 .textAnswer input { min-height: 3.25rem; font-size: 1rem; font-weight: 400; }
 .textAnswer input::placeholder { color: var(--muted); opacity: 1; }
 .textAnswer input[aria-invalid="true"] { border-color: var(--error); }

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { generateSentenceWritingAttempt, getSheet, getSheetCards, getWorkbook, getWorkbooks,
   type FlashcardListItem, type WorkbookDetail, type WorkbookListItem } from "@/services/api";
+import { AudioPronounceButton } from "@/components/shared/audio-pronounce-button";
 import styles from "./sentence-practice.module.css";
 
 export function SentencePractice({ initialSheetId }: { initialSheetId?: string }) {
@@ -99,7 +100,14 @@ function WordPicker({ sheetId }: { sheetId: string }) {
     <div className={styles.filters}><label className={styles.field}>Find a word<input type="search" value={search} placeholder="Search phrase or meaning" disabled={starting} onChange={(event) => setSearch(event.target.value)} /></label>
       <label className={styles.checkbox}><input type="checkbox" checked={weakOnly} disabled={starting} onChange={(event) => setWeakOnly(event.target.checked)} /> Weak cards only</label></div>
     {choices.length ? <><label className={styles.field}>Vocabulary ({choices.length})<select value={selected?.id ?? ""} disabled={starting} onChange={(event) => setSelectedId(event.target.value)}>{choices.map((card) => <option key={card.id} value={card.id}>{card.phrase.slice(0, 100)}{card.is_weak ? " · Weak" : ""}</option>)}</select></label>
-      <div className={styles.word}><p className={styles.eyebrow}>YOUR TARGET EXPRESSION</p><h3>{selected.phrase}</h3><p lang="vi">{selected.meaning}</p></div>
+      <div className={styles.word}>
+        <p className={styles.eyebrow}>YOUR TARGET EXPRESSION</p>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+          <h3>{selected.phrase}</h3>
+          <AudioPronounceButton text={selected.phrase} size="sm" title="Listen to pronunciation" />
+        </div>
+        <p lang="vi">{selected.meaning}</p>
+      </div>
       <p className={styles.note}>AI will create a bilingual situation. Hints stay hidden until you choose to open them.</p>
       <button className={styles.primary} type="button" disabled={starting} aria-busy={starting} onClick={() => void start()}>{starting ? "Creating your situation…" : "Create sentence challenge"}</button>
     </> : <p role="status">{cards.length ? "No words match. Adjust your search or turn off the Weak filter." : "This sheet has no vocabulary yet. Choose another sheet."}</p>}

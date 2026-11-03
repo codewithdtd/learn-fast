@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState, type CSSProperties } from "react";
 
 import { FlashcardFlagButtons } from "@/components/sheets/flashcard-flag-buttons";
 import { ApiRequestError, deleteFlashcard, getSheet, getSheetCards, updateFlashcardBookmark, updateFlashcardContent, updateFlashcardWeak, type FlashcardListItem, type SheetDetail } from "@/services/api";
+import { AudioPronounceButton } from "@/components/shared/audio-pronounce-button";
 import { Icon } from "@/components/layout/app-shell";
 import { useAuth } from "@/context/auth-context";
 
@@ -412,7 +413,12 @@ function VocabularyRow({ card, visibleColumns, gridStyle, isExampleExpanded, can
     <div className="vocabulary-table-row" role="row" style={gridStyle}>
       <div className="vocabulary-cell phrase-cell" role="cell" data-column-hidden={!visibleColumns.phrase} aria-hidden={!visibleColumns.phrase} style={{ gridArea: "phrase" }}>
         {visibleColumns.phrase && <><span className="vocabulary-mobile-field-label">Phrase <span>#{card.position}</span></span><span className="vocabulary-position">#{card.position}</span>
-          {isEditing ? <input form={formId} className="vocabulary-edit-phrase" aria-label={`Phrase for card ${card.position}`} maxLength={200} value={phraseDraft} disabled={isSaving} onChange={(event) => setPhraseDraft(event.target.value)} /> : <strong>{card.phrase}</strong>}</>}
+          {isEditing ? <input form={formId} className="vocabulary-edit-phrase" aria-label={`Phrase for card ${card.position}`} maxLength={200} value={phraseDraft} disabled={isSaving} onChange={(event) => setPhraseDraft(event.target.value)} /> : (
+            <div className="vocabulary-phrase-content">
+              <strong>{card.phrase}</strong>
+              <AudioPronounceButton text={card.phrase} size="sm" title="Listen to phrase" />
+            </div>
+          )}</>}
       </div>
       <div className="vocabulary-cell meaning-cell" role="cell" data-column-hidden={!visibleColumns.meaning} aria-hidden={!visibleColumns.meaning} style={{ gridArea: "meaning" }}>{visibleColumns.meaning && <><span className="vocabulary-mobile-field-label">Meaning</span>{isEditing ? <textarea form={formId} className="vocabulary-edit-meaning" aria-label={`Meaning for ${card.phrase}`} maxLength={600} rows={3} value={meaningDraft} disabled={isSaving} onChange={(event) => setMeaningDraft(event.target.value)} /> : card.meaning}</>}</div>
       <div className="vocabulary-cell examples-cell" role="cell" data-column-hidden={!visibleColumns.examples} aria-hidden={!visibleColumns.examples} style={{ gridArea: "examples" }}>
@@ -420,7 +426,15 @@ function VocabularyRow({ card, visibleColumns, gridStyle, isExampleExpanded, can
           <span className="examples-muted">No examples</span>
         ) : isExampleExpanded ? (
           <div className="example-content">
-            {card.example_en && <p><span>EN</span>{card.example_en}</p>}
+            {card.example_en && (
+              <p>
+                <span>EN</span>
+                <span className="vocabulary-example-text-wrap">
+                  <span>{card.example_en}</span>
+                  <AudioPronounceButton text={card.example_en} size="sm" title="Listen to example" />
+                </span>
+              </p>
+            )}
             {card.example_vi && <p><span>VI</span>{card.example_vi}</p>}
             <button type="button" className="example-toggle-link" onClick={onToggleExamples}>Hide examples <Icon name="chevronDown" size={16} /></button>
           </div>

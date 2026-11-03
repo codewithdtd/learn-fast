@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 
 import { Icon } from "@/components/layout/app-shell";
+import { AudioPronounceButton } from "@/components/shared/audio-pronounce-button";
 import { NoriMascot } from "@/components/illustrations/nori-mascot";
 import { playJourneyCompletionSound } from "@/lib/journey-sounds";
 import {
@@ -199,7 +200,17 @@ function ExerciseRound({ round, sheetId, onRestart, onConfigure }: { round: Roun
     <form className={styles.questionCard} onSubmit={submit}>
       <p className={styles.eyebrow}>{round.settings.mode === "cloze" ? "Complete the English example"
         : round.settings.direction === "en_to_vi" ? "Translate into Vietnamese" : "Translate into English"}</p>
-      <h2 ref={headingRef} tabIndex={-1} className={styles.question}>{question.prompt}</h2>
+      <div className={styles.questionPromptWrap}>
+        <h2 ref={headingRef} tabIndex={-1} className={styles.question}>{question.prompt}</h2>
+        {/* Nút phát âm câu hỏi khi đề bài bằng tiếng Anh (en_to_vi hoặc cloze) */}
+        {(round.settings.direction === "en_to_vi" || round.settings.mode === "cloze") && (
+          <AudioPronounceButton
+            text={round.settings.mode === "cloze" ? (question.example_en ?? question.phrase ?? question.prompt) : question.prompt}
+            size="md"
+            title="Listen to question"
+          />
+        )}
+      </div>
       {question.hint && <p className={styles.meaning}><strong>Meaning:</strong> {question.hint}</p>}
 
       {isMultipleChoice ? <fieldset className={styles.answers} disabled={hasAnswered}>
@@ -238,7 +249,17 @@ function ExerciseRound({ round, sheetId, onRestart, onConfigure }: { round: Roun
                 ? "Correct!"
                 : "Not quite. Here is the expected answer:"}
           </strong>
-          <p>{question.answer}</p>
+          <div className={styles.feedbackAnswerRow}>
+            <p>{question.answer}</p>
+            {/* Nếu câu trả lời là tiếng Anh (vi_to_en, cloze) hoặc có từ vựng tiếng Anh -> Bổ sung nút phát âm */}
+            {(round.settings.direction === "vi_to_en" || round.settings.mode === "cloze" || Boolean(question.phrase)) && (
+              <AudioPronounceButton
+                text={round.settings.direction === "vi_to_en" ? question.answer : (question.phrase ?? question.answer)}
+                size="sm"
+                title="Listen to English answer"
+              />
+            )}
+          </div>
           {!response.is_correct && round.settings.mode === "translation" && <p>This question is moving to the end of the queue. You will need to answer it correctly to finish.</p>}
           {!response.is_correct && !isMultipleChoice && <div className={styles.overrideWrap}>
             <button
@@ -292,7 +313,19 @@ function ExerciseResults({ completionId, responses, retryUntilCorrect, onRestart
         {incorrect.map((response) => <li key={response.question.cardId}>
           <h3>{response.question.prompt}</h3>
           <dl><div><dt>Your answer</dt><dd className={styles.incorrectAnswer}>{response.answer}</dd></div>
-            <div><dt>Expected answer</dt><dd className={styles.correctAnswer}>{response.question.answer}</dd></div></dl>
+            <div>
+              <dt>Expected answer</dt>
+              <dd className={`${styles.correctAnswer} ${styles.correctAnswerWrap}`}>
+                <span>{response.question.answer}</span>
+                {Boolean(response.question.phrase) && (
+                  <AudioPronounceButton
+                    text={response.question.phrase ?? response.question.answer}
+                    size="sm"
+                    title="Listen to pronunciation"
+                  />
+                )}
+              </dd>
+            </div></dl>
         </li>)}
       </ol>
     </section> : <div className={styles.perfect}><Icon name="check" size={24} /><p>You answered every question correctly. Try a different exercise to challenge your recall.</p></div>}
