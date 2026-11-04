@@ -1760,6 +1760,29 @@
   font-size: 11px;
 }
 
+:root[data-theme="island"] .sheet-action-card > span:nth-child(2) {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+:root[data-theme="island"] .sheet-action-card > svg.icon,
+:root[data-theme="island"] .sheet-action-card > svg {
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+:root[data-theme="island"] .sheet-priority-panel select {
+  width: 100%;
+  min-height: 46px;
+  border: 1.5px solid #d4c7b2;
+  border-radius: 14px;
+  background: #fbf7ee;
+  color: #382c22;
+  padding: 0 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 :root[data-theme="island"] .sheet-detail-panel {
   border: 2px solid #d4c7b2;
   border-radius: 24px;
@@ -2632,15 +2655,203 @@
     border-radius: 16px;
   }
 
+/* Responsive Sheet Detail Page on Mobile */
+  :root[data-theme="island"] .sheet-detail-page {
+    padding: 14px 8px calc(92px + env(safe-area-inset-bottom));
+  }
+
   :root[data-theme="island"] .sheet-detail-content {
-    width: calc(100% - 14px);
-    padding: 14px 0 40px;
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 8px 4px 36px;
   }
 
   :root[data-theme="island"] .sheet-detail-header {
-    padding: 16px 14px;
+    padding: 18px 16px;
     border-radius: 20px;
     margin-bottom: 16px;
+  }
+
+  :root[data-theme="island"] .sheet-detail-breadcrumb {
+    display: none;
+  }
+
+  :root[data-theme="island"] .sheet-detail-back {
+    margin-top: 0;
+    margin-bottom: 12px;
+    font-size: 13px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  :root[data-theme="island"] .sheet-detail-title-row {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    margin-top: 0;
+  }
+
+  :root[data-theme="island"] .sheet-detail-name-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+
+  :root[data-theme="island"] .sheet-detail-name-row h1 {
+    font-size: clamp(1.35rem, 5.2vw, 1.7rem);
+    line-height: 1.22;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  :root[data-theme="island"] .sheet-detail-subtitle {
+    font-size: 14px;
+    margin-top: 4px;
+  }
+
+  :root[data-theme="island"] .sheet-status-badge {
+    margin-top: 2px;
+    align-self: flex-start;
+  }
+
+  :root[data-theme="island"] .sheet-detail-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  :root[data-theme="island"] .sheet-detail-main,
+  :root[data-theme="island"] .sheet-detail-sidebar {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+    width: 100%;
+    min-width: 0;
+  }
+
+  :root[data-theme="island"] .sheet-detail-hero-card {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+    padding: 18px 16px;
+    border-radius: 20px;
+    margin-bottom: 0;
+  }
+
+  :root[data-theme="island"] .sheet-detail-hero-copy h2 {
+    font-size: 1.25rem;
+    margin: 4px 0;
+  }
+
+  :root[data-theme="island"] .sheet-detail-hero-copy > p:last-child {
+    font-size: 13.5px;
+    line-height: 1.5;
+  }
+
+  :root[data-theme="island"] .sheet-detail-primary-action {
+    width: 100%;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: 16px;
+    box-sizing: border-box;
+  }
+
+  :root[data-theme="island"] .sheet-detail-primary-action span:nth-child(2) {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  :root[data-theme="island"] .sheet-detail-primary-action strong {
+    font-size: 15px;
+  }
+
+  :root[data-theme="island"] .sheet-detail-primary-action small {
+    font-size: 12px;
+    line-height: 1.35;
+  }
+
+  :root[data-theme="island"] .sheet-detail-actions {
+    display: grid;
+    gap: 12px;
+  }
+
+  :root[data-theme="island"] .sheet-action-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 0;
+  }
+
+  :root[data-theme="island"] .sheet-action-card {
+    padding: 14px 16px;
+    border-radius: 18px;
+    min-height: auto;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    box-sizing: border-box;
+  }
+
+  :root[data-theme="island"] .sheet-action-card > span:nth-child(2) {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  :root[data-theme="island"] .sheet-action-card strong {
+    font-size: 14px;
+    line-height: 1.3;
+  }
+
+  :root[data-theme="island"] .sheet-action-card small {
+    font-size: 12px;
+    line-height: 1.35;
+  }
+
+  :root[data-theme="island"] .sheet-detail-panel {
+    padding: 18px 16px;
+    border-radius: 20px;
+    margin-bottom: 0;
+  }
+
+  :root[data-theme="island"] .sheet-detail-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin: 14px 0 0;
+  }
+
+  :root[data-theme="island"] .sheet-stat {
+    padding: 12px 14px;
+    border-radius: 14px;
+  }
+
+  :root[data-theme="island"] .sheet-stat dt {
+    font-size: 11px;
+  }
+
+  :root[data-theme="island"] .sheet-stat dd {
+    font-size: 1.25rem;
+  }
+
+  :root[data-theme="island"] .sheet-detail-meta-list {
+    margin-top: 14px;
+  }
+
+  :root[data-theme="island"] .sheet-detail-meta-list div {
+    padding: 10px 0;
+    gap: 8px;
+  }
+
+  :root[data-theme="island"] .sheet-detail-meta-list dt,
+  :root[data-theme="island"] .sheet-detail-meta-list dd {
+    font-size: 12px;
   }
 }
 
