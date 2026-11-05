@@ -1,83 +1,111 @@
 import Link from "next/link";
+import {
+  LayoutDashboard,
+  BookOpen,
+  Upload,
+  GraduationCap,
+  Calendar,
+  RotateCcw,
+  ArrowRight,
+  Clock,
+  CheckCircle2,
+  AlertTriangle,
+  RefreshCw,
+  Search,
+  Flame,
+  Bookmark,
+  Eye,
+  EyeOff,
+  ChevronDown,
+  ArrowLeft,
+  Play,
+  Bell,
+  PenTool,
+  Trash2,
+  LucideIcon,
+} from "lucide-react";
 import { UserProfileMenu } from "@/components/auth/user-profile-menu";
 import { DemoBadge } from "@/components/layout/demo-badge";
 import { AccessGate, AdminNotifications } from "@/components/layout/access-gate";
 import { MobileNavDrawer, type MobileNavEntry } from "@/components/layout/mobile-nav-drawer";
 import { ThemeToggle } from "./theme-toggle";
 
+export type IconName =
+  | "home"
+  | "books"
+  | "import"
+  | "study"
+  | "calendar"
+  | "review"
+  | "arrow"
+  | "clock"
+  | "check"
+  | "weak"
+  | "refresh"
+  | "search"
+  | "flame"
+  | "bookmark"
+  | "eye"
+  | "eyeOff"
+  | "chevronDown"
+  | "back"
+  | "play"
+  | "bell"
+  | "writing"
+  | "trash";
 
-
-type IconName = "home" | "books" | "import" | "study" | "calendar" | "review" | "arrow" | "clock" | "check" | "weak" | "refresh" | "search" | "flame" | "bookmark" | "eye" | "eyeOff" | "chevronDown" | "back" | "play" | "bell" | "writing" | "trash";
-
-// Bảng ánh xạ các icon đồ họa sống động (thay thế wireframe stroke SVG đơn sắc)
-const GRAPHIC_ICONS: Partial<Record<IconName, string>> = {
-  flame: "/icons/flame.png",
-  check: "/icons/check.png",
-  clock: "/icons/clock.png",
-  review: "/icons/review.png",
+/**
+ * Clean, cohesive Lucide vector icon mapping
+ * Completely eliminates old cartoon 3D PNGs and unoptimized raw SVGs.
+ */
+const ICON_MAP: Record<IconName, LucideIcon> = {
+  home: LayoutDashboard,
+  books: BookOpen,
+  import: Upload,
+  study: GraduationCap,
+  calendar: Calendar,
+  review: RotateCcw,
+  arrow: ArrowRight,
+  clock: Clock,
+  check: CheckCircle2,
+  weak: AlertTriangle,
+  refresh: RefreshCw,
+  search: Search,
+  flame: Flame,
+  bookmark: Bookmark,
+  eye: Eye,
+  eyeOff: EyeOff,
+  chevronDown: ChevronDown,
+  back: ArrowLeft,
+  play: Play,
+  bell: Bell,
+  writing: PenTool,
+  trash: Trash2,
 };
 
-export function Icon({ name, size = 24 }: { name: IconName; size?: number }) {
-  const graphic = GRAPHIC_ICONS[name];
-  if (graphic) {
-    return (
-      <img
-        src={graphic}
-        alt=""
-        aria-hidden="true"
-        className={`icon-graphic icon-graphic-${name}`}
-        width={size}
-        height={size}
-        style={{
-          width: size,
-          height: size,
-          objectFit: "contain",
-          display: "inline-block",
-          verticalAlign: "middle",
-          flexShrink: 0,
-        }}
-      />
-    );
-  }
-  const paths: Record<IconName, React.ReactNode> = {
-    home: <><rect x="4" y="4" width="6" height="6" rx="1" /><rect x="14" y="4" width="6" height="6" rx="1" /><rect x="4" y="14" width="6" height="6" rx="1" /><rect x="14" y="14" width="6" height="6" rx="1" /></>,
-    books: <><path d="M5 5.5A2.5 2.5 0 0 1 7.5 3H20v15H7.5A2.5 2.5 0 0 0 5 20.5z" /><path d="M5 5.5v15M5 20.5A2.5 2.5 0 0 1 7.5 18H20" /></>,
-    import: <><path d="M5 3h10l4 4v14H5z" /><path d="M15 3v5h4M12 17V10M9 13l3-3 3 3" /></>,
-    study: <><path d="m3 9 9-5 9 5-9 5z" /><path d="M6 11v5c3 2 6 3 9 0v-5M21 10v6" /></>,
-    calendar: <><rect x="4" y="5" width="16" height="15" rx="2" /><path d="M8 3v4M16 3v4M4 10h16" /></>,
-    review: <><circle cx="12" cy="12" r="8" /><path d="M12 7v5l3 2M9 2h6" /></>,
-    arrow: <><path d="M5 12h14M13 6l6 6-6 6" /></>,
-    clock: <><circle cx="12" cy="12" r="8" /><path d="M12 7v5l3 2" /></>,
-    check: <><circle cx="12" cy="12" r="8" /><path d="m8.5 12 2.2 2.2 4.8-5" /></>,
-    weak: <><path d="m12 20-7-8a4.5 4.5 0 0 1 7-5.5A4.5 4.5 0 0 1 19 12z" /><path d="M12 9v4M12 16h.01" /></>,
-    refresh: <><path d="M20 11a8 8 0 0 0-14.7-3L4 10" /><path d="M4 5v5h5M4 13a8 8 0 0 0 14.7 3L20 14" /><path d="M20 19v-5h-5" /></>,
-    search: <><circle cx="10.8" cy="10.8" r="6.8" /><path d="m16 16 5 5" /></>,
-    flame: <path d="M12 21c4.2 0 7-2.8 7-6.8 0-3.2-1.7-5.5-4.8-8.2.1 2.2-.8 3.4-2 4.2.2-3.3-1.4-6-4-8.2.1 3.2-2.2 5.5-2.2 8.8C6 18 8.7 21 12 21Z" />,
-    bookmark: <path d="M6 4.5A1.5 1.5 0 0 1 7.5 3h9A1.5 1.5 0 0 1 18 4.5V21l-6-3-6 3z" />,
-    eye: <><path d="M2.5 12s3.3-5 9.5-5 9.5 5 9.5 5-3.3 5-9.5 5-9.5-5Z" /><circle cx="12" cy="12" r="2.5" /></>,
-    eyeOff: <><path d="m3 3 18 18M10.6 10.6a2 2 0 0 0 2.8 2.8" /><path d="M9.9 5.2A10.8 10.8 0 0 1 12 5c6.2 0 9.5 7 9.5 7a14 14 0 0 1-3 3.7M6.2 6.2C3.8 7.8 2.5 12 2.5 12s3.3 7 9.5 7c1 0 2-.2 2.8-.5" /></>,
-    chevronDown: <path d="m6 9 6 6 6-6" />,
-    back: <><path d="M19 12H5" /><path d="m11 6-6 6 6 6" /></>,
-    play: <path d="m8 5 11 7-11 7z" />,
-    bell: <><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></>,
-    writing: <><path d="M4 20h4l10.5-10.5a2.12 2.12 0 0 0-4-4L4 16z" /><path d="m13.5 6.5 4 4M4 20h16" /></>,
-    trash: <><path d="M4 7h16M10 11v6M14 11v6M5 7l1 14h12l1-14M9 7V4h6v3" /></>,
-  };
-
-  return <svg aria-hidden="true" className="icon" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">{paths[name]}</svg>;
+export function Icon({
+  name,
+  size = 20,
+  className = "",
+}: {
+  name: IconName;
+  size?: number;
+  className?: string;
+}) {
+  const Component = ICON_MAP[name] || BookOpen;
+  return <Component size={size} className={`icon shrink-0 ${className}`.trim()} aria-hidden="true" />;
 }
 
 const navItems: MobileNavEntry[] = [
-  { href: "/", label: "Dashboard", mobileLabel: "Home", icon: "home", imageSrc: "/icon-nav/dashboard.png", primary: true },
-  { href: "/calendar", label: "Calendar & Check-in", mobileLabel: "Calendar", icon: "calendar", imageSrc: "/icon-nav/calendar.png", primary: true },
-  { href: "/workbooks", label: "Workbooks", mobileLabel: "Books", icon: "books", imageSrc: "/icon-nav/quest.png", primary: true },
-  { href: "/import", label: "Import workbook", mobileLabel: "Import", icon: "import", imageSrc: "/icon-nav/import.png", primary: false },
+  { href: "/", label: "Dashboard", mobileLabel: "Home", icon: "home", primary: true },
+  { href: "/calendar", label: "Calendar", mobileLabel: "Calendar", icon: "calendar", primary: true },
+  { href: "/workbooks", label: "Workbooks", mobileLabel: "Books", icon: "books", primary: true },
+  { href: "/import", label: "Import workbook", mobileLabel: "Import", icon: "import", primary: false },
   {
     href: "/ai-support",
     label: "AI Support",
-    mobileLabel: "AI",
+    mobileLabel: "AI Tools",
     icon: "writing",
-    imageSrc: "/icon-nav/creative-writing.png",
     primary: true,
     children: [
       { href: "/ai-support?tab=sentences", label: "Sentence practice" },
@@ -86,9 +114,8 @@ const navItems: MobileNavEntry[] = [
       { href: "/ai-support?tab=video", label: "Video practice" },
     ],
   },
-  { href: "/reading", label: "Read the news", mobileLabel: "Read", icon: "books", imageSrc: "/icon-nav/newspaper.png", primary: true },
+  { href: "/reading", label: "Read the news", mobileLabel: "Reading", icon: "books", primary: true },
 ];
-
 
 export function AppShell({
   children,
@@ -99,33 +126,49 @@ export function AppShell({
 }) {
   return (
     <div className="app-shell">
+      {/* Desktop Sidebar: 240px wide, high contrast, clean typography */}
       <aside className="desktop-sidebar">
         <Link href="/" className="brand" aria-label="DtdFLow dashboard">
-          <span className="brand-mark"><Icon name="books" size={22} /></span>
-          <span><strong>DtdFLow</strong><small>Personal Mentor</small></span>
+          <span className="brand-mark">
+            <Icon name="books" size={20} />
+          </span>
+          <div>
+            <strong>DtdFLow</strong>
+            <small>Personal Mentor</small>
+          </div>
         </Link>
+
         <nav className="sidebar-nav" aria-label="Primary navigation">
           {navItems.map((item) => (
-            <Link key={item.href} href={item.href} className={item.href === activeHref ? "nav-link active" : "nav-link"}>
-              {item.imageSrc ? (
-                <img src={item.imageSrc} alt="" width={22} height={22} style={{ objectFit: "contain", flexShrink: 0 }} />
-              ) : (
-                <Icon name={item.icon} />
-              )}
+            <Link
+              key={item.href}
+              href={item.href}
+              className={item.href === activeHref ? "nav-link active" : "nav-link"}
+            >
+              <Icon name={item.icon} size={18} />
               <span>{item.label}</span>
             </Link>
           ))}
         </nav>
-        <ThemeToggle />
-        <Link href="/workbooks" className="sidebar-action">Browse Workbooks <Icon name="arrow" size={18} /></Link>
+
+        <div className="sidebar-footer">
+          <ThemeToggle />
+          <Link href="/workbooks" className="sidebar-action">
+            <span>Browse Workbooks</span>
+            <Icon name="arrow" size={16} />
+          </Link>
+        </div>
       </aside>
 
+      {/* Mobile Top Header: 52px height, sticky with backdrop blur */}
       <header className="mobile-header">
         <Link href="/" className="mobile-brand" aria-label="DtdFLow Home">
-          <span className="brand-mark mobile-brand-mark"><Icon name="books" size={18} /></span>
+          <span className="brand-mark mobile-brand-mark">
+            <Icon name="books" size={16} />
+          </span>
           <span>DtdFLow</span>
         </Link>
-        <div className="mobile-header-actions flex items-center">
+        <div className="mobile-header-actions flex items-center gap-1.5">
           <DemoBadge />
           <ThemeToggle compact />
           <AdminNotifications />
@@ -134,6 +177,7 @@ export function AppShell({
         </div>
       </header>
 
+      {/* Main Workspace Canvas */}
       <div className="app-content">
         <div className="desktop-top-bar flex items-center justify-end gap-3">
           <DemoBadge />
@@ -143,20 +187,24 @@ export function AppShell({
         <AccessGate>{children}</AccessGate>
       </div>
 
-
+      {/* Mobile Bottom Navigation: Thumb zone ergonomic layout with 5 primary tabs */}
       <nav className="mobile-bottom-nav" aria-label="Mobile navigation">
-        {navItems.filter((item) => item.primary).map((item) => (
-          <Link key={item.href} href={item.href} aria-label={item.label} aria-current={item.href === activeHref ? "page" : undefined} className={item.href === activeHref ? "mobile-nav-link active" : "mobile-nav-link"}>
-            <span className="mobile-nav-icon">
-              {item.imageSrc ? (
-                <img src={item.imageSrc} alt="" width={22} height={22} style={{ objectFit: "contain", display: "block" }} />
-              ) : (
-                <Icon name={item.icon} size={22} />
-              )}
-            </span>
-            <span className="mobile-nav-label">{item.mobileLabel}</span>
-          </Link>
-        ))}
+        {navItems
+          .filter((item) => item.primary)
+          .map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              aria-label={item.label}
+              aria-current={item.href === activeHref ? "page" : undefined}
+              className={item.href === activeHref ? "mobile-nav-link active" : "mobile-nav-link"}
+            >
+              <span className="mobile-nav-icon">
+                <Icon name={item.icon} size={20} />
+              </span>
+              <span className="mobile-nav-label">{item.mobileLabel}</span>
+            </Link>
+          ))}
       </nav>
     </div>
   );
