@@ -300,6 +300,51 @@
   .reviewList dl { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
+.primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md, 12px);
+  background: var(--primary);
+  color: #fff;
+  border: 1px solid transparent;
+  padding: .75rem 1.5rem;
+  font-size: .95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 150ms ease;
+  text-decoration: none;
+}
+.primary:hover {
+  opacity: .95;
+  transform: translateY(-1px);
+}
+.primary:active {
+  transform: scale(0.98);
+}
+.secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md, 12px);
+  background: var(--surface-low);
+  color: var(--foreground);
+  border: 1px solid var(--outline);
+  padding: .75rem 1.5rem;
+  font-size: .95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 150ms ease;
+  text-decoration: none;
+}
+.secondary:hover {
+  background: var(--surface-high);
+  transform: translateY(-1px);
+}
+.secondary:active {
+  transform: scale(0.98);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .modeOption, .overrideButton { transition: none; }
 }

@@ -33,6 +33,20 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-low: var(--surface-low);
+  --color-surface-high: var(--surface-high);
+  --color-primary: var(--primary);
+  --color-primary-container: var(--primary-container);
+  --color-primary-soft: var(--primary-soft);
+  --color-green: var(--green);
+  --color-green-soft: var(--green-soft);
+  --color-gold: var(--gold);
+  --color-gold-soft: var(--gold-soft);
+  --color-error: var(--error);
+  --color-error-soft: var(--error-soft);
+  --color-muted: var(--muted);
+  --color-outline: var(--outline);
 }
 
 * {
