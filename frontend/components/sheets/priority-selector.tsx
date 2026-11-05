@@ -58,14 +58,13 @@ export function PrioritySelector({ sheetId, priority, onSaved }: PrioritySelecto
         value={selectedPriority}
         disabled={isSaving}
         onChange={(event) => void handleChange(event.target.value as SheetPriority)}
-        className="mt-2 block rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-60"
+        className="mt-2 block w-full min-h-[44px] rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-60"
       >
         <option value="high">High</option>
         <option value="medium">Medium</option>
         <option value="low">Low</option>
       </select>
       {isSaving && <p className="mt-1 text-xs text-slate-500">Saving…</p>}
-      {!isAdmin && <p className="mt-1 text-xs text-slate-500">Preview only; this choice is not saved.</p>}
       {!isAdmin && <p className="mt-1 text-xs text-slate-500">Preview only; this choice is not saved.</p>}
       {error && <p role="alert" className="mt-1 text-xs text-rose-700">{error}</p>}
     </div>

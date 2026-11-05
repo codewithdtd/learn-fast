@@ -835,6 +835,24 @@
     padding: 14px 18px;
     border-radius: 18px;
   }
+
+  :root[data-theme="island"] .study-setup-content {
+    width: min(100% - 24px, 760px);
+    padding: 20px 0 48px;
+  }
+
+  :root[data-theme="island"] .study-setup-layout {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  :root[data-theme="island"] .study-setup-summary {
+    position: static;
+  }
+
+  :root[data-theme="island"] .study-choice-grid.three-columns {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 639px) {
@@ -1760,6 +1778,29 @@
   font-size: 11px;
 }
 
+:root[data-theme="island"] .sheet-action-card > span:nth-child(2) {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+:root[data-theme="island"] .sheet-action-card > svg.icon,
+:root[data-theme="island"] .sheet-action-card > svg {
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+:root[data-theme="island"] .sheet-priority-panel select {
+  width: 100%;
+  min-height: 46px;
+  border: 1.5px solid #d4c7b2;
+  border-radius: 14px;
+  background: #fbf7ee;
+  color: #382c22;
+  padding: 0 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 :root[data-theme="island"] .sheet-detail-panel {
   border: 2px solid #d4c7b2;
   border-radius: 24px;
@@ -2253,9 +2294,12 @@
   border-radius: 18px;
   background: #eae3d8;
   padding: 16px;
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 14px;
+  min-width: 0;
+  box-sizing: border-box;
   cursor: pointer;
   transition: all 0.15s ease;
   box-shadow: 0 2px 0 #c7bca8;
@@ -2277,15 +2321,86 @@
   accent-color: #3b6132;
 }
 
+:root[data-theme="island"] .study-option-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: #ded6c8;
+  color: #3b6132;
+  flex-shrink: 0;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+:root[data-theme="island"] .study-choice-card.is-selected .study-option-icon {
+  background: #3b6132;
+  color: #ffffff;
+}
+
+:root[data-theme="island"] .study-choice-copy {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 :root[data-theme="island"] .study-choice-copy strong {
   color: #382c22;
-  font-size: 14px;
+  font-size: 14.5px;
+  font-weight: 800;
   display: block;
 }
 
 :root[data-theme="island"] .study-choice-copy small {
   color: #7a6655;
   font-size: 12px;
+  line-height: 1.4;
+  margin-top: 3px;
+  display: block;
+}
+
+:root[data-theme="island"] .study-radio {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #b3a594;
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+:root[data-theme="island"] .study-choice-card.is-selected .study-radio {
+  border: 6px solid #3b6132;
+  background: #fff;
+}
+
+:root[data-theme="island"] .study-review-notice {
+  border: 2px solid #a8c79c;
+  border-radius: 20px;
+  background: #edf5eb;
+  padding: 18px 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  box-shadow: 0 4px 16px rgb(50 35 20 / 4%);
+}
+
+:root[data-theme="island"] .study-review-notice .study-option-icon {
+  background: #d8ebd3;
+  color: #2b5424;
+}
+
+:root[data-theme="island"] .study-review-notice h2 {
+  color: #2b5424;
+  font-size: 16px;
+  font-weight: 800;
+  margin: 0;
+}
+
+:root[data-theme="island"] .study-review-notice p {
+  color: #3f6037;
+  font-size: 13.5px;
+  margin: 4px 0 0;
+  line-height: 1.45;
 }
 
 :root[data-theme="island"] .study-setup-summary {
@@ -2632,15 +2747,332 @@
     border-radius: 16px;
   }
 
+/* Responsive Sheet Detail Page on Mobile */
+  :root[data-theme="island"] .sheet-detail-page {
+    padding: 14px 8px calc(92px + env(safe-area-inset-bottom));
+  }
+
   :root[data-theme="island"] .sheet-detail-content {
-    width: calc(100% - 14px);
-    padding: 14px 0 40px;
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 8px 4px 36px;
   }
 
   :root[data-theme="island"] .sheet-detail-header {
-    padding: 16px 14px;
+    padding: 18px 16px;
     border-radius: 20px;
     margin-bottom: 16px;
+  }
+
+  :root[data-theme="island"] .sheet-detail-breadcrumb {
+    display: none;
+  }
+
+  :root[data-theme="island"] .sheet-detail-back {
+    margin-top: 0;
+    margin-bottom: 12px;
+    font-size: 13px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  :root[data-theme="island"] .sheet-detail-title-row {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    margin-top: 0;
+  }
+
+  :root[data-theme="island"] .sheet-detail-name-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+
+  :root[data-theme="island"] .sheet-detail-name-row h1 {
+    font-size: clamp(1.35rem, 5.2vw, 1.7rem);
+    line-height: 1.22;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  :root[data-theme="island"] .sheet-detail-subtitle {
+    font-size: 14px;
+    margin-top: 4px;
+  }
+
+  :root[data-theme="island"] .sheet-status-badge {
+    margin-top: 2px;
+    align-self: flex-start;
+  }
+
+  :root[data-theme="island"] .sheet-detail-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  :root[data-theme="island"] .sheet-detail-main,
+  :root[data-theme="island"] .sheet-detail-sidebar {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+    width: 100%;
+    min-width: 0;
+  }
+
+  :root[data-theme="island"] .sheet-detail-hero-card {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+    padding: 18px 16px;
+    border-radius: 20px;
+    margin-bottom: 0;
+  }
+
+  :root[data-theme="island"] .sheet-detail-hero-copy h2 {
+    font-size: 1.25rem;
+    margin: 4px 0;
+  }
+
+  :root[data-theme="island"] .sheet-detail-hero-copy > p:last-child {
+    font-size: 13.5px;
+    line-height: 1.5;
+  }
+
+  :root[data-theme="island"] .sheet-detail-primary-action {
+    width: 100%;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: 16px;
+    box-sizing: border-box;
+  }
+
+  :root[data-theme="island"] .sheet-detail-primary-action span:nth-child(2) {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  :root[data-theme="island"] .sheet-detail-primary-action strong {
+    font-size: 15px;
+  }
+
+  :root[data-theme="island"] .sheet-detail-primary-action small {
+    font-size: 12px;
+    line-height: 1.35;
+  }
+
+  :root[data-theme="island"] .sheet-detail-actions {
+    display: grid;
+    gap: 12px;
+  }
+
+  :root[data-theme="island"] .sheet-action-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 0;
+  }
+
+  :root[data-theme="island"] .sheet-action-card {
+    padding: 14px 16px;
+    border-radius: 18px;
+    min-height: auto;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    box-sizing: border-box;
+  }
+
+  :root[data-theme="island"] .sheet-action-card > span:nth-child(2) {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  :root[data-theme="island"] .sheet-action-card strong {
+    font-size: 14px;
+    line-height: 1.3;
+  }
+
+  :root[data-theme="island"] .sheet-action-card small {
+    font-size: 12px;
+    line-height: 1.35;
+  }
+
+  :root[data-theme="island"] .sheet-detail-panel {
+    padding: 18px 16px;
+    border-radius: 20px;
+    margin-bottom: 0;
+  }
+
+  :root[data-theme="island"] .sheet-detail-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin: 14px 0 0;
+  }
+
+  :root[data-theme="island"] .sheet-stat {
+    padding: 12px 14px;
+    border-radius: 14px;
+  }
+
+  :root[data-theme="island"] .sheet-stat dt {
+    font-size: 11px;
+  }
+
+  :root[data-theme="island"] .sheet-stat dd {
+    font-size: 1.25rem;
+  }
+
+  :root[data-theme="island"] .sheet-detail-meta-list {
+    margin-top: 14px;
+  }
+
+  :root[data-theme="island"] .sheet-detail-meta-list div {
+    padding: 10px 0;
+    gap: 8px;
+  }
+
+  :root[data-theme="island"] .sheet-detail-meta-list dt,
+  :root[data-theme="island"] .sheet-detail-meta-list dd {
+    font-size: 12px;
+  }
+
+  /* Responsive Study Setup Page on Mobile (/sheets/[sheetId]/study) */
+  :root[data-theme="island"] .study-setup-page {
+    padding: 14px 8px calc(92px + env(safe-area-inset-bottom));
+  }
+
+  :root[data-theme="island"] .study-setup-content {
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 8px 4px 36px;
+  }
+
+  :root[data-theme="island"] .study-setup-header {
+    padding: 18px 16px;
+    border-radius: 20px;
+    margin-bottom: 16px;
+  }
+
+  :root[data-theme="island"] .study-setup-breadcrumb {
+    display: none;
+  }
+
+  :root[data-theme="island"] .study-setup-back {
+    margin-top: 0;
+    margin-bottom: 12px;
+    font-size: 13px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  :root[data-theme="island"] .study-setup-title-row {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    margin-top: 0;
+  }
+
+  :root[data-theme="island"] .study-setup-title-row h1 {
+    font-size: clamp(1.35rem, 5.2vw, 1.7rem);
+    line-height: 1.22;
+    word-break: break-word;
+    margin: 4px 0;
+  }
+
+  :root[data-theme="island"] .study-setup-title-row p:last-child {
+    font-size: 13.5px;
+  }
+
+  :root[data-theme="island"] .study-setup-status {
+    margin-top: 2px;
+    align-self: flex-start;
+  }
+
+  :root[data-theme="island"] .study-setup-layout {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  :root[data-theme="island"] .study-setup-options {
+    display: grid;
+    gap: 16px;
+    width: 100%;
+    min-width: 0;
+  }
+
+  :root[data-theme="island"] .study-choice-group {
+    padding: 16px 14px;
+    border-radius: 20px;
+    margin-bottom: 0;
+  }
+
+  :root[data-theme="island"] .study-choice-group legend {
+    font-size: 13px;
+    padding: 0 6px;
+  }
+
+  :root[data-theme="island"] .study-choice-grid.three-columns,
+  :root[data-theme="island"] .study-choice-grid.two-columns {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  :root[data-theme="island"] .study-choice-card {
+    padding: 14px 12px;
+    border-radius: 16px;
+    min-height: auto;
+    gap: 12px;
+  }
+
+  :root[data-theme="island"] .study-choice-copy strong {
+    font-size: 14.5px;
+    line-height: 1.3;
+  }
+
+  :root[data-theme="island"] .study-choice-copy small {
+    font-size: 12px;
+    line-height: 1.35;
+  }
+
+  :root[data-theme="island"] .study-setup-summary {
+    padding: 18px 16px;
+    border-radius: 20px;
+    position: static;
+  }
+
+  :root[data-theme="island"] .study-setup-summary h2 {
+    font-size: 1.25rem;
+    margin: 4px 0 14px;
+  }
+
+  :root[data-theme="island"] .study-setup-summary dl {
+    padding: 12px 14px;
+    border-radius: 14px;
+    margin: 0 0 16px;
+  }
+
+  :root[data-theme="island"] .study-setup-summary dl div {
+    padding: 8px 0;
+    font-size: 12.5px;
+  }
+
+  :root[data-theme="island"] .study-setup-summary button[type="submit"] {
+    padding: 14px 18px;
+    border-radius: 14px;
+    font-size: 15px;
   }
 }
 
