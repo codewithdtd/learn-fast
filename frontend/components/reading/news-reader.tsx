@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { BookOpen, FileText, ArrowLeft, ExternalLink, Sparkles } from "lucide-react";
 
 import { AuthModal } from "@/components/auth/auth-modal";
 import { AudioPronounceButton } from "@/components/shared/audio-pronounce-button";
@@ -347,7 +348,7 @@ export function NewsReader() {
         data-active={mobileTab === "list"}
         onClick={() => setMobileTab("list")}
       >
-        📰 Stories ({visibleArticles.length})
+        <FileText style={{ width: 15, height: 15 }} /> Stories ({visibleArticles.length})
       </button>
       <button
         type="button"
@@ -357,7 +358,7 @@ export function NewsReader() {
         data-active={mobileTab === "reader"}
         onClick={() => setMobileTab("reader")}
       >
-        📖 {selectedArticle ? "Reading" : "Reader"}
+        <BookOpen style={{ width: 15, height: 15 }} /> {selectedArticle ? "Reading" : "Reader"}
       </button>
     </div>
 
@@ -406,19 +407,37 @@ export function NewsReader() {
                 }
               }}
             >
-              ← Choose another story
+              <ArrowLeft style={{ width: 15, height: 15 }} /> Choose another story
             </button>
           </div>
           {selectedArticle.image_url && <NewsImage key={`${selectedArticle.id}-hero`} className={styles.heroImage} src={selectedArticle.image_url} alt={selectedArticle.title} priority />}
           <div className={styles.readerHeader} ref={articleHeaderRef}>
             <p className={styles.articleMeta}>{selectedArticle.source_name} · {selectedArticle.category}{selectedArticle.published_at ? " · " + formatPublished(selectedArticle.published_at) : ""}</p>
-            <h2>{selectedArticle.title}</h2>
-            <p className={styles.summary}>{selectedArticle.summary}</p>
+            <div className={styles.titleRow}>
+              <h2>{selectedArticle.title}</h2>
+              <AudioPronounceButton text={selectedArticle.title} size="sm" title="Listen to headline" />
+            </div>
+            {selectedArticle.summary && (
+              <div className={styles.summaryRow}>
+                <p className={styles.summary}>{selectedArticle.summary}</p>
+                <AudioPronounceButton text={selectedArticle.summary} size="sm" title="Listen to summary" />
+              </div>
+            )}
           </div>
           <p className={styles.selectionHint}>Tap a word to translate it, or select a phrase and choose “Translate selection”.</p>
           {loadingContent || articleContent?.article.id !== selectedArticle.id ? <p className={styles.emptyState} role="status">Loading article…</p> : articleContent.available
             ? <section className={styles.articleBody} ref={articleBodyRef} aria-label="Article text" lang="en">
-              {articleContent.paragraphs.map((paragraph, index) => <p key={index}>{paragraph}</p>)}
+              {articleContent.paragraphs.map((paragraph, index) => (
+                <div key={index} className={styles.paragraphRow}>
+                  <p>{paragraph}</p>
+                  <AudioPronounceButton
+                    text={paragraph}
+                    size="sm"
+                    title="Listen to paragraph"
+                    className={styles.paragraphAudioBtn}
+                  />
+                </div>
+              ))}
               <div className={styles.practiceActions}>
                 <button type="button" onClick={openIELTSPracticeFromArticle}>Create a Reading practice from this article</button>
                 <span>The article text will be prefilled; review the word count before loading it.</span>
