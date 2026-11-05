@@ -9,8 +9,8 @@ export default async function StudySessionPage({ params }: StudySessionPageProps
   const { sessionId } = await params;
 
   return (
-    <AppShell activeHref="/workbooks">
-      <main className="study-session-page">
+    <AppShell activeHref="/workbooks" zenMode>
+      <main className="study-session-page zen-study-page">
         <FlashcardStudyView sessionId={sessionId} />
       </main>
     </AppShell>

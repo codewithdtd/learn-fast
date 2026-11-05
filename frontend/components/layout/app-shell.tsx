@@ -120,92 +120,102 @@ const navItems: MobileNavEntry[] = [
 export function AppShell({
   children,
   activeHref = "/",
+  zenMode = false,
 }: {
   children: React.ReactNode;
   activeHref?: string;
+  zenMode?: boolean;
 }) {
   return (
-    <div className="app-shell">
+    <div className={`app-shell${zenMode ? " zen-mode" : ""}`}>
       {/* Desktop Sidebar: 240px wide, high contrast, clean typography */}
-      <aside className="desktop-sidebar">
-        <Link href="/" className="brand" aria-label="DtdFLow dashboard">
-          <span className="brand-mark">
-            <Icon name="books" size={20} />
-          </span>
-          <div>
-            <strong>DtdFLow</strong>
-            <small>Personal Mentor</small>
-          </div>
-        </Link>
-
-        <nav className="sidebar-nav" aria-label="Primary navigation">
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={item.href === activeHref ? "nav-link active" : "nav-link"}
-            >
-              <Icon name={item.icon} size={18} />
-              <span>{item.label}</span>
-            </Link>
-          ))}
-        </nav>
-
-        <div className="sidebar-footer">
-          <ThemeToggle />
-          <Link href="/workbooks" className="sidebar-action">
-            <span>Browse Workbooks</span>
-            <Icon name="arrow" size={16} />
+      {!zenMode && (
+        <aside className="desktop-sidebar">
+          <Link href="/" className="brand" aria-label="DtdFLow dashboard">
+            <span className="brand-mark">
+              <Icon name="books" size={20} />
+            </span>
+            <div>
+              <strong>DtdFLow</strong>
+              <small>Personal Mentor</small>
+            </div>
           </Link>
-        </div>
-      </aside>
 
-      {/* Mobile Top Header: 52px height, sticky with backdrop blur */}
-      <header className="mobile-header">
-        <Link href="/" className="mobile-brand" aria-label="DtdFLow Home">
-          <span className="brand-mark mobile-brand-mark">
-            <Icon name="books" size={16} />
-          </span>
-          <span>DtdFLow</span>
-        </Link>
-        <div className="mobile-header-actions flex items-center gap-1.5">
-          <DemoBadge />
-          <ThemeToggle compact />
-          <AdminNotifications />
-          <UserProfileMenu />
-          <MobileNavDrawer items={navItems} activeHref={activeHref} />
-        </div>
-      </header>
+          <nav className="sidebar-nav" aria-label="Primary navigation">
+            {navItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={item.href === activeHref ? "nav-link active" : "nav-link"}
+              >
+                <Icon name={item.icon} size={18} />
+                <span>{item.label}</span>
+              </Link>
+            ))}
+          </nav>
+
+          <div className="sidebar-footer">
+            <ThemeToggle />
+            <Link href="/workbooks" className="sidebar-action">
+              <span>Browse Workbooks</span>
+              <Icon name="arrow" size={16} />
+            </Link>
+          </div>
+        </aside>
+      )}
+
+      {/* Mobile Top Header: 52px height, sticky with backdrop blur (hidden in Zen Mode) */}
+      {!zenMode && (
+        <header className="mobile-header">
+          <Link href="/" className="mobile-brand" aria-label="DtdFLow Home">
+            <span className="brand-mark mobile-brand-mark">
+              <Icon name="books" size={16} />
+            </span>
+            <span>DtdFLow</span>
+          </Link>
+          <div className="mobile-header-actions flex items-center gap-1.5">
+            <DemoBadge />
+            <ThemeToggle compact />
+            <AdminNotifications />
+            <UserProfileMenu />
+            <MobileNavDrawer items={navItems} activeHref={activeHref} />
+          </div>
+        </header>
+      )}
 
       {/* Main Workspace Canvas */}
-      <div className="app-content">
-        <div className="desktop-top-bar flex items-center justify-end gap-3">
-          <DemoBadge />
-          <AdminNotifications />
-          <UserProfileMenu />
-        </div>
+      <div className={`app-content${zenMode ? " zen-content" : ""}`}>
+        {!zenMode && (
+          <div className="desktop-top-bar flex items-center justify-end gap-3">
+            <DemoBadge />
+            <AdminNotifications />
+            <UserProfileMenu />
+          </div>
+        )}
         <AccessGate>{children}</AccessGate>
       </div>
 
-      {/* Mobile Bottom Navigation: Thumb zone ergonomic layout with 5 primary tabs */}
-      <nav className="mobile-bottom-nav" aria-label="Mobile navigation">
-        {navItems
-          .filter((item) => item.primary)
-          .map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              aria-label={item.label}
-              aria-current={item.href === activeHref ? "page" : undefined}
-              className={item.href === activeHref ? "mobile-nav-link active" : "mobile-nav-link"}
-            >
-              <span className="mobile-nav-icon">
-                <Icon name={item.icon} size={20} />
-              </span>
-              <span className="mobile-nav-label">{item.mobileLabel}</span>
-            </Link>
-          ))}
-      </nav>
+      {/* Mobile Bottom Navigation: Thumb zone ergonomic layout with 5 primary tabs (hidden in Zen Mode) */}
+      {!zenMode && (
+        <nav className="mobile-bottom-nav" aria-label="Mobile navigation">
+          {navItems
+            .filter((item) => item.primary)
+            .map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                aria-label={item.label}
+                aria-current={item.href === activeHref ? "page" : undefined}
+                className={item.href === activeHref ? "mobile-nav-link active" : "mobile-nav-link"}
+              >
+                <span className="mobile-nav-icon">
+                  <Icon name={item.icon} size={20} />
+                </span>
+                <span className="mobile-nav-label">{item.mobileLabel}</span>
+              </Link>
+            ))}
+        </nav>
+      )}
     </div>
   );
 }

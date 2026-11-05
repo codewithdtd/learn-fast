@@ -3268,3 +3268,72 @@
   padding: 18px 22px;
   box-shadow: 0 4px 14px rgb(50 35 20 / 4%);
 }
+
+
+/* Cozy Island Zen Study Mode Styles */
+:root[data-theme="island"] .zen-study-header {
+  border-bottom-color: #cfc4b2;
+}
+
+:root[data-theme="island"] .zen-exit-btn {
+  color: #5e5145;
+}
+
+:root[data-theme="island"] .zen-exit-btn:hover {
+  color: #241910;
+  background: #ded5c7;
+}
+
+:root[data-theme="island"] .zen-title-info strong {
+  color: #382c22;
+}
+
+:root[data-theme="island"] .zen-badge {
+  color: #2b5424;
+  background: #dfe9dc;
+}
+
+:root[data-theme="island"] .zen-card-counter {
+  color: #5e5145;
+  background: #eae3d8;
+}
+
+:root[data-theme="island"] .study-session-progress.zen-progress .study-progress-track {
+  background: #d4c7b2;
+}
+
+:root[data-theme="island"] .study-progress-round {
+  color: #382c22;
+}
+
+:root[data-theme="island"] .zen-reveal-btn {
+  background: #3b6132;
+  border-color: #284422;
+  box-shadow: 0 3px 0 #284422;
+}
+
+:root[data-theme="island"] .zen-reveal-btn:hover {
+  background: #31522a;
+}
+
+:root[data-theme="island"] .zen-srs-btn.again {
+  border: 1.5px solid #d4a984;
+  color: #703c14;
+  background: #fdf3e8;
+  box-shadow: 0 2px 0 #c7bca8;
+}
+
+:root[data-theme="island"] .zen-srs-btn.again:hover {
+  background: #fae8d4;
+}
+
+:root[data-theme="island"] .zen-srs-btn.remembered {
+  border: 1.5px solid #9bc490;
+  color: #244b1d;
+  background: #eff6ec;
+  box-shadow: 0 2px 0 #c7bca8;
+}
+
+:root[data-theme="island"] .zen-srs-btn.remembered:hover {
+  background: #e2edd0;
+}

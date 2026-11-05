@@ -42,12 +42,17 @@ export function FlashcardStudyView({ sessionId }: FlashcardStudyViewProps) {
   }, []);
 
   const loadSession = useCallback(async () => {
-    setIsLoading(true); setError(null); setNotFound(false);
-    try { applyLoadedSession(await getStudySession(sessionId)); }
-    catch (caughtError) {
+    setIsLoading(true);
+    setError(null);
+    setNotFound(false);
+    try {
+      applyLoadedSession(await getStudySession(sessionId));
+    } catch (caughtError) {
       if (caughtError instanceof ApiRequestError && caughtError.status === 404) setNotFound(true);
       else setError(caughtError instanceof Error ? caughtError.message : "Could not load this study session.");
-    } finally { setIsLoading(false); }
+    } finally {
+      setIsLoading(false);
+    }
   }, [applyLoadedSession, sessionId]);
 
   useEffect(() => {
@@ -60,84 +65,143 @@ export function FlashcardStudyView({ sessionId }: FlashcardStudyViewProps) {
   const roundCards = useMemo(() => activeRound?.round_cards ?? [], [activeRound]);
   const currentRoundCard = roundCards[currentIndex] ?? null;
   const currentCard = currentRoundCard?.session_card ?? null;
-  const currentDirection = currentCard && session ? getCardStudyDirection(session.direction, currentCard, currentIndex) : null;
+  const currentDirection =
+    currentCard && session ? getCardStudyDirection(session.direction, currentCard, currentIndex) : null;
   const roundCounts = useMemo(() => countRoundAnswers(roundCards), [roundCards]);
   const isInteractionLocked = isAnswerSubmitting || isFinishing || isStartingRound;
   const canAnswer = Boolean(activeRound && currentCard && currentDirection && !isInteractionLocked);
 
-  const navigate = useCallback((nextIndex: number) => {
-    if (isInteractionLocked || nextIndex < 0 || nextIndex >= roundCards.length) return;
-    setCurrentIndex(nextIndex); setIsFlipped(false);
-  }, [isInteractionLocked, roundCards.length]);
+  const navigate = useCallback(
+    (nextIndex: number) => {
+      if (isInteractionLocked || nextIndex < 0 || nextIndex >= roundCards.length) return;
+      setCurrentIndex(nextIndex);
+      setIsFlipped(false);
+    },
+    [isInteractionLocked, roundCards.length],
+  );
 
-  const refreshAfterFailure = useCallback(async (message: string) => {
-    try { applyLoadedSession(await getStudySession(sessionId)); setError(`${message} Progress was reloaded.`); }
-    catch { setError(`${message} Refresh this page before trying again.`); }
-  }, [applyLoadedSession, sessionId]);
+  const refreshAfterFailure = useCallback(
+    async (message: string) => {
+      try {
+        applyLoadedSession(await getStudySession(sessionId));
+        setError(`${message} Progress was reloaded.`);
+      } catch {
+        setError(`${message} Refresh this page before trying again.`);
+      }
+    },
+    [applyLoadedSession, sessionId],
+  );
 
   const finishLegacyPerfectSession = useCallback(async () => {
     if (isFinishing) return;
-    setIsFinishing(true); setError(null);
+    setIsFinishing(true);
+    setError(null);
     try {
       const completedSession = await completeStudySession(sessionId);
       setSession(completedSession);
       router.replace(`/study-sessions/${completedSession.id}/result`);
     } catch (caughtError) {
       await refreshAfterFailure(caughtError instanceof Error ? caughtError.message : "Could not finish this session.");
-    } finally { setIsFinishing(false); }
+    } finally {
+      setIsFinishing(false);
+    }
   }, [isFinishing, refreshAfterFailure, router, sessionId]);
 
   useEffect(() => {
-    // Sessions already left at a perfect round before this change are completed
-    // automatically too. New sessions complete in the final answer request.
     if (session?.status === "active" && !activeRound && latestRound?.recall_percentage === 100 && !isFinishing) {
       const timer = window.setTimeout(() => void finishLegacyPerfectSession(), 0);
       return () => window.clearTimeout(timer);
     }
   }, [activeRound, finishLegacyPerfectSession, isFinishing, latestRound?.id, latestRound?.recall_percentage, session?.status]);
 
-  const submitAnswer = useCallback(async (result: StudyAnswerResult) => {
-    if (!session || !activeRound || !currentRoundCard || !currentCard || !currentDirection || isInteractionLocked) return;
-    setIsAnswerSubmitting(true); setError(null);
-    try {
-      const updatedSession = await answerStudySessionRoundCard(
-        sessionId, activeRound.id, currentCard.flashcard_id, { direction: currentDirection, result },
-      );
-      setSession(updatedSession);
-      // Results are markers, not a retry queue. Both buttons move to the next
-      // physical card exactly once, never search backward and never wrap.
-      if (updatedSession.status === "completed") {
-        playJourneyCompletionSound("study-" + updatedSession.id);
-        router.replace(`/study-sessions/${updatedSession.id}/result`);
-      } else if (updatedSession.active_round && currentIndex < updatedSession.active_round.round_cards.length - 1) {
-        setCurrentIndex(currentIndex + 1);
+  const submitAnswer = useCallback(
+    async (result: StudyAnswerResult) => {
+      if (!session || !activeRound || !currentRoundCard || !currentCard || !currentDirection || isInteractionLocked)
+        return;
+      setIsAnswerSubmitting(true);
+      setError(null);
+      try {
+        const updatedSession = await answerStudySessionRoundCard(
+          sessionId,
+          activeRound.id,
+          currentCard.flashcard_id,
+          { direction: currentDirection, result },
+        );
+        setSession(updatedSession);
+        if (updatedSession.status === "completed") {
+          playJourneyCompletionSound("study-" + updatedSession.id);
+          router.replace(`/study-sessions/${updatedSession.id}/result`);
+        } else if (updatedSession.active_round && currentIndex < updatedSession.active_round.round_cards.length - 1) {
+          setCurrentIndex(currentIndex + 1);
+        }
+        setIsFlipped(false);
+      } catch (caughtError) {
+        await refreshAfterFailure(caughtError instanceof Error ? caughtError.message : "Could not save this answer.");
+      } finally {
+        setIsAnswerSubmitting(false);
       }
-      setIsFlipped(false);
-    } catch (caughtError) {
-      await refreshAfterFailure(caughtError instanceof Error ? caughtError.message : "Could not save this answer.");
-    } finally { setIsAnswerSubmitting(false); }
-  }, [activeRound, currentCard, currentDirection, currentIndex, currentRoundCard, isInteractionLocked, refreshAfterFailure, router, session, sessionId]);
+    },
+    [
+      activeRound,
+      currentCard,
+      currentDirection,
+      currentIndex,
+      currentRoundCard,
+      isInteractionLocked,
+      refreshAfterFailure,
+      router,
+      session,
+      sessionId,
+    ],
+  );
 
-  const startRound = useCallback(async (scope: StudyRoundScope) => {
-    if (isStartingRound) return;
-    setIsStartingRound(true); setError(null);
-    try { applyLoadedSession(await createStudySessionRound(sessionId, scope)); }
-    catch (caughtError) { await refreshAfterFailure(caughtError instanceof Error ? caughtError.message : "Could not start another round."); }
-    finally { setIsStartingRound(false); }
-  }, [applyLoadedSession, isStartingRound, refreshAfterFailure, sessionId]);
+  const startRound = useCallback(
+    async (scope: StudyRoundScope) => {
+      if (isStartingRound) return;
+      setIsStartingRound(true);
+      setError(null);
+      try {
+        applyLoadedSession(await createStudySessionRound(sessionId, scope));
+      } catch (caughtError) {
+        await refreshAfterFailure(
+          caughtError instanceof Error ? caughtError.message : "Could not start another round.",
+        );
+      } finally {
+        setIsStartingRound(false);
+      }
+    },
+    [applyLoadedSession, isStartingRound, refreshAfterFailure, sessionId],
+  );
 
   useEffect(() => {
     function isTypingTarget(target: EventTarget | null) {
-      return target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || (target instanceof HTMLElement && target.isContentEditable);
+      return (
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        (target instanceof HTMLElement && target.isContentEditable)
+      );
     }
+
     function handleKeyDown(event: KeyboardEvent) {
       if (event.repeat || event.altKey || event.ctrlKey || event.metaKey || isTypingTarget(event.target)) return;
-      
+
+      // Space or Enter: Toggle card flip
+      if (event.key === " " || event.key === "Enter") {
+        event.preventDefault();
+        setIsFlipped((flipped) => !flipped);
+        return;
+      }
+
       // Keyboard shortcut: Press 'a' or 'p' to pronounce current English phrase/answer
       if (event.key === "a" || event.key === "A" || event.key === "p" || event.key === "P") {
         if (currentCard) {
           event.preventDefault();
-          const englishText = currentDirection === "en_to_vi" ? currentCard.flashcard.phrase : isFlipped ? currentCard.flashcard.phrase : "";
+          const englishText =
+            currentDirection === "en_to_vi"
+              ? currentCard.flashcard.phrase
+              : isFlipped
+                ? currentCard.flashcard.phrase
+                : "";
           if (englishText) {
             speakEnglish(englishText);
           }
@@ -145,13 +209,33 @@ export function FlashcardStudyView({ sessionId }: FlashcardStudyViewProps) {
         return;
       }
 
+      // Navigation shortcuts
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        navigate(currentIndex - 1);
+        return;
+      }
+      if (event.key === "ArrowRight") {
+        event.preventDefault();
+        navigate(currentIndex + 1);
+        return;
+      }
+
+      // SRS Grading shortcuts: 1 (Again), 2 (Remembered)
       if (!canAnswer) return;
-      if (event.key === "1") { event.preventDefault(); void submitAnswer("again"); }
-      if (event.key === "2") { event.preventDefault(); void submitAnswer("remembered"); }
+      if (event.key === "1") {
+        event.preventDefault();
+        void submitAnswer("again");
+      }
+      if (event.key === "2") {
+        event.preventDefault();
+        void submitAnswer("remembered");
+      }
     }
+
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [canAnswer, currentCard, currentDirection, isFlipped, submitAnswer]);
+  }, [canAnswer, currentCard, currentDirection, currentIndex, isFlipped, navigate, submitAnswer]);
 
   if (isLoading) return <SessionState>Loading study session...</SessionState>;
   if (notFound) return <NotFound />;
@@ -160,29 +244,161 @@ export function FlashcardStudyView({ sessionId }: FlashcardStudyViewProps) {
   if (session.status === "completed") return <CompletedSession sessionId={session.id} />;
   if (session.status !== "active") return <InactiveSession status={session.status} sheetId={session.sheet_id} />;
 
-  return <section className="study-session-content">
-    <header className="study-session-header"><Link href={`/sheets/${session.sheet_id}`} className="study-session-back"><Icon name="back" size={18} /> Back to sheet</Link><div className="study-session-context"><div><p className="study-session-kicker">{formatSessionType(session.session_type)} · {formatDirection(session.direction)}</p><h1>Flashcard Study</h1><p>Recall the answer, reveal it, then record what you remember.</p></div><span className="study-session-id">Session #{session.id}</span></div></header>
-    {error && <p role="alert" className="study-session-inline-error">{error}</p>}
-    {activeRound ? <>
-      <StudyProgress roundNumber={activeRound.round_number} totalCards={activeRound.total_cards} answeredCards={roundCounts.answered} rememberedCards={roundCounts.remembered} againCards={roundCounts.again} />
-      {currentCard && currentDirection ? <div className="study-session-practice">
-        <div className="study-session-practice-meta"><span>Card {currentIndex + 1} of {roundCards.length}</span><span className="study-keyboard-hint">Use 1 for Again or 2 for Remembered.</span><span className="study-swipe-hint">After revealing: swipe left if forgotten, right if remembered.</span></div>
-        <Flashcard sessionCard={currentCard} direction={currentDirection} isFlipped={isFlipped} isDisabled={isInteractionLocked} canSwipe={canAnswer} answerResult={currentRoundCard.result} onFlip={() => setIsFlipped((flipped) => !flipped)} onSwipe={submitAnswer} />
-        <div className="study-card-navigation" aria-label="Card navigation"><button type="button" className="study-card-navigation-button" disabled={currentIndex === 0 || isInteractionLocked} onClick={() => navigate(currentIndex - 1)}><Icon name="back" size={18} /> Previous</button><span>{currentIndex + 1} / {roundCards.length}</span><button type="button" className="study-card-navigation-button" disabled={currentIndex === roundCards.length - 1 || isInteractionLocked} onClick={() => navigate(currentIndex + 1)}>Next <Icon name="arrow" size={18} /></button></div>
-        <div className="study-answer-actions"><button type="button" aria-pressed={currentRoundCard.result === "again"} className={`study-answer-button again${currentRoundCard.result === "again" ? " is-selected" : ""}`} disabled={!canAnswer} onClick={() => void submitAnswer("again")}><Icon name="refresh" size={21} /> Again <span>(1)</span></button><button type="button" aria-pressed={currentRoundCard.result === "remembered"} className={`study-answer-button remembered${currentRoundCard.result === "remembered" ? " is-selected" : ""}`} disabled={!canAnswer} onClick={() => void submitAnswer("remembered")}><Icon name="check" size={21} /> Remembered <span>(2)</span></button></div>
-      </div> : <SessionState>This round has no cards.</SessionState>}
-    </> : latestRound ? latestRound.recall_percentage === 100 ? <SessionState>Completing session…</SessionState> : <RoundSummary round={latestRound} isBusy={isInteractionLocked} onStartRound={startRound} /> : <SessionState>There is no active study round.</SessionState>}
-  </section>;
+  return (
+    <section className="study-session-content zen-session-content">
+      {/* Zen Mode Header: Clean Top Navigation Bar */}
+      <header className="zen-study-header">
+        <Link href={`/sheets/${session.sheet_id}`} className="zen-exit-btn">
+          <Icon name="back" size={16} />
+          <span>Exit</span>
+        </Link>
+        <div className="zen-title-info">
+          <strong>Flashcard Study</strong>
+          <span className="zen-badge">{formatSessionType(session.session_type)}</span>
+        </div>
+        <div className="zen-hint-pill">
+          <span className="zen-card-counter">
+            {currentIndex + 1} / {roundCards.length}
+          </span>
+        </div>
+      </header>
+
+      {error && <p role="alert" className="study-session-inline-error">{error}</p>}
+
+      {activeRound ? (
+        <>
+          <StudyProgress
+            roundNumber={activeRound.round_number}
+            totalCards={activeRound.total_cards}
+            answeredCards={roundCounts.answered}
+            rememberedCards={roundCounts.remembered}
+            againCards={roundCounts.again}
+          />
+
+          {currentCard && currentDirection ? (
+            <div className="study-session-practice zen-practice">
+              {/* Keyboard shortcuts & swipe prompt */}
+              <div className="study-session-practice-meta">
+                <span className="study-keyboard-hint">
+                  <kbd className="zen-kbd">Space</kbd> Flip · <kbd className="zen-kbd">1</kbd> Again ·{" "}
+                  <kbd className="zen-kbd">2</kbd> Remembered · <kbd className="zen-kbd">A</kbd> Audio
+                </span>
+                <span className="study-swipe-hint">Tap card or button below to flip</span>
+              </div>
+
+              {/* Central Flashcard Component */}
+              <Flashcard
+                sessionCard={currentCard}
+                direction={currentDirection}
+                isFlipped={isFlipped}
+                isDisabled={isInteractionLocked}
+                canSwipe={canAnswer}
+                answerResult={currentRoundCard.result}
+                onFlip={() => setIsFlipped((flipped) => !flipped)}
+                onSwipe={submitAnswer}
+              />
+
+              {/* Thumb-Zone Controls Area */}
+              <div className="zen-controls-container">
+                <div className="study-card-navigation" aria-label="Card navigation">
+                  <button
+                    type="button"
+                    className="study-card-navigation-button"
+                    disabled={currentIndex === 0 || isInteractionLocked}
+                    onClick={() => navigate(currentIndex - 1)}
+                  >
+                    <Icon name="back" size={16} /> Prev
+                  </button>
+                  <span className="zen-deck-position">
+                    {currentIndex + 1} of {roundCards.length}
+                  </span>
+                  <button
+                    type="button"
+                    className="study-card-navigation-button"
+                    disabled={currentIndex === roundCards.length - 1 || isInteractionLocked}
+                    onClick={() => navigate(currentIndex + 1)}
+                  >
+                    Next <Icon name="arrow" size={16} />
+                  </button>
+                </div>
+
+                <div className="zen-action-zone">
+                  {!isFlipped ? (
+                    <button
+                      type="button"
+                      className="zen-reveal-btn"
+                      disabled={isInteractionLocked}
+                      onClick={() => setIsFlipped(true)}
+                    >
+                      <Icon name="eye" size={18} />
+                      <span>Reveal Answer</span>
+                      <kbd className="zen-kbd-badge">Space</kbd>
+                    </button>
+                  ) : (
+                    <div className="zen-srs-actions">
+                      <button
+                        type="button"
+                        aria-pressed={currentRoundCard.result === "again"}
+                        className={`zen-srs-btn again${currentRoundCard.result === "again" ? " is-selected" : ""}`}
+                        disabled={!canAnswer}
+                        onClick={() => void submitAnswer("again")}
+                      >
+                        <Icon name="refresh" size={18} />
+                        <span>Again</span>
+                        <kbd className="zen-kbd-badge">1</kbd>
+                      </button>
+
+                      <button
+                        type="button"
+                        aria-pressed={currentRoundCard.result === "remembered"}
+                        className={`zen-srs-btn remembered${currentRoundCard.result === "remembered" ? " is-selected" : ""}`}
+                        disabled={!canAnswer}
+                        onClick={() => void submitAnswer("remembered")}
+                      >
+                        <Icon name="check" size={18} />
+                        <span>Remembered</span>
+                        <kbd className="zen-kbd-badge">2</kbd>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <SessionState>This round has no cards.</SessionState>
+          )}
+        </>
+      ) : latestRound ? (
+        latestRound.recall_percentage === 100 ? (
+          <SessionState>Completing session…</SessionState>
+        ) : (
+          <RoundSummary round={latestRound} isBusy={isInteractionLocked} onStartRound={startRound} />
+        )
+      ) : (
+        <SessionState>There is no active study round.</SessionState>
+      )}
+    </section>
+  );
 }
 
-function RoundSummary({ round, isBusy, onStartRound }: { round: StudySession["round_summaries"][number]; isBusy: boolean; onStartRound: (scope: StudyRoundScope) => Promise<void> }) {
+function RoundSummary({
+  round,
+  isBusy,
+  onStartRound,
+}: {
+  round: StudySession["round_summaries"][number];
+  isBusy: boolean;
+  onStartRound: (scope: StudyRoundScope) => Promise<void>;
+}) {
   return (
     <section className="study-round-summary">
       <div className="study-encouragement-banner">
         <span style={{ fontSize: "20px" }}>🎉</span>
         <div>
           <strong>Awesome! You&apos;re doing great!</strong>
-          <span style={{ display: "block", fontSize: "12px", opacity: 0.85 }}>Keep up the momentum to master these cards.</span>
+          <span style={{ display: "block", fontSize: "12px", opacity: 0.85 }}>
+            Keep up the momentum to master these cards.
+          </span>
         </div>
       </div>
       <p className="eyebrow" style={{ marginTop: "16px" }}>Round {round.round_number} complete</p>
@@ -194,17 +410,65 @@ function RoundSummary({ round, isBusy, onStartRound }: { round: StudySession["ro
       </dl>
       <p>Choose a focused retry, or repeat the full set before finishing.</p>
       <div className="study-round-summary-actions">
-        <button type="button" disabled={isBusy} onClick={() => void onStartRound("forgotten")}>Study only forgotten cards <Icon name="arrow" size={18} /></button>
-        <button type="button" className="secondary" disabled={isBusy} onClick={() => void onStartRound("all")}>Study all cards again <Icon name="refresh" size={18} /></button>
+        <button type="button" disabled={isBusy} onClick={() => void onStartRound("forgotten")}>
+          Study only forgotten cards <Icon name="arrow" size={18} />
+        </button>
+        <button type="button" className="secondary" disabled={isBusy} onClick={() => void onStartRound("all")}>
+          Study all cards again <Icon name="refresh" size={18} />
+        </button>
       </div>
     </section>
   );
 }
 
-function formatDirection(direction: StudySession["direction"]) { if (direction === "en_to_vi") return "English to Vietnamese"; if (direction === "vi_to_en") return "Vietnamese to English"; return "Mixed direction"; }
-function formatSessionType(sessionType: StudySession["session_type"]) { if (sessionType === "weak_cards") return "Weak cards"; if (sessionType === "srs_review") return "Scheduled review"; return "All cards"; }
-function CompletedSession({ sessionId }: { sessionId: number }) { return <section className="study-session-state success"><Icon name="check" size={34} /><h1>This session is complete</h1><Link href={`/study-sessions/${sessionId}/result`}>View session result <Icon name="arrow" size={18} /></Link></section>; }
-function InactiveSession({ status, sheetId }: { status: StudySession["status"]; sheetId: number }) { return <section className="study-session-state"><h1>This session is {status}</h1><p>It is read-only and cannot accept more answers.</p><Link href={`/sheets/${sheetId}`}>Back to sheet</Link></section>; }
-function SessionState({ children }: { children: ReactNode }) { return <section className="study-session-state">{children}</section>; }
-function NotFound() { return <section className="study-session-state"><h1>Study session not found</h1><Link href="/workbooks">Back to workbooks</Link></section>; }
-function RetryError({ message, onRetry }: { message: string; onRetry: () => Promise<void> }) { return <section role="alert" className="study-session-state error"><p>{message}</p><button type="button" onClick={() => void onRetry()}>Try again</button></section>; }
+function formatSessionType(sessionType: StudySession["session_type"]) {
+  if (sessionType === "weak_cards") return "Weak cards";
+  if (sessionType === "srs_review") return "Scheduled review";
+  return "All cards";
+}
+
+function CompletedSession({ sessionId }: { sessionId: number }) {
+  return (
+    <section className="study-session-state success">
+      <Icon name="check" size={34} />
+      <h1>This session is complete</h1>
+      <Link href={`/study-sessions/${sessionId}/result`}>
+        View session result <Icon name="arrow" size={18} />
+      </Link>
+    </section>
+  );
+}
+
+function InactiveSession({ status, sheetId }: { status: StudySession["status"]; sheetId: number }) {
+  return (
+    <section className="study-session-state">
+      <h1>This session is {status}</h1>
+      <p>It is read-only and cannot accept more answers.</p>
+      <Link href={`/sheets/${sheetId}`}>Back to sheet</Link>
+    </section>
+  );
+}
+
+function SessionState({ children }: { children: ReactNode }) {
+  return <section className="study-session-state">{children}</section>;
+}
+
+function NotFound() {
+  return (
+    <section className="study-session-state">
+      <h1>Study session not found</h1>
+      <Link href="/workbooks">Back to workbooks</Link>
+    </section>
+  );
+}
+
+function RetryError({ message, onRetry }: { message: string; onRetry: () => Promise<void> }) {
+  return (
+    <section role="alert" className="study-session-state error">
+      <p>{message}</p>
+      <button type="button" onClick={() => void onRetry()}>
+        Try again
+      </button>
+    </section>
+  );
+}

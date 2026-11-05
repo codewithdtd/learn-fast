@@ -8859,3 +8859,294 @@ a {
   .study-swipe-hint { display: inline; color: var(--muted); font-size: 12px; line-height: 1.4; }
 }
 
+
+
+/* ==========================================================================
+   Zen Study Mode & Thumb-Zone Ergonomics
+   ========================================================================== */
+.app-shell.zen-mode .desktop-sidebar,
+.app-shell.zen-mode .mobile-header,
+.app-shell.zen-mode .mobile-bottom-nav {
+  display: none !important;
+}
+
+.app-content.zen-content {
+  margin-left: 0 !important;
+  padding: 0 !important;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.study-session-page.zen-study-page {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 16px 16px 24px;
+  width: 100%;
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+@media (max-width: 639px) {
+  .study-session-page.zen-study-page {
+    padding: 12px 10px calc(24px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* Zen Header Bar */
+.zen-study-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid color-mix(in srgb, var(--outline) 20%, transparent);
+}
+
+.zen-exit-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  padding: 6px 10px;
+  border-radius: 8px;
+  transition: all 140ms ease;
+  text-decoration: none;
+}
+
+.zen-exit-btn:hover {
+  color: var(--foreground);
+  background: var(--surface-low);
+}
+
+.zen-title-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.zen-title-info strong {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--foreground);
+}
+
+.zen-badge {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--primary);
+  background: var(--primary-soft);
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+.zen-card-counter {
+  font-size: 12px;
+  font-weight: 700;
+  font-family: monospace;
+  color: var(--muted);
+  background: var(--surface-low);
+  padding: 4px 10px;
+  border-radius: 8px;
+}
+
+/* Zen Progress Bar */
+.study-session-progress.zen-progress {
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+  margin-bottom: 14px;
+}
+
+.study-session-progress.zen-progress .study-progress-track {
+  height: 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--outline) 18%, transparent);
+  margin-top: 0;
+  margin-bottom: 8px;
+}
+
+.study-session-progress.zen-progress .study-progress-track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--primary);
+  transition: width 0.2s ease;
+}
+
+.study-session-progress.zen-progress .study-progress-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+}
+
+.study-progress-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+}
+
+.study-progress-round {
+  font-weight: 700;
+  color: var(--foreground);
+}
+
+.study-progress-sep {
+  opacity: 0.5;
+}
+
+.study-progress-counts {
+  color: var(--muted);
+}
+
+.study-progress-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.study-progress-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.study-progress-stat.remembered {
+  color: var(--green);
+  background: var(--green-soft);
+}
+
+.study-progress-stat.again {
+  color: var(--gold);
+  background: var(--gold-soft);
+}
+
+/* Zen Flashcard Controls & Thumb Zone */
+.zen-controls-container {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.zen-deck-position {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.zen-action-zone {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.zen-reveal-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 52px;
+  border: 1px solid var(--primary);
+  border-radius: 14px;
+  background: var(--primary);
+  color: white;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--primary) 25%, transparent);
+  transition: all 140ms ease;
+  user-select: none;
+}
+
+.zen-reveal-btn:hover {
+  opacity: 0.95;
+  transform: translateY(-1px);
+}
+
+.zen-reveal-btn:active {
+  transform: scale(0.98);
+}
+
+.zen-srs-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.zen-srs-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 52px;
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 140ms ease;
+  user-select: none;
+}
+
+.zen-srs-btn:active {
+  transform: scale(0.98);
+}
+
+.zen-srs-btn.again {
+  border: 1.5px solid #ffbc85;
+  color: #8c3b06;
+  background: #fff4ea;
+}
+
+.zen-srs-btn.again:hover {
+  background: #ffe8d3;
+}
+
+.zen-srs-btn.remembered {
+  border: 1.5px solid #82d8b5;
+  color: #0b6343;
+  background: #eefbf5;
+}
+
+.zen-srs-btn.remembered:hover {
+  background: #ddf7ea;
+}
+
+.zen-kbd-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  font-size: 11px;
+  font-family: monospace;
+  font-weight: 700;
+  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.08);
+  color: inherit;
+}
+
+.zen-kbd {
+  display: inline-block;
+  padding: 1px 5px;
+  font-size: 11px;
+  font-family: monospace;
+  font-weight: 700;
+  border-radius: 4px;
+  border: 1px solid color-mix(in srgb, var(--outline) 40%, transparent);
+  background: var(--surface-low);
+  color: var(--foreground);
+}
