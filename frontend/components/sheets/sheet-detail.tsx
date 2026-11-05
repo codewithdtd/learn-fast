@@ -2,12 +2,28 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Play,
+  Sparkles,
+  Layers,
+  Edit3,
+  BookOpen,
+  Calendar,
+  RotateCcw,
+  BarChart3,
+  Clock,
+  CheckCircle2,
+} from "lucide-react";
 
-import { Icon } from "@/components/layout/app-shell";
 import { InlineNameEditor } from "@/components/shared/inline-name-editor";
 import { PrioritySelector } from "@/components/sheets/priority-selector";
 import { formatDate, formatLabel } from "@/lib/format";
 import { WorkbookCover } from "@/components/illustrations/workbook-cover";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   ApiRequestError,
   getSheet,
@@ -18,6 +34,11 @@ import {
 
 type SheetDetailProps = { sheetId: string };
 
+/**
+ * Human-crafted Sheet Detail View
+ * Clean layout, high-contrast hierarchy, distraction-free study modes,
+ * and responsive mobile ergonomics.
+ */
 export function SheetDetailView({ sheetId }: SheetDetailProps) {
   const [sheet, setSheet] = useState<SheetDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -65,7 +86,7 @@ export function SheetDetailView({ sheetId }: SheetDetailProps) {
     };
   }, [sheetId]);
 
-  if (isLoading) return <SheetState>Loading sheet…</SheetState>;
+  if (isLoading) return <SheetLoadingState />;
   if (notFound) return <NotFound />;
   if (error) return <RetryError message={error} onRetry={loadSheet} />;
   if (!sheet) return null;
@@ -79,94 +100,317 @@ export function SheetDetailView({ sheetId }: SheetDetailProps) {
   }
 
   return (
-    <section className="sheet-detail-content">
-      <header className="sheet-detail-header">
-        <nav className="sheet-detail-breadcrumb" aria-label="Breadcrumb">
-          <Link href="/workbooks">Workbooks</Link>
-          <span>›</span>
-          <Link href={`/workbooks/${sheet.workbook.id}`}>{sheet.workbook.name}</Link>
-          <span>›</span>
-          <span aria-current="page">{sheet.name}</span>
-        </nav>
-        <Link href={`/workbooks/${sheet.workbook.id}`} className="sheet-detail-back">
-          <Icon name="back" size={18} /> Back to {sheet.workbook.name}
+    <section className="sheet-detail-content max-w-5xl mx-auto px-4 py-6 sm:py-8">
+      {/* 1. Breadcrumb & Navigation */}
+      <nav className="mb-4 flex flex-wrap items-center gap-2 text-xs font-medium text-muted" aria-label="Breadcrumb">
+        <Link href="/workbooks" className="hover:text-primary transition-colors">
+          Workbooks
         </Link>
-        <div className="sheet-detail-title-row">
-          <WorkbookCover workbookId={sheet.workbook.id} className="journey-sheet-cover" />
+        <span>/</span>
+        <Link href={`/workbooks/${sheet.workbook.id}`} className="hover:text-primary transition-colors">
+          {sheet.workbook.name}
+        </Link>
+        <span>/</span>
+        <span className="font-semibold text-foreground" aria-current="page">
+          {sheet.name}
+        </span>
+      </nav>
+
+      <div className="mb-6">
+        <Link
+          href={`/workbooks/${sheet.workbook.id}`}
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted hover:text-primary transition-colors"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" /> Back to {sheet.workbook.name}
+        </Link>
+      </div>
+
+      {/* 2. Sheet Header Row */}
+      <header className="mb-8 flex flex-col gap-4 rounded-2xl border border-outline/40 bg-surface p-5 shadow-xs sm:flex-row sm:items-center sm:justify-between sm:p-6">
+        <div className="flex items-start gap-4">
+          <WorkbookCover workbookId={sheet.workbook.id} className="h-16 w-14 shrink-0 rounded-lg object-cover shadow-xs" />
           <div>
-            <p className="sheet-detail-kicker">Sheet {sheet.position} · {formatLabel(sheet.status)}</p>
-            <div className="sheet-detail-name-row">
-              <h1>{sheet.name}</h1>
-              {sheet.is_ai_generated && <span className="sheet-ai-badge">✨ AI Generated</span>}
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-muted">
+                Sheet {sheet.position}
+              </span>
+              <StatusBadge status={sheet.status} />
+              {sheet.is_ai_generated && (
+                <Badge variant="outline" className="text-[10px]">
+                  ✨ AI Generated
+                </Badge>
+              )}
+            </div>
+
+            <div className="mt-1 flex flex-wrap items-center gap-2">
+              <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
+                {sheet.name}
+              </h1>
               <InlineNameEditor value={sheet.name} label="sheet name" onSave={handleSheetRenamed} />
             </div>
-            <p className="sheet-detail-subtitle">Part of <Link href={`/workbooks/${sheet.workbook.id}`}>{sheet.workbook.name}</Link></p>
+
+            <p className="mt-0.5 text-xs text-muted">
+              Part of{" "}
+              <Link
+                href={`/workbooks/${sheet.workbook.id}`}
+                className="font-semibold text-primary hover:underline"
+              >
+                {sheet.workbook.name}
+              </Link>
+            </p>
           </div>
-          <StatusBadge status={sheet.status} />
+        </div>
+
+        <div className="flex items-center gap-3 self-start sm:self-center">
+          <Link
+            href={`/sheets/${sheet.id}/study`}
+            className={buttonVariants({
+              variant: "default",
+              size: "md",
+              className: "w-full sm:w-auto shadow-sm",
+            })}
+          >
+            <Play className="h-4 w-4 fill-current mr-1.5" /> Study Deck
+          </Link>
         </div>
       </header>
 
-      <div className="sheet-detail-layout">
-        <div className="sheet-detail-main">
-          <section className="sheet-detail-hero-card">
-            <div className="sheet-detail-hero-copy">
-              <p className="eyebrow">Ready to learn</p>
-              <h2>Choose your study mode</h2>
-              <p>Use the mode that fits your next focused learning session.</p>
-            </div>
-            <Link href={`/sheets/${sheet.id}/study`} className="sheet-detail-primary-action">
-              <span className="sheet-action-icon"><Icon name="study" size={22} /></span>
-              <span><strong>Study Flashcards</strong><small>Review this sheet with spaced repetition.</small></span>
-              <Icon name="arrow" size={20} />
-            </Link>
-          </section>
+      {/* 3. Main Content & Sidebar Grid */}
+      <div className="grid gap-8 lg:grid-cols-3">
+        {/* Main Column (2/3) */}
+        <div className="space-y-6 lg:col-span-2">
+          {/* Primary Flashcard Action Hero */}
+          <Card className="border-primary/25 bg-gradient-to-r from-surface to-surface-low shadow-sm">
+            <CardContent className="p-5 sm:p-6">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <Badge variant="default" className="text-xs">
+                    Primary Study Mode
+                  </Badge>
+                  <h2 className="mt-2 text-lg font-bold tracking-tight text-foreground sm:text-xl">
+                    Study Flashcards
+                  </h2>
+                  <p className="mt-1 text-xs text-muted sm:text-sm">
+                    Review {sheet.card_count} flashcards with spaced repetition and active recall.
+                  </p>
+                  <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-muted">
+                    <span>SRS Level: <strong>{sheet.srs_level}</strong></span>
+                    <span>·</span>
+                    <span>Interval: <strong>{sheet.interval_days}d</strong></span>
+                    <span>·</span>
+                    <span>Reviews: <strong>{sheet.review_count}</strong></span>
+                  </div>
+                </div>
 
-          <section className="sheet-detail-actions" aria-labelledby="sheet-actions-title">
-            <div className="section-heading"><div><p className="eyebrow">More ways to practice</p><h2 id="sheet-actions-title">Learning modes</h2></div></div>
-            <div className="sheet-action-grid">
-              <ActionCard href={`/ai-support?tab=sentences&sheet=${sheet.id}`} icon="writing" title="Use this word" description="Write your own sentences and get bilingual AI feedback. Admin access required." tone="mint" />
-              <ActionCard href={`/sheets/${sheet.id}/paragraph-practice`} icon="study" title="Translate a story" description="Turn 5–10 expressions into a story or dialogue and get AI feedback." tone="gold" />
-              <ActionCard href={`/sheets/${sheet.id}/quick-recall`} icon="refresh" title="Practice Exercises" description="Check your recall with quizzes, translation and fill-in-the-blank exercises." tone="mint" />
-              <ActionCard href={`/sheets/${sheet.id}/table`} icon="books" title="Table View" description="Browse the full vocabulary list." tone="gold" />
+                <Link
+                  href={`/sheets/${sheet.id}/study`}
+                  className={buttonVariants({
+                    variant: "default",
+                    size: "lg",
+                    className: "w-full sm:w-auto shrink-0",
+                  })}
+                >
+                  Start Flashcards <ArrowRight className="h-4 w-4 ml-1.5" />
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Learning Modes (2x2 Grid) */}
+          <section aria-labelledby="learning-modes-title">
+            <h2 id="learning-modes-title" className="mb-3 text-base font-bold tracking-tight text-foreground">
+              More Ways to Practice
+            </h2>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <LearningModeCard
+                href={`/sheets/${sheet.id}/quick-recall`}
+                icon={Sparkles}
+                title="Practice Exercises"
+                description="Check your recall with quizzes, reverse translation, and fill-in-the-blank."
+              />
+
+              <LearningModeCard
+                href={`/sheets/${sheet.id}/table`}
+                icon={Layers}
+                title="Table View"
+                description="Browse full vocabulary list, listen to audio pronunciation, and inspect examples."
+              />
+
+              <LearningModeCard
+                href={`/ai-support?tab=sentences&sheet=${sheet.id}`}
+                icon={Edit3}
+                title="Write Sentences"
+                description="Write sentences using these words and get bilingual AI feedback."
+              />
+
+              <LearningModeCard
+                href={`/sheets/${sheet.id}/paragraph-practice`}
+                icon={BookOpen}
+                title="Translate a Story"
+                description="Turn 5–10 expressions into a short story or dialogue with AI coaching."
+              />
             </div>
           </section>
         </div>
 
-        <aside className="sheet-detail-sidebar">
-          <section className="sheet-detail-panel" aria-labelledby="sheet-overview-title">
-            <div className="section-heading"><div><p className="eyebrow">Sheet overview</p><h2 id="sheet-overview-title">Progress data</h2></div><Icon name="review" size={22} /></div>
-            <dl className="sheet-detail-stats">
-              <Stat label="Cards" value={String(sheet.card_count)} tone="primary" />
-              <Stat label="Priority" value={formatLabel(sheet.priority)} tone="mint" />
-              <Stat label="Reviews" value={String(sheet.review_count)} tone="lavender" />
-              <Stat label="Lapses" value={String(sheet.lapse_count)} tone="rose" />
-            </dl>
-            <div className="sheet-detail-meta-list">
-              <MetaRow label="Next review" value={formatDate(sheet.next_review_at)} />
-              <MetaRow label="First learned" value={formatDate(sheet.first_learned_at)} />
-              <MetaRow label="Last reviewed" value={formatDate(sheet.last_reviewed_at)} />
-              <MetaRow label="SRS level" value={String(sheet.srs_level)} />
-              <MetaRow label="Interval" value={`${sheet.interval_days} day${sheet.interval_days === 1 ? "" : "s"}`} />
-            </div>
-          </section>
+        {/* Sidebar Column (1/3) */}
+        <aside className="space-y-6">
+          {/* Progress & SRS Stats Card */}
+          <Card className="border-outline/40 bg-surface shadow-xs">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-muted">
+                <span>Sheet Progress</span>
+                <BarChart3 className="h-4 w-4 text-primary" />
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              {/* 4 Key Metrics */}
+              <div className="grid grid-cols-2 gap-2.5 mb-5">
+                <StatBox label="Total Cards" value={String(sheet.card_count)} />
+                <StatBox label="Priority" value={formatLabel(sheet.priority)} />
+                <StatBox label="Reviews" value={String(sheet.review_count)} />
+                <StatBox label="Lapses" value={String(sheet.lapse_count)} />
+              </div>
 
-          <section className="sheet-detail-panel sheet-priority-panel" aria-labelledby="sheet-priority-title">
-            <div className="section-heading"><div><p className="eyebrow">Personalize review</p><h2 id="sheet-priority-title">Study priority</h2></div></div>
-            <PrioritySelector sheetId={sheet.id} priority={sheet.priority} onSaved={handlePrioritySaved} />
-          </section>
+              {/* Detailed Metadata List */}
+              <div className="divide-y divide-outline/30 text-xs">
+                <MetaRow label="Next Review" value={formatDate(sheet.next_review_at)} />
+                <MetaRow label="First Learned" value={formatDate(sheet.first_learned_at)} />
+                <MetaRow label="Last Reviewed" value={formatDate(sheet.last_reviewed_at)} />
+                <MetaRow label="SRS Level" value={String(sheet.srs_level)} />
+                <MetaRow
+                  label="Interval"
+                  value={`${sheet.interval_days} day${sheet.interval_days === 1 ? "" : "s"}`}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Study Priority Setting Card */}
+          <Card className="border-outline/40 bg-surface shadow-xs">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted">
+                Study Priority
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <p className="mb-3 text-xs text-muted">
+                Adjust how often this sheet is scheduled in your daily review rounds.
+              </p>
+              <PrioritySelector
+                sheetId={sheet.id}
+                priority={sheet.priority}
+                onSaved={handlePrioritySaved}
+              />
+            </CardContent>
+          </Card>
         </aside>
       </div>
     </section>
   );
 }
 
-function ActionCard({ href, icon, title, description, tone }: { href: string; icon: "writing" | "study" | "refresh" | "books" | "review" | "play"; title: string; description: string; tone: "mint" | "gold" }) {
-  return <Link href={href} className={`sheet-action-card ${tone}`}><span className="sheet-action-icon"><Icon name={icon} size={23} /></span><span><strong>{title}</strong><small>{description}</small></span><Icon name="arrow" size={20} /></Link>;
+/**
+ * Clean Learning Mode Card
+ */
+function LearningModeCard({
+  href,
+  icon: IconComponent,
+  title,
+  description,
+}: {
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  description: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className="group flex flex-col justify-between rounded-2xl border border-outline/40 bg-surface p-4 transition-all hover:border-primary/40 hover:shadow-xs"
+    >
+      <div>
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-surface-low text-muted group-hover:bg-primary-soft group-hover:text-primary transition-colors">
+          <IconComponent className="h-4 w-4" />
+        </div>
+        <h3 className="mt-3 text-sm font-bold text-foreground group-hover:text-primary transition-colors">
+          {title}
+        </h3>
+        <p className="mt-1 text-xs text-muted leading-relaxed">
+          {description}
+        </p>
+      </div>
+
+      <div className="mt-4 flex items-center justify-end text-xs font-semibold text-primary">
+        <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+      </div>
+    </Link>
+  );
 }
 
-function StatusBadge({ status }: { status: SheetDetail["status"] }) { return <span className={`sheet-status-badge ${status}`}>{formatLabel(status)}</span>; }
-function Stat({ label, value, tone }: { label: string; value: string; tone: string }) { return <div className={`sheet-stat ${tone}`}><dt>{label}</dt><dd>{value}</dd></div>; }
-function MetaRow({ label, value }: { label: string; value: string }) { return <div><dt>{label}</dt><dd>{value}</dd></div>; }
-function SheetState({ children }: { children: React.ReactNode }) { return <section className="sheet-detail-state">{children}</section>; }
-function NotFound() { return <section className="sheet-detail-state"><h1>Sheet not found</h1><Link href="/workbooks">Back to workbooks</Link></section>; }
-function RetryError({ message, onRetry }: { message: string; onRetry: () => Promise<void> }) { return <section role="alert" className="sheet-detail-state sheet-detail-state-error"><p>{message}</p><button type="button" onClick={() => void onRetry()}>Try again</button></section>; }
+function StatBox({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl border border-outline/30 bg-surface-low p-2.5 text-center">
+      <span className="block text-[11px] font-medium text-muted">{label}</span>
+      <span className="mt-0.5 block text-base font-bold text-foreground">{value}</span>
+    </div>
+  );
+}
+
+function MetaRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between py-2">
+      <span className="text-muted">{label}</span>
+      <span className="font-semibold text-foreground">{value}</span>
+    </div>
+  );
+}
+
+function StatusBadge({ status }: { status: SheetDetail["status"] }) {
+  const variantMap: Record<SheetDetail["status"], "default" | "secondary" | "success" | "warning"> = {
+    not_started: "secondary",
+    learning: "warning",
+    due: "warning",
+    learned: "success",
+  };
+  return <Badge variant={variantMap[status] ?? "secondary"}>{formatLabel(status)}</Badge>;
+}
+
+function SheetLoadingState() {
+  return (
+    <section className="max-w-5xl mx-auto px-4 py-12 text-center text-sm text-muted">
+      <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent mb-3" />
+      <p>Loading sheet details…</p>
+    </section>
+  );
+}
+
+function NotFound() {
+  return (
+    <section className="max-w-md mx-auto my-12 rounded-2xl border border-outline/40 bg-surface p-8 text-center shadow-xs">
+      <h1 className="text-lg font-bold text-foreground">Sheet not found</h1>
+      <p className="mt-1 text-xs text-muted">
+        The sheet you are looking for may have been removed or renamed.
+      </p>
+      <div className="mt-4">
+        <Link href="/workbooks" className={buttonVariants({ variant: "default", size: "sm" })}>
+          Back to Workbooks
+        </Link>
+      </div>
+    </section>
+  );
+}
+
+function RetryError({ message, onRetry }: { message: string; onRetry: () => Promise<void> }) {
+  return (
+    <section role="alert" className="max-w-md mx-auto my-12 rounded-2xl border border-error/30 bg-surface p-8 text-center shadow-xs">
+      <p className="text-xs text-error font-medium">{message}</p>
+      <div className="mt-4">
+        <Button variant="secondary" size="sm" onClick={() => void onRetry()}>
+          Try again
+        </Button>
+      </div>
+    </section>
+  );
+}

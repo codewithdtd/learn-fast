@@ -1684,15 +1684,15 @@
 :root[data-theme="island"] .sheet-detail-primary-action {
   background: #3b6132;
   color: #fff;
-  border: 2px solid #284422;
-  border-radius: 18px;
-  padding: 14px 22px;
+  border: 1px solid rgba(40, 68, 34, 0.35);
+  border-radius: 14px;
+  padding: 12px 20px;
   display: inline-flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
   text-decoration: none;
-  font-weight: 700;
-  box-shadow: 0 3px 0 #284422;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(40, 68, 34, 0.12);
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -1909,12 +1909,12 @@
 :root[data-theme="island"] .table-view-study-link {
   background: #3b6132;
   color: #fff !important;
-  border: 2px solid #284422;
-  border-radius: 16px;
-  padding: 12px 20px;
-  font-weight: 700;
-  font-size: 14px;
-  box-shadow: 0 3px 0 #284422;
+  border: 1px solid rgba(40, 68, 34, 0.35);
+  border-radius: 12px;
+  padding: 10px 18px;
+  font-weight: 600;
+  font-size: 13px;
+  box-shadow: 0 1px 3px rgba(40, 68, 34, 0.12);
   text-decoration: none;
   display: inline-flex;
   align-items: center;

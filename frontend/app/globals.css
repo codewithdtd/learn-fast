@@ -4491,7 +4491,7 @@ a {
 }
 
 @media (max-width: 639px) {
-  .sheet-detail-page { padding: 14px 8px calc(92px + env(safe-area-inset-bottom)); }
+  .sheet-detail-page { padding: 16px 16px calc(92px + env(safe-area-inset-bottom)); }
   .sheet-detail-breadcrumb { display: none; }
   .sheet-detail-header { margin-bottom: 16px; padding: 18px 16px; }
   .sheet-detail-back { margin-top: 0; margin-bottom: 12px; }

@@ -9,6 +9,39 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
   rightIcon?: React.ReactNode;
 }
 
+export function buttonVariants({
+  variant = "default",
+  size = "md",
+  className = "",
+}: {
+  variant?: ButtonProps["variant"];
+  size?: ButtonProps["size"];
+  className?: string;
+} = {}) {
+  const baseStyles =
+    "inline-flex items-center justify-center font-semibold transition-all duration-150 select-none cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2";
+
+  const variantStyles: Record<NonNullable<ButtonProps["variant"]>, string> = {
+    default: "bg-primary text-white hover:opacity-95 shadow-sm focus-visible:ring-primary",
+    secondary: "bg-surface-low text-foreground hover:bg-surface-high border border-outline/30 focus-visible:ring-outline",
+    outline: "border border-outline/60 bg-transparent text-foreground hover:bg-surface-low focus-visible:ring-primary",
+    ghost: "bg-transparent text-foreground hover:bg-surface-low focus-visible:ring-outline",
+    destructive: "bg-error text-white hover:opacity-95 focus-visible:ring-error",
+    success: "bg-green text-white hover:opacity-95 focus-visible:ring-green",
+  };
+
+  const sizeStyles: Record<NonNullable<ButtonProps["size"]>, string> = {
+    sm: "h-8 px-3 text-xs rounded-lg gap-1.5",
+    md: "h-10 px-4 text-sm rounded-xl gap-2",
+    lg: "h-12 px-6 text-base rounded-xl gap-2.5",
+    icon: "h-10 w-10 p-0 rounded-xl",
+  };
+
+  return [baseStyles, variantStyles[variant], sizeStyles[size], className]
+    .filter(Boolean)
+    .join(" ");
+}
+
 /**
  * Human-crafted Button Primitive complying with the 8-state interactive discipline:
  * 1. Default (Idle)
@@ -35,33 +68,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     },
     ref,
   ) => {
-    const baseStyles =
-      "inline-flex items-center justify-center font-semibold transition-all duration-150 select-none cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2";
-
-    const variantStyles: Record<NonNullable<ButtonProps["variant"]>, string> = {
-      default: "bg-primary text-white hover:opacity-95 shadow-sm focus-visible:ring-primary",
-      secondary: "bg-surface-low text-foreground hover:bg-surface-high border border-outline/30 focus-visible:ring-outline",
-      outline: "border border-outline/60 bg-transparent text-foreground hover:bg-surface-low focus-visible:ring-primary",
-      ghost: "bg-transparent text-foreground hover:bg-surface-low focus-visible:ring-outline",
-      destructive: "bg-error text-white hover:opacity-95 focus-visible:ring-error",
-      success: "bg-green text-white hover:opacity-95 focus-visible:ring-green",
-    };
-
-    const sizeStyles: Record<NonNullable<ButtonProps["size"]>, string> = {
-      sm: "h-8 px-3 text-xs rounded-lg gap-1.5",
-      md: "h-10 px-4 text-sm rounded-xl gap-2",
-      lg: "h-12 px-6 text-base rounded-xl gap-2.5",
-      icon: "h-10 w-10 p-0 rounded-xl",
-    };
-
-    const combinedClassName = [
-      baseStyles,
-      variantStyles[variant],
-      sizeStyles[size],
-      className,
-    ]
-      .filter(Boolean)
-      .join(" ");
+    const combinedClassName = buttonVariants({ variant, size, className });
 
     return (
       <button
@@ -87,4 +94,3 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 );
 
 Button.displayName = "Button";
-
