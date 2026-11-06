@@ -92,3 +92,4 @@ Do iOS Safari có cơ chế cache icon cực kỳ kiên cố, nếu bạn vừa 
 2. Cuộn xuống cuối chọn **Nâng cao (Advanced)** -> **Dữ liệu trang web (Website Data)**.
 3. Tìm kiếm tên miền ứng dụng (hoặc localhost) và vuốt sang trái chọn **Xóa (Delete)**.
 4. Mở lại Safari truy cập trang, toàn bộ icon mới sẽ hiển thị sắc nét 100%.
+

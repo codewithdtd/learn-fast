@@ -76,3 +76,4 @@ Giải quyết triệt để vấn đề người dùng truy cập Learn-Fast tr
 ## 7. Rủi ro & Edge cases
 - **Cơ chế cache của iOS Safari**: iOS Safari lưu trữ favicon trong SQLite cache nội bộ rất lâu. Nếu chỉ đổi file mà không đổi URL hoặc không có versioning query parameter `?v=...`, thiết bị của người dùng đã từng mở trang web sẽ tiếp tục đọc ảnh cũ từ local storage của máy cho đến khi xóa lịch sử web hoặc cache bị purge.
   -> *Giải pháp*: Cung cấp cả thẻ `apple-touch-icon` mới có version query `?v=2` VÀ hướng dẫn thao tác xóa cache trên Safari.
+
