@@ -61,6 +61,7 @@ export function VideoPractice() {
   const [firstTryResults, setFirstTryResults] = useState<Record<number, boolean>>({});
   const [selectedWord, setSelectedWord] = useState<SelectedWord | null>(null);
   const [selectedPhrase, setSelectedPhrase] = useState<SelectedPhrase | null>(null);
+  const [speakingWord, setSpeakingWord] = useState<string | null>(null);
   const [lookup, setLookup] = useState<WordLookup | null>(null);
   const [loadingLookup, setLoadingLookup] = useState(false);
   const [lookupError, setLookupError] = useState<string | null>(null);
@@ -102,7 +103,7 @@ export function VideoPractice() {
 
   useEffect(() => {
     if (mode !== "shadowing" || activeSegment < 0) return;
-    segmentElementsRef.current.get(activeSegment)?.scrollIntoView({ block: "start", behavior: "smooth" });
+    segmentElementsRef.current.get(activeSegment)?.scrollIntoView({ block: "nearest", behavior: "smooth" });
   }, [activeSegment, mode]);
 
   useEffect(() => {
@@ -282,6 +283,26 @@ export function VideoPractice() {
     }
   }
 
+  // Business logic: Instant text-to-speech pronunciation on word tap + dictionary lookup
+  function handleWordTap(term: string, context: string) {
+    const cleanTerm = term.trim();
+    if (!cleanTerm) return;
+
+    // 1. Play immediate natural English pronunciation
+    if (isSpeechSupported()) {
+      setSpeakingWord(cleanTerm);
+      speakEnglish(cleanTerm, {
+        rate: 0.88,
+        onStart: () => setSpeakingWord(cleanTerm),
+        onEnd: () => setSpeakingWord((curr) => (curr === cleanTerm ? null : curr)),
+        onError: () => setSpeakingWord((curr) => (curr === cleanTerm ? null : curr)),
+      });
+    }
+
+    // 2. Select word for dictionary lookup & translation
+    void selectWord(cleanTerm, context);
+  }
+
   async function selectWord(term: string, context: string, canSaveToSheet = true) {
     const normalizedTerm = term.trim().toLocaleLowerCase("en");
     if (!normalizedTerm) return;
@@ -458,11 +479,12 @@ export function VideoPractice() {
           </label>
         </div>
         <div className={styles.videoMeta}>
-          <h3>{transcript.title || "YouTube video"}</h3>
-          {transcript.author_name && <p>{transcript.author_name}</p>}
-          <p>{transcript.segments.length} lines · {transcript.caption_type === "auto" ? "Auto-generated captions" : "Captions"}</p>
+          <h3 title={transcript.title ?? undefined}>{transcript.title ?? "YouTube Video"}</h3>
+          <p>{transcript.segments.length} lines{transcript.language_code ? ` · ${transcript.language_code.toUpperCase()}` : ""}</p>
+        </div>
+        <div className={styles.actions}>
           <button type="button" className={styles.secondary} onClick={openIELTSPractice}>
-            {transcript.ielts_source_ticket ? "Create IELTS tests from this video" : "Use transcript as a Reading passage"}
+            Practice IELTS with this video
           </button>
           {!transcript.ielts_source_ticket && <p>This caption set is too large to reuse for Listening. Its text will open as a Reading source.</p>}
         </div>
@@ -473,7 +495,9 @@ export function VideoPractice() {
       <div className={styles.transcriptColumn}>
         {mode === "shadowing" ? <>
           <p className={styles.eyebrow}>SHADOWING · TAP A LINE TO PLAY</p>
-          <p className={styles.captionNotice}>Each selected line plays once. Tap a word to look it up, or select a phrase and translate it.</p>
+          <div className={styles.transcriptHelpBar}>
+            <p className={styles.captionNotice}>💡 <strong>Chạm vào bất kỳ từ nào</strong> để nghe phát âm ngay và tra từ điển. Nhấp vào dòng để tua video.</p>
+          </div>
           <div className={styles.segmentList} aria-label="Timestamped transcript">
             {transcript.segments.map((segment, index) => <div ref={(element) => {
               if (element) segmentElementsRef.current.set(index, element);
@@ -482,36 +506,70 @@ export function VideoPractice() {
               <div className={styles.segmentLine}>
                 <span className={styles.timestamp}>{formatTimestamp(segment.start)}</span>
                 <p className={styles.segmentText} onMouseUp={(event) => capturePhraseSelection(index, event.currentTarget)} onTouchEnd={(event) => capturePhraseSelection(index, event.currentTarget)}>
-                  <TranscriptWords text={segment.text} onSelectWord={(term) => void selectWord(term, segment.text)} />
+                  <TranscriptWords
+                    text={segment.text}
+                    onSelectWord={(term) => handleWordTap(term, segment.text)}
+                    speakingWord={speakingWord}
+                  />
                 </p>
-                <button
-                  type="button"
-                  className={styles.translateButton}
-                  data-has-translation={Boolean(inlineTranslationStates[index]?.translation)}
-                  onClick={() => void toggleLineTranslation(index, segment)}
-                  disabled={inlineTranslationStates[index]?.loading}
-                  aria-expanded={Boolean(inlineTranslationStates[index]?.visible)}
-                  aria-label={inlineTranslationStates[index]?.loading
-                    ? "Translating line"
-                    : inlineTranslationStates[index]?.translation
+                <div className={styles.segmentActions}>
+                  {isSpeechSupported() && (
+                    <button
+                      type="button"
+                      className={styles.linePronounceBtn}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        speakEnglish(segment.text, { rate: 0.88 });
+                      }}
+                      title="Pronounce entire line"
+                      aria-label={`Pronounce line ${index + 1}`}
+                    >
+                      <SpeakerIcon />
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    className={styles.translateButton}
+                    data-has-translation={Boolean(inlineTranslationStates[index]?.translation)}
+                    onClick={() => void toggleLineTranslation(index, segment)}
+                    disabled={inlineTranslationStates[index]?.loading}
+                    aria-expanded={Boolean(inlineTranslationStates[index]?.visible)}
+                    aria-label={inlineTranslationStates[index]?.loading
+                      ? "Translating line"
+                      : inlineTranslationStates[index]?.translation
+                        ? inlineTranslationStates[index]?.visible ? "Hide translation" : "Show translation"
+                        : inlineTranslationStates[index]?.error ? "Retry translation" : "Translate line"}
+                    title={inlineTranslationStates[index]?.translation
                       ? inlineTranslationStates[index]?.visible ? "Hide translation" : "Show translation"
                       : inlineTranslationStates[index]?.error ? "Retry translation" : "Translate line"}
-                  title={inlineTranslationStates[index]?.translation
-                    ? inlineTranslationStates[index]?.visible ? "Hide translation" : "Show translation"
-                    : inlineTranslationStates[index]?.error ? "Retry translation" : "Translate line"}
-                >
-                  {inlineTranslationStates[index]?.loading
-                    ? <span className={styles.translationSpinner} aria-hidden="true" />
-                    : inlineTranslationStates[index]?.translation
-                      ? inlineTranslationStates[index]?.visible ? "Hide" : "Show"
-                      : <TranslateIcon />}
-                </button>
+                  >
+                    {inlineTranslationStates[index]?.loading
+                      ? <span className={styles.translationSpinner} aria-hidden="true" />
+                      : inlineTranslationStates[index]?.translation
+                        ? inlineTranslationStates[index]?.visible ? "Hide" : "Show"
+                        : <TranslateIcon />}
+                  </button>
+                </div>
               </div>
               {selectedPhrase?.index === index && <div className={styles.phraseSelectionAction} data-no-line-playback>
                 <span title={selectedPhrase.text}>{selectedPhrase.text}</span>
-                <button type="button" className={styles.secondary} onClick={() => void selectWord(selectedPhrase.text, segment.text, false)}>
-                  <TranslateIcon /> Translate selection
-                </button>
+                <div className={styles.phraseActionBtns}>
+                  {isSpeechSupported() && (
+                    <button
+                      type="button"
+                      className={styles.secondary}
+                      onClick={() => {
+                        speakEnglish(selectedPhrase.text, { rate: 0.88 });
+                      }}
+                      title="Pronounce selected phrase"
+                    >
+                      <SpeakerIcon /> Listen
+                    </button>
+                  )}
+                  <button type="button" className={styles.secondary} onClick={() => void selectWord(selectedPhrase.text, segment.text, false)}>
+                    <TranslateIcon /> Translate selection
+                  </button>
+                </div>
               </div>}
               {inlineTranslationStates[index]?.visible && <p className={styles.inlineTranslation} lang="vi" aria-live="polite" data-no-line-playback>
                 <span className={styles.inlineTranslationLabel}>Vietnamese</span>
@@ -561,9 +619,10 @@ export function VideoPractice() {
                       aria-label={`Missing word ${part.gapIndex + 1} in line ${index + 1}`}
                       placeholder="…"
                       onChange={(event) => {
+                        const nextValue = event.target.value;
                         setDictationGapAnswers((current) => {
                           const answers = [...(current[index] ?? Array.from({ length: dictationGapPrompts[index]?.answers.length ?? 0 }, () => ""))];
-                          answers[part.gapIndex!] = event.target.value;
+                          answers[part.gapIndex!] = nextValue;
                           return { ...current, [index]: answers };
                         });
                         setDictationGapResults((current) => { const next = { ...current }; delete next[index]; return next; });
@@ -571,20 +630,16 @@ export function VideoPractice() {
                       }}
                       onKeyDown={(event) => { if ((event.ctrlKey || event.metaKey) && event.key === "Enter") checkDictation(index); }}
                     />
-                    {dictationResults[index] !== undefined && <span className={styles.gapExpected}>{dictationGapPrompts[index]?.answers[part.gapIndex]}</span>}
+                    {dictationGapResults[index]?.[part.gapIndex] === false && <span className={styles.gapExpected}>{dictationGapPrompts[index]?.answers[part.gapIndex]}</span>}
                   </label>)}
               </div>}
-              {dictationMode === "fill_gaps" && !dictationGapPrompts[index]?.answers.length && <p className={styles.captionNotice}>This line has no words to hide. Switch to Full sentence for this transcript.</p>}
+              {dictationResults[index] !== undefined && <p className={styles.feedback} data-correct={dictationResults[index]}>
+                {dictationResults[index] ? "Correct!" : "Not quite right yet."}
+              </p>}
               <div className={styles.actions}>
-                <button type="button" className={styles.primary} disabled={dictationMode === "full_sentence"
-                  ? !dictationAnswers[index]?.trim()
-                  : !dictationGapPrompts[index]?.answers.length || !dictationGapPrompts[index]?.answers.every((_, gapIndex) => dictationGapAnswers[index]?.[gapIndex]?.trim())} onClick={() => checkDictation(index)}>Check</button>
+                <button type="button" className={styles.primary} onClick={() => checkDictation(index)}>Check answer</button>
+                <button type="button" className={styles.iconButton} onClick={() => void selectWord(segment.text, segment.text, false)} aria-label="Translate line" title="Translate line"><TranslateIcon /></button>
               </div>
-              {dictationResults[index] !== undefined && <>
-                <p className={styles.feedback} data-correct={dictationResults[index]} role="status">{dictationResults[index] ? "Correct — nice listening." : dictationMode === "fill_gaps" ? "Some gaps are incorrect. Review the marked answers." : "Not quite. Compare your answer with the transcript:"}</p>
-                {dictationMode === "full_sentence" && <p className={styles.segmentText}><TranscriptWords text={segment.text} onSelectWord={(term) => void selectWord(term, segment.text)} /></p>}
-                <button type="button" className={styles.translateButton} onClick={() => void selectWord(segment.text, segment.text, false)} aria-label="Translate line" title="Translate line"><TranslateIcon /></button>
-              </>}
             </article>)}
           </div>
           <p className={styles.captionNotice}>Capitalization, spaces, and punctuation are ignored. Use <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Enter</kbd> to check the focused line.</p>
@@ -592,7 +647,23 @@ export function VideoPractice() {
 
         {selectedWord && <section className={styles.lookupCard} aria-labelledby="word-lookup-title">
           <div className={styles.lookupHeader}>
-            <div><p className={styles.eyebrow}>WORD OR PHRASE LOOKUP</p><h3 id="word-lookup-title">{selectedWord.term}{lookup?.phonetic ? ` · ${lookup.phonetic}` : ""}</h3></div>
+            <div>
+              <p className={styles.eyebrow}>WORD OR PHRASE LOOKUP</p>
+              <div className={styles.lookupTitleRow}>
+                <h3 id="word-lookup-title">{selectedWord.term}{lookup?.phonetic ? <span className={styles.phonetic}> · {lookup.phonetic}</span> : ""}</h3>
+                {isSpeechSupported() && (
+                  <button
+                    type="button"
+                    className={styles.pronounceButton}
+                    onClick={playPronunciation}
+                    aria-label={`Play pronunciation for ${selectedWord.term}`}
+                    title="Play pronunciation"
+                  >
+                    <SpeakerIcon />
+                  </button>
+                )}
+              </div>
+            </div>
             <button type="button" className={styles.secondary} onClick={closeLookup} aria-label="Close word lookup">Close</button>
           </div>
           {loadingLookup && <p className={styles.loading} role="status">Looking up this text…</p>}
@@ -626,15 +697,41 @@ export function VideoPractice() {
   </section>;
 }
 
-function TranscriptWords({ text, onSelectWord }: { text: string; onSelectWord: (word: string) => void }) {
-  return <>{splitTranscriptText(text).map(({ value, isWord }, index) => isWord
-    ? <button type="button" className={styles.wordButton} key={`${value}-${index}`} onClick={(event) => {
-      event.stopPropagation();
-      // A multi-word browser selection is handled by the adjacent phrase translation action, not this word button.
-      if ((window.getSelection()?.toString().trim().split(/\s+/).filter(Boolean).length ?? 0) > 1) return;
-      onSelectWord(value);
-    }} aria-label={`Look up ${value}`}>{value}</button>
-    : <span key={`${value}-${index}`}>{value}</span>)}</>;
+function TranscriptWords({
+  text,
+  onSelectWord,
+  speakingWord,
+}: {
+  text: string;
+  onSelectWord: (word: string) => void;
+  speakingWord?: string | null;
+}) {
+  return (
+    <>
+      {splitTranscriptText(text).map(({ value, isWord }, index) =>
+        isWord ? (
+          <button
+            type="button"
+            className={styles.wordButton}
+            data-speaking={Boolean(speakingWord && speakingWord.toLowerCase() === value.toLowerCase())}
+            key={`${value}-${index}`}
+            onClick={(event) => {
+              event.stopPropagation();
+              // A multi-word browser selection is handled by the adjacent phrase translation action, not this word button.
+              if ((window.getSelection()?.toString().trim().split(/\s+/).filter(Boolean).length ?? 0) > 1) return;
+              onSelectWord(value);
+            }}
+            aria-label={`Pronounce and look up ${value}`}
+            title={`Tap to pronounce "${value}" and look up meaning`}
+          >
+            {value}
+          </button>
+        ) : (
+          <span key={`${value}-${index}`}>{value}</span>
+        )
+      )}
+    </>
+  );
 }
 
 function SpeakerIcon() {
@@ -652,8 +749,9 @@ function TranslateIcon() {
 }
 
 function formatTimestamp(seconds: number): string {
-  const safeSeconds = Math.max(0, Math.floor(seconds));
-  const minutes = Math.floor(safeSeconds / 60);
-  const remainder = safeSeconds % 60;
-  return `${minutes}:${String(remainder).padStart(2, "0")}`;
+  if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
+  const rounded = Math.floor(seconds);
+  const minutes = Math.floor(rounded / 60);
+  const remainder = rounded % 60;
+  return `${minutes}:${remainder.toString().padStart(2, "0")}`;
 }
