@@ -6,6 +6,10 @@ type StudyProgressProps = {
   againCards: number;
 };
 
+/**
+ * Clean, compact progress bar for Zen Study Mode
+ * Minimal height, high visibility, zero distraction.
+ */
 export function StudyProgress({
   roundNumber,
   totalCards,
@@ -14,26 +18,29 @@ export function StudyProgress({
   againCards,
 }: StudyProgressProps) {
   const percentage = totalCards === 0 ? 0 : Math.round((answeredCards / totalCards) * 100);
+
   return (
-    <section className="study-session-progress" aria-label="Round progress">
-      <div className="study-progress-heading">
-        <div className="study-progress-step-info">
-          <span className="study-star-badge" aria-hidden="true">★</span>
-          <div>
-            <p className="eyebrow">Round {roundNumber}</p>
-            <strong>{answeredCards} of {totalCards} answered</strong>
-          </div>
-        </div>
-        <b>{percentage}%</b>
+    <div className="study-session-progress zen-progress" aria-label="Round progress">
+      <div className="study-progress-track">
+        <span style={{ width: `${percentage}%` }} />
       </div>
-      <div className="study-progress-track"><span style={{ width: `${percentage}%` }} /></div>
-      <dl>
-        <Stat label="Remembered" value={String(rememberedCards)} />
-        <Stat label="Again" value={String(againCards)} />
-        <Stat label="Remaining" value={String(totalCards - answeredCards)} />
-      </dl>
-    </section>
+      <div className="study-progress-heading">
+        <div className="study-progress-left">
+          <span className="study-progress-round">Round {roundNumber}</span>
+          <span className="study-progress-sep">·</span>
+          <span className="study-progress-counts">
+            {answeredCards} of {totalCards} answered ({percentage}%)
+          </span>
+        </div>
+        <div className="study-progress-badges">
+          <span className="study-progress-stat remembered" title="Remembered cards">
+            ✓ {rememberedCards}
+          </span>
+          <span className="study-progress-stat again" title="Need review cards">
+            ↺ {againCards}
+          </span>
+        </div>
+      </div>
+    </div>
   );
 }
-
-function Stat({ label, value }: { label: string; value: string }) { return <div><dt>{label}</dt><dd>{value}</dd></div>; }

@@ -3,16 +3,32 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import {
+  Flame,
+  BookOpen,
+  Sparkles,
+  Clock,
+  ArrowRight,
+  Play,
+  CheckCircle2,
+  Calendar,
+  Layers,
+  FileText,
+  AlertTriangle,
+  RotateCcw,
+  Plus,
+} from "lucide-react";
 
 import { DashboardCheckinBanner } from "@/components/dashboard/dashboard-checkin-banner";
 import { DashboardLearningChart } from "@/components/dashboard/dashboard-learning-chart";
-import { JourneyDashboard, JourneyExplore } from "@/components/dashboard/journey-dashboard";
 import { CozyDashboardView } from "@/components/dashboard/island/cozy-dashboard-view";
-import { setTheme, useTheme } from "@/hooks/use-theme";
-import { Icon } from "@/components/layout/app-shell";
+import { useTheme } from "@/hooks/use-theme";
 import { StartupWarmupCountdown } from "@/components/shared/startup-warmup-countdown";
 import { useAuth } from "@/context/auth-context";
 import { formatDate, formatLabel } from "@/lib/format";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   createStudySession,
   getCalendarMonth,
@@ -23,6 +39,11 @@ import {
   type DashboardSummary,
 } from "@/services/api";
 
+/**
+ * Human-crafted Learning Hub Dashboard
+ * Follows Linear / Readwise aesthetic: 1px subtle borders, no AI card soup,
+ * high-contrast hierarchy, and instant 1-click actionability.
+ */
 export function DashboardView() {
   const { user } = useAuth();
   const activeTheme = useTheme();
@@ -32,17 +53,38 @@ export function DashboardView() {
   const [error, setError] = useState<string | null>(null);
 
   async function loadDashboard() {
-    setIsLoading(true); setError(null);
-    try { setDashboard(await getDashboard()); }
-    catch (caughtError) { setError(caughtError instanceof Error ? caughtError.message : "Could not load your learning dashboard."); }
-    finally { setIsLoading(false); }
+    setIsLoading(true);
+    setError(null);
+    try {
+      setDashboard(await getDashboard());
+    } catch (caughtError) {
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : "Could not load your learning dashboard.",
+      );
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   useEffect(() => {
     let isCurrent = true;
-    void getDashboard().then((value) => { if (isCurrent) setDashboard(value); }).catch((caughtError: unknown) => {
-      if (isCurrent) setError(caughtError instanceof Error ? caughtError.message : "Could not load your learning dashboard.");
-    }).finally(() => { if (isCurrent) setIsLoading(false); });
+    void getDashboard()
+      .then((value) => {
+        if (isCurrent) setDashboard(value);
+      })
+      .catch((caughtError: unknown) => {
+        if (isCurrent)
+          setError(
+            caughtError instanceof Error
+              ? caughtError.message
+              : "Could not load your learning dashboard.",
+          );
+      })
+      .finally(() => {
+        if (isCurrent) setIsLoading(false);
+      });
 
     const now = new Date();
     void getCalendarMonth(now.getFullYear(), now.getMonth() + 1)
@@ -51,7 +93,9 @@ export function DashboardView() {
       })
       .catch(() => {});
 
-    return () => { isCurrent = false; };
+    return () => {
+      isCurrent = false;
+    };
   }, []);
 
   if (isLoading) return <DashboardLoading onRetry={() => void loadDashboard()} />;
@@ -68,7 +112,7 @@ export function DashboardView() {
       </main>
     );
   }
-  const badgesCount = Math.max(1, Math.floor(streak / 2) + Math.min(5, dashboard.recent_sessions.length));
+
   const totalActiveCards =
     dashboard.active_sessions.reduce((acc, s) => acc + s.total_cards, 0) +
     dashboard.due_sheets.reduce((acc, s) => acc + s.card_count, 0) +
@@ -76,213 +120,348 @@ export function DashboardView() {
 
   return (
     <main className="dashboard-page">
-      <JourneyDashboard userName={displayName} streak={streak} dashboard={dashboard} />
-      <div style={{ display: "flex", justifyContent: "flex-end", margin: "4px 0 12px" }}>
-        <button
-          type="button"
-          onClick={() => setTheme("island")}
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "6px",
-            padding: "6px 14px",
-            borderRadius: "14px",
-            background: "#f4efe6",
-            border: "1.5px solid #3b6132",
-            color: "#261c14",
-            fontSize: "0.84rem",
-            fontWeight: 600,
-            cursor: "pointer",
-          }}
-          title="Switch to Cozy Island theme"
-        >
-          <span>🏝️</span> Switch to Cozy Island Dashboard
-        </button>
-      </div>
-      <div data-journey-classic-only="true">
-        <DashboardWelcomeHeader userName={displayName} />
-        <DashboardGamifiedStatsBar streak={streak} cardsCount={totalActiveCards} badgesCount={badgesCount} />
-      </div>
-      <FeaturedHeroCard dashboard={dashboard} />
-      <JourneyExplore />
-      <div data-journey-classic-only="true"><ExplorePastelGrid dashboard={dashboard} /></div>
+      {/* 1. Header: Greeting, Date, Streak & Stats Strip */}
+      <DashboardHeader
+        userName={displayName}
+        streak={streak}
+        totalActiveCards={totalActiveCards}
+        dueSheetsCount={dashboard.due_sheets.length}
+        generatedAt={dashboard.generated_at}
+      />
 
-      <header className="dashboard-heading" data-journey-classic-only="true">
-        <div><p className="eyebrow">English SRS</p><h1>Today&apos;s learning</h1><p className="heading-date"><Icon name="calendar" size={19} /> {formatDate(dashboard.generated_at)}</p></div>
-        <div className="heading-actions"><Link href="/reading" className="button secondary">Read English news</Link><Link href="/import" className="button secondary">Import workbook</Link><Link href="/workbooks" className="button secondary">Workbooks</Link></div>
-      </header>
+      {/* 2. Primary Action Hero: 1-Click Actionable Study Loop */}
+      <DailyActionHero dashboard={dashboard} />
 
-      <DashboardCheckinBanner />
-
-      <div className="journey-dashboard-insights">
-        <DashboardLearningChart dashboard={dashboard} />
-      </div>
-
+      {/* 3. Main Dashboard Grid: Two-Column on Desktop, Flow Stack on Mobile */}
       <div className="dashboard-grid">
-
         <div className="dashboard-main-column">
-          <DashboardOverview dashboard={dashboard} />
-          <DashboardSectionHeading title="Continue Learning" />
-          {dashboard.active_sessions.length > 0 ? <div className="session-stack">{dashboard.active_sessions.map((session) => <ActiveSessionCard key={session.id} session={session} />)}</div> : <EmptyState>No study sessions are currently in progress.</EmptyState>}
-          <ReviewSection sheets={dashboard.due_sheets} />
+          {/* Active Sessions in Progress */}
+          {dashboard.active_sessions.length > 0 && (
+            <ActiveSessionsSection sessions={dashboard.active_sessions} />
+          )}
+
+          {/* Due Review Sheets */}
+          <DueReviewSection sheets={dashboard.due_sheets} />
+
+          {/* Learn New Content */}
           <LearnNewSection sheets={dashboard.new_sheets} />
-          <RecentActivity sessions={dashboard.recent_sessions} />
+
+          {/* Recent Activity */}
+          <RecentActivitySection sessions={dashboard.recent_sessions} />
         </div>
+
         <aside className="dashboard-side-column">
-          <OverviewSideCard dashboard={dashboard} />
-          <WeakCardsSummary count={dashboard.weak_card_count} />
+          {/* Daily Check-in */}
+          <DashboardCheckinBanner />
+
+          {/* Study Trends Analytics Chart */}
+          <div className="rounded-2xl border border-outline/40 bg-surface p-5 shadow-xs">
+            <h3 className="mb-4 text-xs font-bold uppercase tracking-wider text-muted">
+              Learning Activity
+            </h3>
+            <DashboardLearningChart dashboard={dashboard} />
+          </div>
+
+          {/* Quick Shortcuts */}
+          <QuickShortcutsCard weakCount={dashboard.weak_card_count} />
+
+          {/* Weak Cards Alert */}
+          {dashboard.weak_card_count > 0 && (
+            <WeakCardsCard count={dashboard.weak_card_count} />
+          )}
         </aside>
       </div>
     </main>
   );
 }
 
-function DashboardOverview({ dashboard }: { dashboard: DashboardSummary }) {
-  return <section className="overview-mobile-card"><div className="section-heading"><div><p className="eyebrow">Your queues</p><h2>Ready when you are</h2></div><Icon name="review" size={28} /></div><div className="overview-stats"><Stat value={dashboard.due_sheets.length} label="Due sheets" tone="primary" /><Stat value={dashboard.active_sessions.length} label="Active sessions" tone="green" /><Stat value={dashboard.new_sheets.length} label="New sheets" tone="gold" /></div></section>;
-}
-
-function OverviewSideCard({ dashboard }: { dashboard: DashboardSummary }) {
-  return <section className="side-card overview-side-card"><p className="eyebrow">Today&apos;s overview</p><div className="side-stat"><strong>{dashboard.due_sheets.length}</strong><span>due sheets</span></div><div className="queue-bar"><span style={{ width: `${dashboard.due_sheets.length > 0 ? 100 : 0}%` }} /></div><div className="side-stat-list"><span><Icon name="review" size={18} /> Scheduled review</span><strong>{dashboard.due_sheets.length}</strong><span><Icon name="clock" size={18} /> Active sessions</span><strong>{dashboard.active_sessions.length}</strong></div></section>;
-}
-
-function Stat({ value, label, tone }: { value: number; label: string; tone: "primary" | "green" | "gold" }) { return <div className={`stat stat-${tone}`}><strong>{value}</strong><span>{label}</span></div>; }
-
-function ReviewSection({ sheets }: { sheets: DashboardSheetItem[] }) {
+/**
+ * Clean Top Header with Greeting, Date and Key Metric Chips
+ */
+function DashboardHeader({
+  userName,
+  streak,
+  totalActiveCards,
+  dueSheetsCount,
+  generatedAt,
+}: {
+  userName: string;
+  streak: number;
+  totalActiveCards: number;
+  dueSheetsCount: number;
+  generatedAt: string;
+}) {
   return (
-    <section id="today-review" className="dashboard-section review-section">
-      <DashboardSectionHeading title="Today's Review" count={sheets.length} />
-      <div className="review-card">
-        {sheets.length === 0 ? (
-          <EmptyState>
-            <span className="empty-state-icon" aria-hidden="true">
-              <Icon name="check" size={24} />
-            </span>
-            <p>No sheets are due right now. You are completely up to date.</p>
-            <Link href="/workbooks" className="text-link" aria-label="Browse learning sheets">
-              Browse learning sheets <Icon name="arrow" size={17} />
-            </Link>
-          </EmptyState>
-        ) : (
-          <div className="review-list">
-            {sheets.map((sheet) => (
-              <DueSheetRow key={sheet.id} sheet={sheet} />
-            ))}
-          </div>
+    <header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <div className="flex items-center gap-2 text-xs font-medium text-muted">
+          <Calendar className="h-3.5 w-3.5" />
+          <span>{formatDate(generatedAt)}</span>
+        </div>
+        <h1 className="mt-1 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+          Hi, {userName} 👋
+        </h1>
+        <p className="mt-0.5 text-sm text-muted">
+          {dueSheetsCount > 0
+            ? `You have ${dueSheetsCount} sheet${dueSheetsCount === 1 ? "" : "s"} scheduled for review today.`
+            : "All scheduled reviews are caught up. Pick a workbook or practice recall."}
+        </p>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+        <Link
+          href="/calendar"
+          className="group flex items-center gap-2 rounded-xl border border-outline/50 bg-surface px-3 py-2 text-xs font-semibold shadow-xs transition-colors hover:border-primary/40 hover:bg-surface-low"
+          title="View study streak and calendar"
+        >
+          <Flame className="h-4 w-4 text-amber-500 transition-transform group-hover:scale-110" />
+          <span>
+            <strong className="text-sm font-bold text-foreground">{streak}</strong>{" "}
+            <span className="text-muted">day streak</span>
+          </span>
+        </Link>
+
+        <div
+          className="flex items-center gap-2 rounded-xl border border-outline/50 bg-surface px-3 py-2 text-xs font-semibold shadow-xs"
+          title="Total active and due learning cards"
+        >
+          <BookOpen className="h-4 w-4 text-primary" />
+          <span>
+            <strong className="text-sm font-bold text-foreground">{totalActiveCards}</strong>{" "}
+            <span className="text-muted">cards</span>
+          </span>
+        </div>
+
+        {dueSheetsCount > 0 && (
+          <Badge variant="warning" className="px-3 py-1.5 text-xs font-bold">
+            {dueSheetsCount} Due
+          </Badge>
         )}
       </div>
-    </section>
+    </header>
   );
 }
 
-function DueSheetRow({ sheet }: { sheet: DashboardSheetItem }) {
-  return (
-    <div className="review-row">
-      <div className="review-icon" aria-hidden="true">
-        <Icon name="review" size={25} />
-      </div>
-      <div className="row-copy">
-        <strong>{sheet.name}</strong>
-        <span>
-          {sheet.workbook_name} · Due {formatDate(sheet.next_review_at)} · {formatLabel(sheet.priority)} priority
-        </span>
-      </div>
-      <Link
-        href={`/sheets/${sheet.id}/study?mode=review`}
-        className="button primary"
-        aria-label={`Review now: ${sheet.name} from ${sheet.workbook_name}`}
-      >
-        Review now
-      </Link>
-    </div>
-  );
-}
+/**
+ * Actionable Daily Hero Card:
+ * Prioritizes active in-progress session -> scheduled SRS review -> fresh cards -> clean state.
+ */
+function DailyActionHero({ dashboard }: { dashboard: DashboardSummary }) {
+  const router = useRouter();
+  const [isStarting, setIsStarting] = useState(false);
+  const [startError, setStartError] = useState<string | null>(null);
 
-function ActiveSessionCard({ session }: { session: DashboardActiveSessionItem }) {
-  return (
-    <article className="active-session-card">
-      <div className="session-badge">Current session</div>
-      <h3>{session.sheet.name}</h3>
-      <p>
-        {session.sheet.workbook_name} · {sessionLabel(session.session_type)}
-      </p>
-      <small>
-        Started {formatDate(session.started_at)} · {session.total_cards} cards
-      </small>
-      <Link
-        href={`/study-sessions/${session.id}`}
-        className="button light"
-        aria-label={`Continue learning session for ${session.sheet.name}`}
-      >
-        Continue learning <Icon name="arrow" size={18} />
-      </Link>
-    </article>
-  );
-}
+  const activeSession = dashboard.active_sessions[0];
+  const dueSheet = dashboard.due_sheets[0];
+  const newSheet = dashboard.new_sheets[0];
+  const selectedSheet = dueSheet ?? newSheet;
 
-function LearnNewSection({ sheets }: { sheets: DashboardSheetItem[] }) {
+  let kicker = "All caught up";
+  let title = "Your queue is clear";
+  let description = "You've completed all scheduled reviews for today. Practice recall or explore English news.";
+  let buttonText = "Explore Workbooks";
+
+  if (activeSession) {
+    kicker = "In Progress";
+    title = activeSession.sheet.name;
+    description = `${activeSession.sheet.workbook_name} · Pick up where you left off with ${activeSession.total_cards} cards.`;
+    buttonText = "Continue Practice";
+  } else if (dueSheet) {
+    kicker = "Due for Review";
+    title = dueSheet.name;
+    description = `${dueSheet.workbook_name} · ${dueSheet.card_count} cards are ready for spaced repetition review.`;
+    buttonText = "Start Daily Review";
+  } else if (newSheet) {
+    kicker = "Learn New Words";
+    title = newSheet.name;
+    description = `${newSheet.workbook_name} · Start a new set of ${newSheet.card_count} flashcards.`;
+    buttonText = "Start Learning";
+  }
+
+  async function handleActionClick() {
+    if (isStarting) return;
+    setStartError(null);
+
+    if (activeSession) {
+      router.push(`/study-sessions/${activeSession.id}`);
+      return;
+    }
+    if (!selectedSheet) {
+      router.push("/workbooks");
+      return;
+    }
+
+    setIsStarting(true);
+    try {
+      // Ưu tiên lượt ôn đến hạn trước để người học không bỏ lỡ lịch SRS; chỉ học sheet mới khi không còn lượt ôn.
+      const session = await createStudySession({
+        sheet_id: selectedSheet.id,
+        session_type: dueSheet ? "srs_review" : "new_learning",
+        direction: "en_to_vi",
+      });
+      router.push(`/study-sessions/${session.id}`);
+    } catch (caughtError) {
+      setStartError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : "Could not start today's practice. Please try again.",
+      );
+    } finally {
+      setIsStarting(false);
+    }
+  }
+
   return (
-    <section className="dashboard-section">
-      <DashboardSectionHeading
-        title="Learn New"
-        count={sheets.length}
-        action={
-          <Link href="/workbooks" className="text-link" aria-label="See all workbooks">
-            See all <Icon name="arrow" size={17} />
-          </Link>
-        }
-      />
-      {sheets.length === 0 ? (
-        <EmptyState>
-          <span className="empty-state-icon" aria-hidden="true">
-            <Icon name="books" size={24} />
-          </span>
-          <p>All available sheets have been started. Import a workbook to add more learning content.</p>
-          <Link href="/import" className="text-link" aria-label="Import a new workbook">
-            Import workbook <Icon name="arrow" size={17} />
-          </Link>
-        </EmptyState>
-      ) : (
-        <div className="learn-new-grid">
-          {sheets.map((sheet) => (
-            <Link
-              key={sheet.id}
-              href={`/sheets/${sheet.id}/study`}
-              className="learn-new-card"
-              aria-label={`Learn new sheet: ${sheet.name} from ${sheet.workbook_name}, ${sheet.card_count} cards`}
+    <Card className="mb-8 border-primary/25 bg-gradient-to-r from-surface to-surface-low shadow-sm">
+      <CardContent className="p-5 sm:p-6">
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="max-w-xl">
+            <div className="flex items-center gap-2">
+              <Badge variant={activeSession ? "default" : dueSheet ? "warning" : "secondary"}>
+                {kicker}
+              </Badge>
+              {(activeSession || selectedSheet) && (
+                <span className="text-xs text-muted">
+                  Step 1: Flashcards SRS → Step 2: Practice Exercises
+                </span>
+              )}
+            </div>
+
+            <h2 className="mt-2 text-xl font-bold tracking-tight text-foreground sm:text-2xl">
+              {title}
+            </h2>
+            <p className="mt-1 text-sm text-muted">{description}</p>
+
+            {startError && (
+              <p className="mt-2 text-xs font-semibold text-error" role="alert">
+                {startError}
+              </p>
+            )}
+          </div>
+
+          <div className="flex items-center sm:self-center">
+            <Button
+              size="lg"
+              variant="default"
+              className="w-full sm:w-auto"
+              onClick={() => void handleActionClick()}
+              disabled={isStarting}
+              isLoading={isStarting}
+              leftIcon={<Play className="h-4 w-4 fill-current" />}
+              rightIcon={<ArrowRight className="h-4 w-4" />}
             >
-              <span className="card-icon" aria-hidden="true">
-                <Icon name="books" size={23} />
-              </span>
-              <span className="card-title">{sheet.name}</span>
-              <span className="card-meta">{sheet.workbook_name}</span>
-              <span className="card-count">{sheet.card_count} cards</span>
+              {buttonText}
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+/**
+ * Active study sessions in progress
+ */
+function ActiveSessionsSection({ sessions }: { sessions: DashboardActiveSessionItem[] }) {
+  return (
+    <section className="mb-8">
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="text-base font-bold tracking-tight text-foreground">
+          Continue Learning
+        </h2>
+        <Badge variant="secondary">{sessions.length} active</Badge>
+      </div>
+
+      <div className="grid gap-3">
+        {sessions.map((session) => (
+          <div
+            key={session.id}
+            className="flex flex-col gap-3 rounded-2xl border border-outline/40 bg-surface p-4 transition-colors hover:border-primary/40 sm:flex-row sm:items-center sm:justify-between"
+          >
+            <div>
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="text-[11px]">
+                  {sessionLabel(session.session_type)}
+                </Badge>
+                <span className="text-xs text-muted">{session.sheet.workbook_name}</span>
+              </div>
+              <h3 className="mt-1 text-base font-bold text-foreground">
+                {session.sheet.name}
+              </h3>
+              <p className="text-xs text-muted">
+                Started {formatDate(session.started_at)} · {session.total_cards} cards in deck
+              </p>
+            </div>
+
+            <Link
+              href={`/study-sessions/${session.id}`}
+              className={buttonVariants({ size: "sm", variant: "secondary", className: "w-full sm:w-auto" })}
+            >
+              Continue <ArrowRight className="h-3.5 w-3.5" />
             </Link>
-          ))}
-        </div>
-      )}
+          </div>
+        ))}
+      </div>
     </section>
   );
 }
 
-function WeakCardsSummary({ count }: { count: number }) {
-  return <section className="side-card weak-card"><div className="section-heading"><p className="eyebrow">Weak cards</p><span className="count-badge">{count}</span></div><div className="weak-copy"><span className="weak-icon"><Icon name="weak" size={24} /></span><p>{count === 0 ? "No cards are currently marked Weak." : `${count} card${count === 1 ? "" : "s"} need extra attention in sheet study.`}</p></div>{count > 0 && <p className="supporting-copy">Choose Weak cards from a sheet&apos;s study setup when you are ready to practise them.</p>}</section>;
-}
-
-function RecentActivity({ sessions }: { sessions: DashboardRecentSessionItem[] }) {
+/**
+ * Scheduled review sheets
+ */
+function DueReviewSection({ sheets }: { sheets: DashboardSheetItem[] }) {
   return (
-    <section className="dashboard-section recent-section">
-      <DashboardSectionHeading title="Recent Activity" />
-      {sessions.length === 0 ? (
-        <EmptyState>
-          <span className="empty-state-icon" aria-hidden="true">
-            <Icon name="clock" size={24} />
-          </span>
-          <p>Completed study sessions and review rounds will appear here.</p>
-        </EmptyState>
+    <section id="today-review" className="mb-8">
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="text-base font-bold tracking-tight text-foreground">
+          Scheduled Review
+        </h2>
+        {sheets.length > 0 && <Badge variant="warning">{sheets.length} due</Badge>}
+      </div>
+
+      {sheets.length === 0 ? (
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-outline/60 bg-surface/50 p-8 text-center">
+          <CheckCircle2 className="h-8 w-8 text-green" />
+          <p className="mt-2 text-sm font-semibold text-foreground">
+            No reviews due right now!
+          </p>
+          <p className="text-xs text-muted">
+            You are completely up to date with your spaced repetition schedule.
+          </p>
+          <Link
+            href="/workbooks"
+            className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-primary hover:underline"
+          >
+            Browse learning sheets <ArrowRight className="h-3 w-3" />
+          </Link>
+        </div>
       ) : (
-        <div className="activity-list">
-          {sessions.map((session) => (
-            <RecentActivityItem key={session.id} session={session} />
+        <div className="divide-y divide-outline/30 rounded-2xl border border-outline/40 bg-surface shadow-xs">
+          {sheets.map((sheet) => (
+            <div
+              key={sheet.id}
+              className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between"
+            >
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted">{sheet.workbook_name}</span>
+                  <Badge variant="outline" className="text-[10px]">
+                    {formatLabel(sheet.priority)}
+                  </Badge>
+                </div>
+                <h3 className="mt-0.5 text-sm font-bold text-foreground">{sheet.name}</h3>
+                <p className="text-xs text-muted">
+                  Due {formatDate(sheet.next_review_at)} · {sheet.card_count} cards
+                </p>
+              </div>
+
+              <Link
+                href={`/sheets/${sheet.id}/study?mode=review`}
+                className={buttonVariants({ size: "sm", variant: "default", className: "w-full sm:w-auto" })}
+              >
+                Review now <Play className="h-3 w-3 fill-current" />
+              </Link>
+            </div>
           ))}
         </div>
       )}
@@ -290,30 +469,196 @@ function RecentActivity({ sessions }: { sessions: DashboardRecentSessionItem[] }
   );
 }
 
-function RecentActivityItem({ session }: { session: DashboardRecentSessionItem }) {
+/**
+ * Learn new sheets
+ */
+function LearnNewSection({ sheets }: { sheets: DashboardSheetItem[] }) {
+  if (sheets.length === 0) return null;
+
   return (
-    <Link
-      href={`/study-sessions/${session.id}/result`}
-      className="activity-item"
-      aria-label={`View result for ${session.sheet_name} session, scored ${session.mastery_score === null ? "unscored" : `${session.mastery_score}%`}`}
-    >
-      <span className="activity-icon" aria-hidden="true">
-        <Icon name="check" size={20} />
-      </span>
-      <span className="row-copy">
-        <strong>{session.sheet_name}</strong>
-        <span>
-          {session.workbook_name} · {sessionLabel(session.session_type)} · {formatDate(session.completed_at)}
-        </span>
-      </span>
-      <span className="activity-score">{session.mastery_score === null ? "View" : `${session.mastery_score}%`}</span>
-    </Link>
+    <section className="mb-8">
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="text-base font-bold tracking-tight text-foreground">
+          Learn New Words
+        </h2>
+        <Link
+          href="/workbooks"
+          className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
+        >
+          View all workbooks <ArrowRight className="h-3 w-3" />
+        </Link>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        {sheets.map((sheet) => (
+          <Link
+            key={sheet.id}
+            href={`/sheets/${sheet.id}/study`}
+            className="group flex flex-col justify-between rounded-2xl border border-outline/40 bg-surface p-4 transition-all hover:border-primary/40 hover:shadow-sm"
+          >
+            <div>
+              <span className="text-xs text-muted">{sheet.workbook_name}</span>
+              <h3 className="mt-0.5 text-sm font-bold text-foreground group-hover:text-primary">
+                {sheet.name}
+              </h3>
+            </div>
+            <div className="mt-3 flex items-center justify-between text-xs text-muted">
+              <span>{sheet.card_count} cards</span>
+              <span className="font-semibold text-primary group-hover:underline">
+                Start learning →
+              </span>
+            </div>
+          </Link>
+        ))}
+      </div>
+    </section>
   );
 }
 
-function DashboardSectionHeading({ title, count, action }: { title: string; count?: number; action?: React.ReactNode }) { return <div className="dashboard-section-heading"><h2>{title}{count !== undefined && <span className="heading-count">{count}</span>}</h2>{action}</div>; }
-function sessionLabel(type: DashboardActiveSessionItem["session_type"]): string { if (type === "srs_review") return "Scheduled review"; if (type === "weak_cards") return "Weak-card practice"; return "Flashcard study"; }
-function EmptyState({ children }: { children: React.ReactNode }) { return <div className="empty-state">{children}</div>; }
+/**
+ * Recent completed sessions
+ */
+function RecentActivitySection({ sessions }: { sessions: DashboardRecentSessionItem[] }) {
+  if (sessions.length === 0) return null;
+
+  return (
+    <section className="mb-8">
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="text-base font-bold tracking-tight text-foreground">
+          Recent Activity
+        </h2>
+      </div>
+
+      <div className="divide-y divide-outline/30 rounded-2xl border border-outline/40 bg-surface shadow-xs">
+        {sessions.map((session) => (
+          <Link
+            key={session.id}
+            href={`/study-sessions/${session.id}/result`}
+            className="flex items-center justify-between p-3.5 transition-colors hover:bg-surface-low sm:p-4"
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface-low text-muted">
+                <Clock className="h-4 w-4" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-foreground sm:text-sm">
+                  {session.sheet_name}
+                </p>
+                <p className="text-[11px] text-muted">
+                  {session.workbook_name} · {formatDate(session.completed_at)}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Badge
+                variant={
+                  session.mastery_score !== null && session.mastery_score >= 80
+                    ? "success"
+                    : "secondary"
+                }
+                className="text-xs font-bold"
+              >
+                {session.mastery_score === null ? "View" : `${session.mastery_score}%`}
+              </Badge>
+              <ArrowRight className="h-3.5 w-3.5 text-muted" />
+            </div>
+          </Link>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/**
+ * Clean Shortcuts Card for Quick Navigation
+ */
+function QuickShortcutsCard({ weakCount }: { weakCount: number }) {
+  const shortcuts = [
+    {
+      title: "Practice Exercises",
+      desc: "Quizzes, translation & recall",
+      href: "/workbooks",
+      icon: Sparkles,
+    },
+    {
+      title: "Read English News",
+      desc: "Bilingual reader & vocabulary",
+      href: "/reading",
+      icon: FileText,
+    },
+    {
+      title: "Weak Cards",
+      desc: `${weakCount} cards need attention`,
+      href: "/workbooks",
+      icon: AlertTriangle,
+    },
+    {
+      title: "Import Deck",
+      desc: "Upload from Excel or Anki",
+      href: "/import",
+      icon: Plus,
+    },
+  ];
+
+  return (
+    <Card className="border-outline/40 bg-surface">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted">
+          Quick Practice & Tools
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="grid gap-1 p-2 pt-0">
+        {shortcuts.map((item) => (
+          <Link
+            key={item.title}
+            href={item.href}
+            className="flex items-center gap-3 rounded-xl p-2.5 transition-colors hover:bg-surface-low"
+          >
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-surface-low text-muted">
+              <item.icon className="h-4 w-4" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-bold text-foreground">{item.title}</p>
+              <p className="truncate text-[11px] text-muted">{item.desc}</p>
+            </div>
+            <ArrowRight className="h-3.5 w-3.5 text-muted" />
+          </Link>
+        ))}
+      </CardContent>
+    </Card>
+  );
+}
+
+/**
+ * Weak Cards Summary Card
+ */
+function WeakCardsCard({ count }: { count: number }) {
+  return (
+    <Card className="border-error/25 bg-error-soft/30">
+      <CardContent className="p-4">
+        <div className="flex items-start gap-3">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-error" />
+          <div>
+            <p className="text-xs font-bold text-foreground">
+              {count} Weak {count === 1 ? "Card" : "Cards"}
+            </p>
+            <p className="mt-0.5 text-xs text-muted">
+              These cards need extra recall attention. Select Weak Cards in sheet study to practice.
+            </p>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function sessionLabel(type: DashboardActiveSessionItem["session_type"]): string {
+  if (type === "srs_review") return "Scheduled Review";
+  if (type === "weak_cards") return "Weak-card Practice";
+  return "Flashcard Study";
+}
+
 function DashboardLoading({ onRetry }: { onRetry?: () => void }) {
   const [showWarmup, setShowWarmup] = useState(false);
 
@@ -347,7 +692,13 @@ function DashboardLoading({ onRetry }: { onRetry?: () => void }) {
   );
 }
 
-function DashboardError({ message, onRetry }: { message: string; onRetry: () => Promise<void> }) {
+function DashboardError({
+  message,
+  onRetry,
+}: {
+  message: string;
+  onRetry: () => Promise<void>;
+}) {
   return (
     <main className="dashboard-page">
       <StartupWarmupCountdown
@@ -355,215 +706,12 @@ function DashboardError({ message, onRetry }: { message: string; onRetry: () => 
         initialSeconds={30}
         onReady={() => void onRetry()}
       />
-      <section role="alert" className="error-card" style={{ marginTop: 16 }}>
-        <p style={{ margin: "0 0 10px", fontSize: "0.88rem", color: "var(--muted)" }}>
-          Thông báo kết nối: {message}
-        </p>
-        <button type="button" className="button secondary" onClick={() => void onRetry()}>
+      <section role="alert" className="error-card mt-4 p-4 text-center">
+        <p className="mb-2 text-xs text-muted">Connection note: {message}</p>
+        <Button variant="secondary" size="sm" onClick={() => void onRetry()}>
           Thử tải lại Dashboard
-        </button>
+        </Button>
       </section>
     </main>
   );
 }
-
-function DashboardWelcomeHeader({ userName }: { userName: string }) {
-  const initial = userName.trim() ? userName.trim().charAt(0).toUpperCase() : "L";
-  return (
-    <div className="dashboard-welcome-header">
-      <div className="welcome-avatar-wrap">
-        <div className="welcome-avatar" aria-hidden="true" style={{ overflow: "hidden" }}>
-          <img
-            src="/avatar.jpg"
-            alt=""
-            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-            onError={(e) => {
-              (e.currentTarget as HTMLElement).style.display = "none";
-            }}
-          />
-        </div>
-        <div className="welcome-text">
-          <h2>Hello, {userName}! 👋</h2>
-          <p>Ready to learn something new?</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function DashboardGamifiedStatsBar({
-  streak,
-  cardsCount,
-  badgesCount,
-}: {
-  streak: number;
-  cardsCount: number;
-  badgesCount: number;
-}) {
-  return (
-    <div className="gamified-stats-bar" aria-label="Learning statistics">
-      <Link href="/calendar" className="gamified-stat-chip" title="View study calendar and streaks">
-        <span className="gamified-stat-icon" aria-hidden="true">🔥</span>
-        <div className="gamified-stat-data">
-          <strong>{streak}</strong>
-          <span>Day Streak</span>
-        </div>
-      </Link>
-      <div className="gamified-stat-chip" title="Total active and due learning cards">
-        <span className="gamified-stat-icon" aria-hidden="true">🪙</span>
-        <div className="gamified-stat-data">
-          <strong>{cardsCount}</strong>
-          <span>Cards</span>
-        </div>
-      </div>
-      <div className="gamified-stat-chip" title="Badges and learning achievements">
-        <span className="gamified-stat-icon" aria-hidden="true">🎖️</span>
-        <div className="gamified-stat-data">
-          <strong>{badgesCount}</strong>
-          <span>Badges</span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function FeaturedHeroCard({ dashboard }: { dashboard: DashboardSummary }) {
-  const router = useRouter();
-  const [isStarting, setIsStarting] = useState(false);
-  const [startError, setStartError] = useState<string | null>(null);
-  const activeSession = dashboard.active_sessions[0];
-  const dueSheet = dashboard.due_sheets[0];
-  const newSheet = dashboard.new_sheets[0];
-  const selectedSheet = dueSheet ?? newSheet;
-
-  const planTitle = activeSession ? activeSession.sheet.name : selectedSheet?.name ?? "Your queue is clear";
-  const planDescription = activeSession
-    ? `${activeSession.sheet.workbook_name} · Continue your ${activeSession.total_cards}-card session.`
-    : dueSheet
-      ? `${dueSheet.workbook_name} · ${dueSheet.card_count} cards are ready for scheduled review.`
-      : newSheet
-        ? `${newSheet.workbook_name} · Start with ${newSheet.card_count} new cards.`
-        : "No cards are due right now. Browse your workbooks to choose what to study.";
-
-  async function startDailyPractice() {
-    if (isStarting) return;
-    setStartError(null);
-    if (activeSession) {
-      router.push(`/study-sessions/${activeSession.id}`);
-      return;
-    }
-    if (!selectedSheet) {
-      router.push("/workbooks");
-      return;
-    }
-
-    setIsStarting(true);
-    try {
-      // Ưu tiên lượt ôn đến hạn trước để người học không bỏ lỡ lịch SRS; chỉ học sheet mới khi không còn lượt ôn.
-      const session = await createStudySession({
-        sheet_id: selectedSheet.id,
-        session_type: dueSheet ? "srs_review" : "new_learning",
-        direction: "en_to_vi",
-      });
-      router.push(`/study-sessions/${session.id}`);
-    } catch (caughtError) {
-      setStartError(caughtError instanceof Error ? caughtError.message : "Could not start today's practice. Please try again.");
-    } finally {
-      setIsStarting(false);
-    }
-  }
-
-  return (
-    <section className="featured-hero-card daily-practice-card" aria-label="Daily practice plan">
-      <span className="hero-pill-badge">Daily Practice</span>
-      <div className="hero-content-wrap">
-        <div className="hero-text-block">
-          <h2 className="hero-title">{planTitle}</h2>
-          <p className="hero-subtitle">{planDescription}</p>
-          {(activeSession || selectedSheet) && <div className="daily-practice-flow" aria-label="Today's practice steps">
-            <span data-current="true"><b>1</b> Flashcards</span>
-            <Icon name="arrow" size={16} />
-            <span><b>2</b> Practice Exercises</span>
-          </div>}
-          {dashboard.weak_card_count > 0 && <p className="daily-practice-weak-note">
-            {dashboard.weak_card_count} weak {dashboard.weak_card_count === 1 ? "card" : "cards"} need extra attention. Choose a sheet&apos;s Weak cards option for focused review.
-          </p>}
-          {startError && <p className="daily-practice-error" role="alert">{startError}</p>}
-          {selectedSheet || activeSession ? <button type="button" className="hero-cta-btn daily-practice-cta" onClick={() => void startDailyPractice()} disabled={isStarting} aria-busy={isStarting}>
-            {isStarting ? "Starting practice…" : activeSession ? "Continue today's practice" : dueSheet ? "Start review" : "Start today's practice"}
-            <Icon name={isStarting ? "clock" : "arrow"} size={18} />
-          </button> : <Link href="/workbooks" className="hero-cta-btn daily-practice-cta">
-            Browse Workbooks <Icon name="arrow" size={18} />
-          </Link>}
-        </div>
-        <div className="hero-mascot-badge" aria-hidden="true">
-          <Icon name="study" size={32} />
-        </div>
-      </div>
-      <p className="daily-practice-footer">After the flashcards, check what stayed in memory with Practice Exercises.</p>
-    </section>
-  );
-}
-function ExplorePastelGrid({ dashboard }: { dashboard: DashboardSummary }) {
-  return (
-    <section className="explore-section" aria-label="Explore learning modules">
-      <div className="explore-section-header">
-        <h3>✨ Let&apos;s Explore</h3>
-        <Link href="/workbooks" className="text-link" style={{ fontSize: "12px" }}>
-          View all <Icon name="arrow" size={15} />
-        </Link>
-      </div>
-      <div className="explore-grid">
-        <Link href="/workbooks" className="explore-tile pastel-blue" aria-label="Explore English SRS Workbooks">
-          <div className="explore-tile-icon-wrap" aria-hidden="true">📚</div>
-          <div className="explore-tile-info">
-            <strong>English SRS</strong>
-            <span>All Workbooks</span>
-          </div>
-        </Link>
-
-        <Link href="/workbooks" className="explore-tile pastel-peach" aria-label="Quick Recall fast practice">
-          <div className="explore-tile-icon-wrap" aria-hidden="true">⚡</div>
-          <div className="explore-tile-info">
-            <strong>Quick Recall</strong>
-            <span>Fast recall mode</span>
-          </div>
-        </Link>
-
-        <Link href="/calendar" className="explore-tile pastel-mint" aria-label="Study Calendar and streak">
-          <div className="explore-tile-icon-wrap" aria-hidden="true">📅</div>
-          <div className="explore-tile-info">
-            <strong>Calendar</strong>
-            <span>Check-in streak</span>
-          </div>
-        </Link>
-
-        <Link href="/import" className="explore-tile pastel-lavender" aria-label="Import deck from Excel or Anki">
-          <div className="explore-tile-icon-wrap" aria-hidden="true">📥</div>
-          <div className="explore-tile-info">
-            <strong>Import Deck</strong>
-            <span>Excel / Sheets</span>
-          </div>
-        </Link>
-
-        <Link href="/workbooks" className="explore-tile pastel-coral" aria-label={`Weak cards: ${dashboard.weak_card_count} cards`}>
-          <div className="explore-tile-icon-wrap" aria-hidden="true">🎯</div>
-          <div className="explore-tile-info">
-            <strong>Weak Cards</strong>
-            <span>{dashboard.weak_card_count} to fix</span>
-          </div>
-        </Link>
-
-        <Link href="#today-review" className="explore-tile pastel-yellow" aria-label={`Today's review: ${dashboard.due_sheets.length} due`}>
-          <div className="explore-tile-icon-wrap" aria-hidden="true">🏆</div>
-          <div className="explore-tile-info">
-            <strong>Quiz Review</strong>
-            <span>{dashboard.due_sheets.length} due</span>
-          </div>
-        </Link>
-      </div>
-    </section>
-  );
-}
-
-

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState, useSyncExternalStore, type CSSProperties, type KeyboardEvent } from "react";
+import { Sun, Moon, Feather, Sparkles, Compass, Palmtree, Check } from "lucide-react";
 import { setTheme, useTheme } from "@/hooks/use-theme";
 import { THEME_OPTIONS, type Theme } from "@/lib/theme";
 import { getJourneySoundsEnabled, getJourneySoundsServerSnapshot, setJourneySoundsEnabled, subscribeToJourneySoundPreference } from "@/lib/journey-sounds";
@@ -137,7 +138,9 @@ export function ThemeToggle({ compact = false }: { compact?: boolean }) {
             >
               <span className={styles.choiceSwatch} aria-hidden="true" />
               <span className={styles.choiceText}><strong>{option.label}</strong><small>{option.description}</small></span>
-              <span className={styles.choiceCheck} aria-hidden="true">{activeTheme === option.id ? "✓" : ""}</span>
+              <span className={styles.choiceCheck} aria-hidden="true">
+                {activeTheme === option.id ? <Check size={14} className="text-primary inline-block" /> : null}
+              </span>
             </button>
           ))}
           {activeTheme === "journey" && (
@@ -161,9 +164,10 @@ export function ThemeToggle({ compact = false }: { compact?: boolean }) {
 }
 
 function ThemeIcon({ theme }: { theme: Theme }) {
-  if (theme === "dark") return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20.5 14A8.5 8.5 0 0 1 10 3.5 8.5 8.5 0 1 0 20.5 14Z" /></svg>;
-  if (theme === "retro") return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 21V11m0 4c-4 0-6-2-6-6 4 0 6 2 6 6Zm0-3c0-4 2-6 6-6 0 4-2 6-6 6Z" /></svg>;
-  if (theme === "playful") return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m12 2 2.8 6.2 6.8.8-5 4.6 1.3 6.6-5.9-3.2-5.9 3.2 1.3-6.6-5-4.6 6.8-.8L12 2Z" /></svg>;
-  if (theme === "journey") return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19V6l8-3 8 3v13l-8 3-8-3Z" /><path d="m4 6 8 3 8-3M12 9v13" /></svg>;
-  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="4" /><path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></svg>;
+  if (theme === "dark") return <Moon size={18} aria-hidden="true" />;
+  if (theme === "retro") return <Feather size={18} aria-hidden="true" />;
+  if (theme === "playful") return <Sparkles size={18} aria-hidden="true" />;
+  if (theme === "journey") return <Compass size={18} aria-hidden="true" />;
+  if (theme === "island") return <Palmtree size={18} aria-hidden="true" />;
+  return <Sun size={18} aria-hidden="true" />;
 }
