@@ -92,3 +92,4 @@
    - Bật / tắt các thẻ Flashcard trong phần Học từ vựng (`/sheets/.../study`): nhấn nút phát âm, loa vẫn phát bình thường.
 2. **Trên máy tính (Chrome / Edge / Firefox / Safari Mac)**:
    - Mọi chức năng phát âm tiếp tục sử dụng Web Speech nội bộ với tốc độ phản hồi tức thì và chất lượng âm thanh cao cấp.
+
