@@ -75,3 +75,4 @@ Giải quyết triệt để vấn đề thiết bị iOS (iPhone, iPad) khi b�
 ## 7. Rủi ro & Edge cases
 - **Khác biệt âm lượng Ringer vs Media**: Trên iOS, khi gạt nút im lặng, thanh âm lượng chuông (Ringer) về 0. Nếu người dùng cũng đang để Media volume ở 0%, họ sẽ không nghe thấy gì dù kênh đã mở -> Cần có tooltip/hint nhắc nhở người dùng tăng volume media.
 - **Safari Autoplay Policy**: WebKit chỉ cho phép mở kênh âm thanh khi có tương tác người dùng (`touchstart`/`click`) -> Tất cả lệnh `play()` và `audioSession` phải nằm trong callback tương tác hoặc sau khi đã prime kênh từ cú chạm đầu tiên.
+
