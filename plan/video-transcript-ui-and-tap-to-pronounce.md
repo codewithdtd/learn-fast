@@ -105,3 +105,4 @@ Giải quyết 2 vấn đề lớn được người dùng phản ánh trong ph�
 - **Xung đột giữa Chạm từ và Tua video**: Khi click vào thẻ dòng (`segment`), video sẽ nhảy đến giây đó. Khi click vào từ, bắt buộc phải dùng `event.stopPropagation()` để việc phát âm từ không làm video bị nhảy thời gian không mong muốn.
 - **Xung đột giữa Chạm từ và Bôi đen cụm từ**: Nếu người dùng quét chọn 2 từ trở lên bằng chuột hoặc ngón tay (`window.getSelection()`), hệ thống sẽ ưu tiên tính năng dịch cụm từ ("Translate selection") thay vì phát âm 1 từ đơn lẻ.
 - **Trình duyệt không hỗ trợ Web Speech API**: Sử dụng fallback an toàn (vẫn tra từ và hiển thị phiên âm IPA bình thường mà không gây crash ứng dụng).
+

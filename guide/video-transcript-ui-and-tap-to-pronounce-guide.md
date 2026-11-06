@@ -83,3 +83,4 @@
      - Bấm vào biểu tượng loa nhỏ bên cạnh nút dịch ở từng dòng transcript để nghe đọc toàn bộ câu bằng giọng đọc rõ ràng, tốc độ vừa phải.
    - **Nghe phát âm cụm từ tự chọn**:
      - Quét chọn (bôi đen) 2-3 từ liên tiếp: thanh công cụ sẽ xuất hiện với 2 nút: **Listen** (nghe phát âm cả cụm) và **Translate selection** (dịch cụm từ).
+

@@ -18,8 +18,8 @@ function initializeTheme(storedTheme, shouldThrow = false) {
   return document.documentElement.dataset.theme;
 }
 
-test("theme registry contains five valid display modes and keeps Playful as default", () => {
-  assert.deepEqual(Array.from(THEMES), ["light", "dark", "retro", "playful", "journey"]);
+test("theme registry contains valid display modes and keeps Playful as default", () => {
+  assert.deepEqual(Array.from(THEMES), ["light", "dark", "retro", "playful", "journey", "island"]);
   assert.equal(DEFAULT_THEME, "playful");
   assert.ok(isTheme("journey"));
   assert.equal(isTheme("unsupported"), false);

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent, type MouseEvent } from "react";
 import { useAuth } from "@/context/auth-context";
 import { saveIELTSPracticePrefill } from "@/lib/ielts-practice-prefill";
-import { isSpeechSupported, speakEnglish } from "@/lib/speech";
+import { isSpeechSupported, speakEnglish, unlockIOSAudio } from "@/lib/speech";
 import {
   createDictationGapPrompt,
   evaluateDictationGaps,
@@ -351,6 +351,8 @@ export function VideoPractice() {
 
   function playPronunciation() {
     if (!lookup) return;
+    // Explicitly prime iOS media audio channel so playback works even with silent switch active
+    unlockIOSAudio();
     if (lookup.audio_url && typeof Audio !== "undefined") {
       const audio = new Audio(lookup.audio_url);
       void audio.play().catch(() => {
@@ -496,7 +498,7 @@ export function VideoPractice() {
         {mode === "shadowing" ? <>
           <p className={styles.eyebrow}>SHADOWING · TAP A LINE TO PLAY</p>
           <div className={styles.transcriptHelpBar}>
-            <p className={styles.captionNotice}>💡 <strong>Chạm vào bất kỳ từ nào</strong> để nghe phát âm ngay và tra từ điển. Nhấp vào dòng để tua video.</p>
+            <p className={styles.captionNotice}>💡 <strong>Chạm vào bất kỳ từ nào</strong> để nghe phát âm ngay và tra từ điển. Nhấp vào dòng để tua video. <span className={styles.iosTip}>· Hỗ trợ phát âm kể cả khi bật chế độ im lặng trên iOS (chỉ cần đảm bảo âm lượng Media bật).</span></p>
           </div>
           <div className={styles.segmentList} aria-label="Timestamped transcript">
             {transcript.segments.map((segment, index) => <div ref={(element) => {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useSyncExternalStore, useState } from "react";
-import { isSpeechSupported, speakEnglish } from "@/lib/speech";
+import { isSpeechSupported, speakEnglish, unlockIOSAudio } from "@/lib/speech";
 
 interface AudioPronounceButtonProps {
   text: string;
@@ -39,6 +39,9 @@ export function AudioPronounceButton({
     e.preventDefault();
 
     if (isPlaying) return;
+
+    // Explicitly prime iOS media audio channel on direct touch/click
+    unlockIOSAudio();
 
     speakEnglish(text, {
       rate,
