@@ -78,3 +78,4 @@ Thay đổi toàn bộ hệ thống Favicon, Apple Touch Icon và App Icon của
 
 ## 7. Rủi ro & Edge cases
 - **Cơ chế cache của iOS Safari**: Người dùng cần được nhắc nhở mở lại tab hoặc thêm query `?reload=1` nếu Safari trên máy họ chưa tự động purge cache icon cũ.
+

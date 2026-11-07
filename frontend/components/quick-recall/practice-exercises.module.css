@@ -16,6 +16,8 @@
 }
 
 .header { margin-bottom: 2rem; }
+.headerTop { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+.headerTop .back { margin-bottom: 0; }
 .back { display: inline-flex; align-items: center; max-width: 100%; gap: .5rem; min-height: 2.5rem; margin-bottom: 1rem; color: var(--muted); font-size: .875rem; font-weight: 600; text-decoration: none; transition: color 150ms; }
 .back:hover { color: var(--primary); }
 .eyebrow { margin: 0 0 .5rem; color: var(--primary); font-size: .75rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
@@ -107,6 +109,11 @@
   color: var(--muted);
   font-size: .85rem;
   margin-bottom: .5rem;
+}
+.roundModeWrap {
+  display: inline-flex;
+  align-items: center;
+  gap: .625rem;
 }
 .progress {
   display: block;
