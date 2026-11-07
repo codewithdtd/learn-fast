@@ -17,7 +17,9 @@ import {
 } from "lucide-react";
 
 import { AudioPronounceButton } from "@/components/shared/audio-pronounce-button";
+import { SoundToggleButton } from "@/components/shared/sound-toggle-button";
 import { playJourneyCompletionSound } from "@/lib/journey-sounds";
+import { playSuccessSound } from "@/lib/sound-effects";
 import {
   buildExerciseQuestions,
   createExercisePool,
@@ -110,14 +112,17 @@ export function PracticeExerciseSession({
 
   return (
     <section className={styles.root}>
-      {/* Header with Breadcrumb and Kicker */}
+      {/* Header with Breadcrumb, Sound Controls, and Kicker */}
       <header className={styles.header}>
-        <Link
-          href={backHref ?? `/sheets/${sheet.id}`}
-          className={styles.back}
-        >
-          <ArrowLeft className="h-4 w-4" /> Back to {sheet.name}
-        </Link>
+        <div className={styles.headerTop}>
+          <Link
+            href={backHref ?? `/sheets/${sheet.id}`}
+            className={styles.back}
+          >
+            <ArrowLeft className="h-4 w-4" /> Back to {sheet.name}
+          </Link>
+          <SoundToggleButton size="md" />
+        </div>
         <p className={styles.eyebrow}>Active Recall & Comprehension</p>
         <h1 ref={pageHeadingRef} tabIndex={-1}>
           Practice Exercises
@@ -343,6 +348,10 @@ function ExerciseRound({
       confidence_rating: 3,
     };
     setResponse(updated);
+
+    // Phát âm thanh chuông "ting" khích lệ khi người học chọn xem lại thành đúng
+    playSuccessSound();
+
     // Cập nhật câu trả lời này thành đúng trong danh sách responses để tính điểm chính xác
     setResponses((current) => {
       const exists = current.some((item) => item.question.cardId === question.cardId);
@@ -392,6 +401,11 @@ function ExerciseRound({
     );
     setResponse(graded);
     setWasOverridden(false);
+
+    // Business logic: Phát âm thanh chuông "ting" vui tai để khích lệ người học khi làm đúng câu hỏi
+    if (graded.is_correct) {
+      playSuccessSound();
+    }
   }
 
   if (isComplete) {
@@ -412,7 +426,10 @@ function ExerciseRound({
     <div className={styles.round}>
       {/* Progress Meta */}
       <div className={styles.roundMeta}>
-        <span className="font-semibold text-foreground">{mode?.title}</span>
+        <div className={styles.roundModeWrap}>
+          <span className="font-semibold text-foreground">{mode?.title}</span>
+          <SoundToggleButton size="sm" showLabel={false} />
+        </div>
         <span>
           Question <strong>{answeredCount + 1}</strong> of {totalQuestions}
         </span>

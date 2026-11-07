@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState, type FormEvent, type MouseEve
 import { useAuth } from "@/context/auth-context";
 import { saveIELTSPracticePrefill } from "@/lib/ielts-practice-prefill";
 import { isSpeechSupported, speakEnglish, unlockIOSAudio } from "@/lib/speech";
+import { playSuccessSound } from "@/lib/sound-effects";
 import {
   createDictationGapPrompt,
   evaluateDictationGaps,
@@ -403,6 +404,9 @@ export function VideoPractice() {
     setDictationResults((current) => ({ ...current, [index]: correct }));
     // Keep the score based on the first submission so retries help learning without inflating accuracy.
     setFirstTryResults((current) => current[index] === undefined ? { ...current, [index]: correct } : current);
+    if (correct) {
+      playSuccessSound();
+    }
   }
 
   if (!transcript) {

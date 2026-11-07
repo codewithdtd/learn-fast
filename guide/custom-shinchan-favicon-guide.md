@@ -81,3 +81,4 @@ Hệ thống đã:
   -> Safari nhận URL mới và tải ngay `apple-touch-icon.png?v=3` Shin-chan.
 - **Cách 2 (Thêm vào Màn hình chính / Add to Home Screen)**:
   Bấm nút **Chia sẻ (Share)** ở dưới cùng trình duyệt Safari -> Chọn **Thêm vào MH chính (Add to Home Screen)** -> Biểu tượng Shin-chan đội mũ gấu sẽ xuất hiện làm logo ứng dụng trên màn hình iPhone của bạn.
+
