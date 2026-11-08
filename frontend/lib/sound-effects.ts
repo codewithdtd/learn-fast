@@ -177,3 +177,4 @@ export function playSuccessSound(): void {
     // Graceful degradation: sound failure must never break core learning functionality
   }
 }
+

@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -7,7 +8,8 @@ class Settings(BaseSettings):
     """Read safe local-development settings from the backend environment."""
 
     api_host: str = "0.0.0.0"
-    api_port: int = 8000
+    # Auto-bind to Render's dynamically injected PORT environment variable (defaults to 8000 locally)
+    api_port: int = int(os.environ.get("PORT", "8000"))
     frontend_origin: str = "http://localhost:3000"
     database_url: str = "sqlite:///./data/app.db"
     
@@ -63,4 +65,3 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
-

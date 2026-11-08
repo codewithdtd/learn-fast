@@ -12,9 +12,19 @@ connect_args = (
     else {}
 )
 
-# SQLite connections are thread-bound by default, while FastAPI may execute
+# Business logic: SQLite connections are thread-bound by default, while FastAPI may execute
 # synchronous dependencies in a worker thread different from the request setup.
-engine = create_engine(settings.database_url, connect_args=connect_args)
+# For Cloud PostgreSQL (Render / Neon / Supabase), pool_pre_ping=True and pool_recycle=300
+# automatically refresh stale/dead sockets after container sleep, eliminating 500 connection errors.
+engine_kwargs: dict[str, object] = {
+    "connect_args": connect_args,
+}
+
+if not settings.database_url.startswith("sqlite"):
+    engine_kwargs["pool_pre_ping"] = True
+    engine_kwargs["pool_recycle"] = 300
+
+engine = create_engine(settings.database_url, **engine_kwargs)
 
 if settings.database_url.startswith("sqlite"):
     @event.listens_for(engine, "connect")

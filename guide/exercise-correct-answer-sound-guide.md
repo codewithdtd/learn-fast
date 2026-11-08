@@ -80,3 +80,4 @@
 3. **Nút Bật / Tắt Âm thanh**:
    - Ở góc trên màn hình bài tập có nút **Sound ON 🔊** / **Sound OFF 🔇**.
    - Bấm vào nút này để tắt âm thanh nếu muốn học trong yên lặng; trạng thái được lưu lại cho các lần học sau.
+
