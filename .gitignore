@@ -13,6 +13,14 @@ frontend/.next/
 .env
 backend/.env
 frontend/.env.local
+
+# Database files
+backend/data/*.db
+backend/data/*.db-wal
+backend/data/*.db-shm
+*.db
+*.sqlite
+*.sqlite3
 plan/
 guide/
 .codex/

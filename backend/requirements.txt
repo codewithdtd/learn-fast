@@ -6,9 +6,9 @@ pydantic-settings
 python-multipart
 openpyxl
 psycopg[binary]
+psycopg2-binary
 pytest
 httpx
 pyjwt[crypto]
-passlib[bcrypt]
 bcrypt
 email-validator

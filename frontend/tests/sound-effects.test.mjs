@@ -50,3 +50,4 @@ test("playSuccessSound executes safely in any environment without throwing", () 
     playSuccessSound();
   });
 });
+

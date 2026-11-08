@@ -77,3 +77,4 @@ Thêm hiệu ứng âm thanh phản hồi thính giác (auditory feedback / "tin
 ## 7. Rủi ro & Edge cases
 - **Chính sách Autoplay của trình duyệt**: Web Audio API yêu cầu tương tác người dùng để resume AudioContext. Do người dùng nhấn nút "Check answer", nhấn Enter hoặc chạm vào màn hình để nộp bài, cử chỉ này tự động cấp quyền phát âm thanh.
 - **Tần suất âm thanh**: Nếu người dùng làm bài liên tục rất nhanh, các nốt âm thanh cần tự ngắt kết nối (`oscillator.onended`) để tránh rò rỉ bộ nhớ AudioContext nodes.
+

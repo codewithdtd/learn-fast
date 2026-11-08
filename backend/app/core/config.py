@@ -1,5 +1,7 @@
+import os
 from pathlib import Path
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -7,9 +9,31 @@ class Settings(BaseSettings):
     """Read safe local-development settings from the backend environment."""
 
     api_host: str = "0.0.0.0"
-    api_port: int = 8000
+    # Auto-bind to Render's dynamically injected PORT environment variable (defaults to 8000 locally)
+    api_port: int = int(os.environ.get("PORT", "8000"))
     frontend_origin: str = "http://localhost:3000"
     database_url: str = "sqlite:///./data/app.db"
+
+    @field_validator("database_url", mode="before")
+    @classmethod
+    def normalize_database_url(cls, v: str) -> str:
+        """
+        Normalize cloud database URLs (Neon DB, Supabase, Render PostgreSQL, Heroku).
+
+        Why this is critical:
+        1. Neon and Heroku frequently provide URLs beginning with 'postgres://' or 'postgresql://'.
+        2. In SQLAlchemy 2.0, 'postgres://' raises NoSuchModuleError.
+        3. 'postgresql://' defaults to the psycopg2 driver, which will raise ModuleNotFoundError
+           if only psycopg (v3) is installed.
+        4. Converting to 'postgresql+psycopg://' routes directly to psycopg 3 with native SSL support.
+        """
+        if not v or not isinstance(v, str):
+            return v
+        if v.startswith("postgres://"):
+            return "postgresql+psycopg://" + v[len("postgres://"):]
+        if v.startswith("postgresql://") and not v.startswith("postgresql+"):
+            return "postgresql+psycopg://" + v[len("postgresql://"):]
+        return v
     
     # JWT authentication settings
     # In production, secret_key should be set via environment variable with high entropy
@@ -63,4 +87,3 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
-
