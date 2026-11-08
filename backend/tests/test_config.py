@@ -32,3 +32,21 @@ def test_mymemory_contact_email_is_loaded_from_environment(monkeypatch):
     monkeypatch.setenv("MYMEMORY_EMAIL", "learner@example.com")
 
     assert Settings(_env_file=None).mymemory_email == "learner@example.com"
+
+
+def test_neon_postgres_url_is_normalized_to_postgresql_plus_psycopg(monkeypatch):
+    """Ensure raw Neon connection URLs automatically map to psycopg3 dialect."""
+    # Test standard postgres:// scheme provided by Neon
+    monkeypatch.setenv("DATABASE_URL", "postgres://user:pass@ep-cool-123.neon.tech/neondb?sslmode=require")
+    settings = Settings(_env_file=None)
+    assert settings.database_url == "postgresql+psycopg://user:pass@ep-cool-123.neon.tech/neondb?sslmode=require"
+
+    # Test postgresql:// scheme provided by Neon
+    monkeypatch.setenv("DATABASE_URL", "postgresql://user:pass@ep-cool-123.neon.tech/neondb?sslmode=require")
+    settings = Settings(_env_file=None)
+    assert settings.database_url == "postgresql+psycopg://user:pass@ep-cool-123.neon.tech/neondb?sslmode=require"
+
+    # Test existing sqlite:// URL remains intact
+    monkeypatch.setenv("DATABASE_URL", "sqlite:///./data/app.db")
+    settings = Settings(_env_file=None)
+    assert settings.database_url == "sqlite:///./data/app.db"

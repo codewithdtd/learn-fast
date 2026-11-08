@@ -13,16 +13,19 @@ if settings.database_url.startswith("sqlite"):
     if raw_path and not raw_path.startswith(":memory:"):
         Path(raw_path).resolve().parent.mkdir(parents=True, exist_ok=True)
 
-connect_args = (
+connect_args: dict[str, object] = (
     {"check_same_thread": False}
     if settings.database_url.startswith("sqlite")
-    else {}
+    else {"connect_timeout": 15}
 )
 
 # Business logic: SQLite connections are thread-bound by default, while FastAPI may execute
 # synchronous dependencies in a worker thread different from the request setup.
-# For Cloud PostgreSQL (Render / Neon / Supabase), pool_pre_ping=True and pool_recycle=300
-# automatically refresh stale/dead sockets after container sleep, eliminating 500 connection errors.
+# For Cloud Serverless PostgreSQL (Neon DB, Supabase, Render), compute autosuspends after 5 min.
+# - pool_pre_ping=True sends an automatic test probe before each transaction, silently discarding
+#   dead sockets left behind after Neon sleep and eliminating 500 OperationalErrors.
+# - pool_recycle=300 actively recycles sockets before the 5-minute idle cutoff.
+# - connect_timeout=15 allows sufficient grace period for Neon compute to wake up without timing out.
 engine_kwargs: dict[str, object] = {
     "connect_args": connect_args,
 }
