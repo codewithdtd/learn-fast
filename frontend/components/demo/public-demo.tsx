@@ -39,7 +39,7 @@ function DemoFlashcards() {
   const card = DEMO_CARDS[index];
   function reset() { setIndex(0); setFlipped(false); setAnswers([]); }
   function answer(result: StudyAnswerResult) {
-    if (!flipped || !card) return;
+    if (!card) return;
     // Đây là lượt thử cục bộ: không gọi API session/rating, không thay đổi bộ mẫu hoặc SRS.
     setAnswers((current) => current.length === index ? [...current, result] : current);
     setFlipped(false); setIndex(index + 1);
@@ -48,8 +48,8 @@ function DemoFlashcards() {
   const sessionCard: StudySessionCard = { id: card.id, flashcard_id: card.id, direction: "en_to_vi", attempt_count: 0,
     again_count: 0, remembered: false, first_try_correct: false, last_answered_at: null, flashcard: card };
   return <section className={styles.flashcards} aria-label="Sample flashcard practice"><p className={styles.progress} role="status">Card {index + 1} of {DEMO_CARDS.length}</p>
-    <Flashcard key={card.id} sessionCard={sessionCard} direction="en_to_vi" isFlipped={flipped} isDisabled={false} canSwipe={flipped} answerResult={null} onFlip={() => setFlipped(!flipped)} onSwipe={answer} />
+    <Flashcard key={card.id} sessionCard={sessionCard} direction="en_to_vi" isFlipped={flipped} isDisabled={false} canSwipe={true} answerResult={null} onFlip={() => setFlipped(!flipped)} onSwipe={answer} />
     <div className={styles.actions}>{flipped ? <><button className={styles.secondary} onClick={() => answer("again")}>Again</button><button className={styles.primary} onClick={() => answer("remembered")}>Remembered</button></> : <button className={styles.primary} onClick={() => setFlipped(true)}>Reveal answer</button>}</div>
-    <p className={styles.notice}>Flip the card, then choose Again or Remembered. On touch screens, swipe left for Again or right for Remembered.</p>
+    <p className={styles.notice}>Tap to flip, or swipe left for Again and right for Remembered (works on both sides of the card).</p>
   </section>;
 }

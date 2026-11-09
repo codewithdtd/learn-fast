@@ -1,7 +1,14 @@
-import { useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 
 import { Icon } from "@/components/layout/app-shell";
 import { AudioPronounceButton } from "@/components/shared/audio-pronounce-button";
+import { computeSwipeDrag } from "@/lib/flashcard-gesture";
 import type { StudyAnswerDirection, StudyAnswerResult, StudySessionCard } from "@/services/api";
 
 type FlashcardProps = {
@@ -15,16 +22,45 @@ type FlashcardProps = {
   onSwipe: (result: StudyAnswerResult) => void;
 };
 
-const SWIPE_THRESHOLD = 72;
-const SWIPE_INTENT_THRESHOLD = 12;
-const SWIPE_DIRECTION_RATIO = 1.25;
+export function Flashcard({
+  sessionCard,
+  direction,
+  isFlipped,
+  isDisabled,
+  canSwipe,
+  answerResult,
+  onFlip,
+  onSwipe,
+}: FlashcardProps) {
+  // Quản lý trạng thái cử chỉ kéo chạm (touch / pointer gesture)
+  const gestureRef = useRef<{
+    pointerId: number;
+    startX: number;
+    startY: number;
+    hasCaptured: boolean;
+  } | null>(null);
 
-export function Flashcard({ sessionCard, direction, isFlipped, isDisabled, canSwipe, answerResult, onFlip, onSwipe }: FlashcardProps) {
-  const gesture = useRef<{ pointerId: number; startX: number; startY: number; movedHorizontally: boolean } | null>(null);
   const suppressClick = useRef(false);
   const [swipeOffset, setSwipeOffset] = useState(0);
-  const [swipePreview, setSwipePreview] = useState<StudyAnswerResult | null>(null);
+  const [swipeRotation, setSwipeRotation] = useState(0);
+  const [swipePreview, setSwipePreview] = useState<{
+    type: StudyAnswerResult;
+    opacity: number;
+    scale: number;
+  } | null>(null);
   const [isSwipeDragging, setIsSwipeDragging] = useState(false);
+  const [flyOutDirection, setFlyOutDirection] = useState<"left" | "right" | null>(null);
+
+  const cardId = sessionCard.id;
+  // Khi chuyển sang thẻ mới (hoặc reset vòng học), làm mới toàn bộ vị trí transform và hiệu ứng bay
+  useEffect(() => {
+    setSwipeOffset(0);
+    setSwipeRotation(0);
+    setSwipePreview(null);
+    setIsSwipeDragging(false);
+    setFlyOutDirection(null);
+  }, [cardId]);
+
   const { flashcard } = sessionCard;
   const isEnglishPrompt = direction === "en_to_vi";
   const question = isEnglishPrompt ? flashcard.phrase : flashcard.meaning;
@@ -39,58 +75,159 @@ export function Flashcard({ sessionCard, direction, isFlipped, isDisabled, canSw
   }
 
   function handlePointerDown(event: ReactPointerEvent<HTMLElement>) {
-    if (!canSwipe || (event.pointerType !== "touch" && event.pointerType !== "pen") || !event.isPrimary) return;
+    // Không nhận cử chỉ khi tương tác đang bị khóa
+    if (!canSwipe || isDisabled) return;
+
+    // Không kích hoạt kéo khi người dùng bấm vào các nút tương tác bên trong (nút phát âm, link...)
     const target = event.target;
-    if (target instanceof Element && target.closest("button, a, input, textarea, select, [contenteditable='true']")) return;
+    if (target instanceof Element && target.closest("button, a, input, textarea, select, [contenteditable='true']")) {
+      return;
+    }
+
+    // Với chuột chỉ nhận chuột trái (button 0), với touch và pen luôn nhận
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+
     suppressClick.current = false;
-    gesture.current = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, movedHorizontally: false };
-    event.currentTarget.setPointerCapture(event.pointerId);
+    gestureRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      hasCaptured: false,
+    };
   }
 
   function handlePointerMove(event: ReactPointerEvent<HTMLElement>) {
-    const active = gesture.current;
-    if (!active || active.pointerId !== event.pointerId) return;
-    const deltaX = event.clientX - active.startX;
-    const deltaY = event.clientY - active.startY;
-    if (Math.abs(deltaX) > SWIPE_INTENT_THRESHOLD && Math.abs(deltaX) > Math.abs(deltaY) * SWIPE_DIRECTION_RATIO) active.movedHorizontally = true;
-    if (!active.movedHorizontally || !isFlipped) return;
-    setIsSwipeDragging(true);
-    setSwipeOffset(Math.max(-120, Math.min(120, deltaX)));
-    setSwipePreview(deltaX < 0 ? "again" : "remembered");
-  }
+    const gesture = gestureRef.current;
+    if (!gesture || gesture.pointerId !== event.pointerId) return;
 
-  function resetGesture() {
-    gesture.current = null;
-    setIsSwipeDragging(false);
-    setSwipeOffset(0);
-    setSwipePreview(null);
+    const deltaX = event.clientX - gesture.startX;
+    const deltaY = event.clientY - gesture.startY;
+
+    const { isIntent, offset, rotation, previewProgress, resultType } = computeSwipeDrag(deltaX, deltaY);
+
+    if (!gesture.hasCaptured) {
+      if (isIntent) {
+        gesture.hasCaptured = true;
+        suppressClick.current = true;
+        setIsSwipeDragging(true);
+        try {
+          event.currentTarget.setPointerCapture(event.pointerId);
+        } catch {
+          // Bỏ qua nếu trình duyệt không hỗ trợ capture
+        }
+      } else {
+        // Chưa rõ ý định hoặc đang cuộn trang dọc, nhường cho trình duyệt cuộn mượt mà
+        return;
+      }
+    }
+
+    // Cập nhật vị trí thẻ theo thời gian thực (bám sát ngón tay 1:1 và xoay góc nhẹ tự nhiên)
+    setSwipeOffset(offset);
+    setSwipeRotation(rotation);
+
+    if (previewProgress > 0.05) {
+      setSwipePreview({
+        type: resultType,
+        opacity: previewProgress,
+        scale: 0.85 + 0.15 * previewProgress,
+      });
+    } else {
+      setSwipePreview(null);
+    }
   }
 
   function handlePointerUp(event: ReactPointerEvent<HTMLElement>) {
-    const active = gesture.current;
-    if (!active || active.pointerId !== event.pointerId) return;
-    const deltaX = event.clientX - active.startX;
-    const deltaY = event.clientY - active.startY;
-    // Chỉ chấm sau khi mở đáp án và cử chỉ đủ rõ theo chiều ngang để tránh nhầm thao tác cuộn trang.
-    const isSwipe = active.movedHorizontally && Math.abs(deltaX) >= SWIPE_THRESHOLD && Math.abs(deltaX) > Math.abs(deltaY) * SWIPE_DIRECTION_RATIO;
-    suppressClick.current = active.movedHorizontally;
-    resetGesture();
-    // Giữ cùng kết quả SRS với hai nút hiện tại: kéo trái là quên, kéo phải là nhớ.
-    if (isSwipe && canSwipe && isFlipped && !isDisabled) onSwipe(deltaX < 0 ? "again" : "remembered");
+    const gesture = gestureRef.current;
+    if (!gesture || gesture.pointerId !== event.pointerId) return;
+
+    const deltaX = event.clientX - gesture.startX;
+    const deltaY = event.clientY - gesture.startY;
+    const wasDragging = gesture.hasCaptured;
+
+    if (gesture.hasCaptured) {
+      try {
+        if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+          event.currentTarget.releasePointerCapture(event.pointerId);
+        }
+      } catch {
+        // Bỏ qua lỗi release capture
+      }
+    }
+
+    gestureRef.current = null;
+    setIsSwipeDragging(false);
+
+    if (wasDragging) {
+      suppressClick.current = true;
+      const { isCommitted, resultType, offset } = computeSwipeDrag(deltaX, deltaY);
+
+      // Cho phép quẹt ghi nhận đáp án ở cả mặt trước lẫn mặt sau khi vượt ngưỡng cam kết
+      if (isCommitted && canSwipe && !isDisabled) {
+        const flyDir = offset < 0 ? "left" : "right";
+        setFlyOutDirection(flyDir);
+        setSwipePreview(null);
+        onSwipe(resultType);
+        return;
+      }
+    }
+
+    // Nếu nhả tay khi chưa đủ ngưỡng, kích hoạt đàn hồi (spring back) mềm mại về vị trí ban đầu
+    setSwipeOffset(0);
+    setSwipeRotation(0);
+    setSwipePreview(null);
   }
 
-  function handlePointerCancel() {
+  function handlePointerCancel(event: ReactPointerEvent<HTMLElement>) {
+    const gesture = gestureRef.current;
+    if (gesture && gesture.pointerId === event.pointerId) {
+      if (gesture.hasCaptured) {
+        try {
+          if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+            event.currentTarget.releasePointerCapture(event.pointerId);
+          }
+        } catch {
+          // Bỏ qua
+        }
+      }
+    }
+    gestureRef.current = null;
     suppressClick.current = true;
-    resetGesture();
+    setIsSwipeDragging(false);
+    setSwipeOffset(0);
+    setSwipeRotation(0);
+    setSwipePreview(null);
   }
+
+  // Tạo transform động: kết hợp độ dời kéo ngang và góc xoay vật lý
+  const dynamicTransform = flyOutDirection
+    ? undefined // Để CSS xử lý class .is-fly-out-left / .is-fly-out-right
+    : swipeOffset !== 0 || swipeRotation !== 0
+      ? `translate3d(${swipeOffset}px, 0, 0) rotate(${swipeRotation}deg)`
+      : undefined;
+
+  const glowClass = swipePreview
+    ? swipePreview.type === "again"
+      ? " swipe-glow-again"
+      : " swipe-glow-remembered"
+    : "";
+
+  const flyClass = flyOutDirection === "left"
+    ? " is-fly-out-left"
+    : flyOutDirection === "right"
+      ? " is-fly-out-right"
+      : "";
 
   return (
     <article
-      className={`study-flashcard${isFlipped ? " is-flipped" : ""}${isDisabled ? " is-disabled" : ""}${isSwipeDragging ? " is-swipe-dragging" : ""}`}
-      style={{ transform: swipeOffset ? `translateX(${swipeOffset}px)` : undefined }}
+      className={`study-flashcard${isFlipped ? " is-flipped" : ""}${isDisabled ? " is-disabled" : ""}${isSwipeDragging ? " is-swipe-dragging" : ""}${glowClass}${flyClass}`}
+      style={{ transform: dynamicTransform }}
       role="button"
       tabIndex={isDisabled ? -1 : 0}
-      aria-label={isFlipped ? "Hide answer. Swipe left if forgotten or right if remembered." : "Show answer"}
+      aria-label={
+        isFlipped
+          ? "Hide answer. Swipe left for Again or right for Remembered."
+          : "Show answer. Swipe left for Again or right for Remembered."
+      }
       aria-pressed={isFlipped}
       aria-disabled={isDisabled}
       onPointerDown={handlePointerDown}
@@ -98,16 +235,40 @@ export function Flashcard({ sessionCard, direction, isFlipped, isDisabled, canSw
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerCancel}
       onClick={(event) => {
-        if (suppressClick.current) { suppressClick.current = false; return; }
-        if (event.target instanceof Element && event.target.closest("button, a, input, textarea, select, [contenteditable='true']")) return;
+        // Ngăn chặn sự kiện click khi vừa hoàn tất cử chỉ quẹt kéo
+        if (suppressClick.current) {
+          suppressClick.current = false;
+          return;
+        }
+        const target = event.target;
+        if (target instanceof Element && target.closest("button, a, input, textarea, select, [contenteditable='true']")) {
+          return;
+        }
         if (!isDisabled) onFlip();
       }}
       onKeyDown={handleKeyDown}
     >
-      {swipePreview && <span className={`study-swipe-preview ${swipePreview}`} aria-hidden="true">{swipePreview === "again" ? "Forgot" : "Remembered"}</span>}
+      {/* Con dấu hiển thị trạng thái quẹt nổi trực quan */}
+      {swipePreview && (
+        <span
+          className={`study-swipe-preview ${swipePreview.type}`}
+          style={{
+            opacity: swipePreview.opacity,
+            transform: `rotate(${swipePreview.type === "again" ? -10 : 10}deg) scale(${swipePreview.scale})`,
+          }}
+          aria-hidden="true"
+        >
+          {swipePreview.type === "again" ? "Forgot" : "Remembered"}
+        </span>
+      )}
+
       <div className="study-flashcard-inner">
+        {/* Mặt trước của thẻ (Câu hỏi) - Hỗ trợ quẹt và chạm lật */}
         <div className="study-flashcard-face study-flashcard-front" aria-hidden={isFlipped}>
-          <div className="study-flashcard-topline"><span>{directionLabel}</span><AnswerStatus result={answerResult} /></div>
+          <div className="study-flashcard-topline">
+            <span>{directionLabel}</span>
+            <AnswerStatus result={answerResult} />
+          </div>
           <div className="study-flashcard-body">
             <div className="study-flashcard-face-content">
               <p className="study-flashcard-label">{promptLabel}</p>
@@ -117,13 +278,19 @@ export function Flashcard({ sessionCard, direction, isFlipped, isDisabled, canSw
                   <AudioPronounceButton text={question} size="lg" title="Listen to question" />
                 )}
               </div>
-              <p className="study-flashcard-hint"><Icon name="eye" size={18} /> Click the card to reveal the answer.</p>
+              <p className="study-flashcard-hint">
+                <Icon name="eye" size={18} /> Click the card to reveal the answer.
+              </p>
             </div>
           </div>
         </div>
 
+        {/* Mặt sau của thẻ (Đáp án) - Hỗ trợ quẹt và chạm lật */}
         <div className="study-flashcard-face study-flashcard-back" aria-hidden={!isFlipped}>
-          <div className="study-flashcard-topline"><span>{directionLabel}</span><AnswerStatus result={answerResult} /></div>
+          <div className="study-flashcard-topline">
+            <span>{directionLabel}</span>
+            <AnswerStatus result={answerResult} />
+          </div>
           <div className="study-flashcard-body">
             <div className="study-flashcard-face-content">
               <p className="study-flashcard-label">Answer</p>
@@ -137,11 +304,19 @@ export function Flashcard({ sessionCard, direction, isFlipped, isDisabled, canSw
                 <div className="study-example">
                   {flashcard.example_en && (
                     <div className="study-example-row">
-                      <p><strong>Example EN</strong>{flashcard.example_en}</p>
+                      <p>
+                        <strong>Example EN</strong>
+                        {flashcard.example_en}
+                      </p>
                       <AudioPronounceButton text={flashcard.example_en} size="sm" title="Listen to example" />
                     </div>
                   )}
-                  {flashcard.example_vi && <p><strong>Example VI</strong>{flashcard.example_vi}</p>}
+                  {flashcard.example_vi && (
+                    <p>
+                      <strong>Example VI</strong>
+                      {flashcard.example_vi}
+                    </p>
+                  )}
                 </div>
               )}
             </div>
@@ -154,5 +329,9 @@ export function Flashcard({ sessionCard, direction, isFlipped, isDisabled, canSw
 
 function AnswerStatus({ result }: { result: StudyAnswerResult | null }) {
   if (!result) return <strong className="study-flashcard-answer-status unanswered">Not answered</strong>;
-  return <strong className={`study-flashcard-answer-status ${result}`}>{result === "again" ? "Marked Again" : "Remembered"}</strong>;
+  return (
+    <strong className={`study-flashcard-answer-status ${result}`}>
+      {result === "again" ? "Marked Again" : "Remembered"}
+    </strong>
+  );
 }
