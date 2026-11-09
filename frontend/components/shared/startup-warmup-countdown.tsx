@@ -88,6 +88,15 @@ export function StartupWarmupCountdown({
 
   const onReadyRef = useRef(onReady);
   onReadyRef.current = onReady;
+  const isPingingRef = useRef<boolean>(false);
+  const isMountedRef = useRef<boolean>(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   // 1. Quản lý đồng hồ đếm ngược từng giây
   useEffect(() => {
@@ -106,14 +115,16 @@ export function StartupWarmupCountdown({
     return () => clearInterval(tipTimer);
   }, []);
 
-  // 3. Hàm thăm dò sức khỏe backend (health probe)
+  // 3. Hàm thăm dò sức khỏe backend (health probe) kiên nhẫn chờ Render Cold Start
   const probeServer = useCallback(async () => {
+    if (isPingingRef.current || isAwake) return;
+    isPingingRef.current = true;
     setIsPinging(true);
     try {
-      const ok = await pingBackendHealth(3500);
-      if (ok) {
+      // Cho phép giữ kết nối lên tới 65s để Render proxy hoàn tất khởi động container tự nhiên
+      const ok = await pingBackendHealth(65000);
+      if (ok && isMountedRef.current) {
         setIsAwake(true);
-        // Chờ 600ms hiệu ứng thành công trước khi gọi callback chuyển tiếp
         setTimeout(() => {
           if (onReadyRef.current) {
             onReadyRef.current();
@@ -121,25 +132,32 @@ export function StartupWarmupCountdown({
         }, 650);
       }
     } finally {
-      setIsPinging(false);
+      isPingingRef.current = false;
+      if (isMountedRef.current) {
+        setIsPinging(false);
+      }
     }
-  }, []);
+  }, [isAwake]);
 
-  // 4. Polling liên tục mỗi 2.8 giây để phát hiện ngay lập tức khi máy chủ Render vừa thức
+  // 4. Khởi động 1 probe dài duy nhất ngay khi component mount, tự động thử lại nếu đứt kết nối
   useEffect(() => {
     if (isAwake) return;
-    // Bắt đầu probe ngay sau 800ms
-    const initialProbe = setTimeout(() => {
-      void probeServer();
-    }, 800);
+    let timer: ReturnType<typeof setTimeout> | null = null;
 
-    const interval = setInterval(() => {
-      void probeServer();
-    }, 2800);
+    const runProbeCycle = async () => {
+      if (isAwake || !isMountedRef.current) return;
+      await probeServer();
+      // Nếu probe trước kết thúc mà server vẫn chưa thức (ví dụ timeout mạng sau 65s),
+      // đợi 2.5s rồi mở chu kỳ thăm dò mới
+      if (!isAwake && isMountedRef.current) {
+        timer = setTimeout(runProbeCycle, 2500);
+      }
+    };
+
+    void runProbeCycle();
 
     return () => {
-      clearTimeout(initialProbe);
-      clearInterval(interval);
+      if (timer) clearTimeout(timer);
     };
   }, [isAwake, probeServer]);
 
@@ -151,6 +169,7 @@ export function StartupWarmupCountdown({
   // Lấy thông điệp tiến trình tương ứng với mốc thời gian
   const getStageMessage = () => {
     if (isAwake) return "✨ Máy chủ đã sẵn sàng! Đang vào ứng dụng...";
+    if (secondsLeft === 0) return "⏳ Máy chủ đang nạp dữ liệu cuối cùng, vui lòng đợi thêm chút...";
     const elapsed = initialSeconds - secondsLeft;
     if (elapsed < 8) return "☕ Đang gửi tín hiệu kích hoạt máy chủ Render...";
     if (elapsed < 20) return "🍃 Khởi động dịch vụ FastAPI & kết nối PostgreSQL...";
@@ -269,8 +288,21 @@ export function StartupWarmupCountdown({
             onClick={() => void probeServer()}
             disabled={isPinging || isAwake}
           >
-            {isPinging ? "🔄 Đang kiểm tra..." : "⚡ Thử kết nối ngay"}
+            {isPinging ? "🔄 Đang kết nối..." : "⚡ Thử kết nối ngay"}
           </button>
+          {secondsLeft === 0 && !isAwake && (
+            <button
+              type="button"
+              className={styles.pingButton}
+              onClick={() => {
+                if (typeof window !== "undefined") {
+                  window.location.reload();
+                }
+              }}
+            >
+              🔄 Tải lại trang
+            </button>
+          )}
           <button
             type="button"
             className={styles.infoToggle}

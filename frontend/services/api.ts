@@ -383,11 +383,11 @@ const apiBaseUrl =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
 
 /**
- * Kiểm tra nhanh trạng thái sẵn sàng của backend (Cold Start probe).
+ * Kiểm tra trạng thái sẵn sàng của backend khi khởi động lại từ chế độ ngủ (Cold Start probe).
  * Endpoint /api/v1/health trả về HTTP 200 text/plain "ok".
- * Trả về true nếu server đã phản hồi HTTP 200, false nếu server đang ngủ, timeout hoặc lỗi kết nối.
+ * Timeout mặc định 65,000ms (65 giây) để giữ kết nối với Render proxy cho đến khi container thức dậy.
  */
-export async function pingBackendHealth(timeoutMs = 5000): Promise<boolean> {
+export async function pingBackendHealth(timeoutMs = 65000): Promise<boolean> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {

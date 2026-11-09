@@ -63,3 +63,13 @@ app = CORSMiddleware(
     allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH"],
     allow_headers=["Content-Type", "Authorization", "X-Guest-Token"],
 )
+
+
+if __name__ == "__main__":
+    import os
+    import uvicorn
+
+    # Automatically bind to 0.0.0.0 and the dynamically injected PORT on cloud environments (Render)
+    port = int(os.environ.get("PORT", "8000"))
+    uvicorn.run("app.main:app", host="0.0.0.0", port=port, workers=1)
+

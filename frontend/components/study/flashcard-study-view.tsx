@@ -283,7 +283,7 @@ export function FlashcardStudyView({ sessionId }: FlashcardStudyViewProps) {
                   <kbd className="zen-kbd">Space</kbd> Flip · <kbd className="zen-kbd">1</kbd> Again ·{" "}
                   <kbd className="zen-kbd">2</kbd> Remembered · <kbd className="zen-kbd">A</kbd> Audio
                 </span>
-                <span className="study-swipe-hint">Tap card or button below to flip</span>
+                <span className="study-swipe-hint">Swipe left for Again, right for Remembered (both sides) · Tap to flip</span>
               </div>
 
               {/* Central Flashcard Component */}
