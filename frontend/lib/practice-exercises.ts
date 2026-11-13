@@ -212,38 +212,36 @@ export function summarizeExercise(responses: readonly ExerciseResponse[]) {
 }
 
 /**
- * Trích xuất câu tiếng Anh hoặc cụm từ tiếng Anh đại diện cho câu hỏi bài tập
+ * Trích xuất từ / cụm từ tiếng Anh mục tiêu đang học của câu hỏi bài tập
  * để hệ thống tự động phát âm khi người học hoàn thành câu trả lời đúng.
+ * 
+ * Quy định nghiệp vụ quan trọng:
+ * - Chỉ đọc từ / cụm từ tiếng Anh mục tiêu đang học (target English phrase/word).
+ * - Tuyệt đối KHÔNG đọc câu ví dụ (example_en) để tránh làm loãng trọng tâm từ vựng.
  */
 export function getExerciseEnglishSentence(
   question: ExerciseQuestion,
   settings?: Pick<ExerciseSettings, "direction" | "mode">,
 ): string {
-  // 1. Chế độ Cloze (Điền từ vào câu): Luôn đọc câu ví dụ tiếng Anh đầy đủ
-  if (settings?.mode === "cloze" || question.prompt.includes("____")) {
-    if (question.example_en && question.example_en.trim().length > 0) {
-      return question.example_en.trim();
-    }
-    // Nếu thiếu example_en, ghép từ cần điền vào chỗ trống ____
-    return question.prompt.replaceAll("____", question.answer).trim();
-  }
-
-  // 2. Chế độ dịch / Trắc nghiệm: Nếu thẻ từ vựng có sẵn câu ví dụ tiếng Anh, đọc câu ví dụ để người học nghe ngữ cảnh hoàn chỉnh
-  if (question.example_en && question.example_en.trim().length > 0) {
-    return question.example_en.trim();
-  }
-
-  // 3. Nếu không có câu ví dụ, đọc cụm từ tiếng Anh gốc của thẻ
+  // 1. Ưu tiên cao nhất: Cụm từ tiếng Anh mục tiêu đang học của thẻ
   if (question.phrase && question.phrase.trim().length > 0) {
     return question.phrase.trim();
   }
 
-  // 4. Nếu là chiều dịch Việt -> Anh, đáp án chính là tiếng Anh
+  // 2. Nếu là chiều dịch Việt -> Anh, đáp án chính là cụm từ tiếng Anh
   if (settings?.direction === "vi_to_en") {
     return question.answer.trim();
   }
 
-  // 5. Mặc định: prompt câu hỏi tiếng Anh
+  // 3. Nếu là chế độ Cloze (điền từ), đáp án cần điền chính là cụm từ tiếng Anh
+  if (settings?.mode === "cloze" || question.prompt.includes("____")) {
+    return question.answer.trim();
+  }
+
+  // 4. Mặc định: prompt câu hỏi tiếng Anh (chiều Anh -> Việt)
   return question.prompt.trim();
 }
+
+export const getExerciseEnglishPhrase = getExerciseEnglishSentence;
+
 

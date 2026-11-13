@@ -130,26 +130,30 @@ test("summary scores actual answers rather than requested card count", () => {
   assert.deepEqual(summarizeExercise([]), { correct: 0, total: 0, percentage: 0 });
 });
 
-test("getExerciseEnglishSentence extracts the natural English sentence or phrase across modes", () => {
-  // 1. Cloze mode: extracts full English example sentence
+test("getExerciseEnglishSentence extracts the target English phrase and never the example sentence", () => {
   const clozeCard = card(10, "take off", "cất cánh", { example_en: "The plane will take off soon." });
-  const [clozeQuestion] = createExercisePool([clozeCard], { ...settings, mode: "cloze" });
-  assert.equal(getExerciseEnglishSentence(clozeQuestion, { mode: "cloze", direction: "en_to_vi" }), "The plane will take off soon.");
-
-  // 2. en_to_vi with example_en
-  const [enToViWithEx] = createExercisePool([clozeCard], { ...settings, direction: "en_to_vi" });
-  assert.equal(getExerciseEnglishSentence(enToViWithEx, { mode: "translation", direction: "en_to_vi" }), "The plane will take off soon.");
-
-  // 3. en_to_vi without example_en: falls back to phrase
   const simpleCard = card(11, "good morning", "chào buổi sáng");
+
+  // 1. Cloze mode: extracts the target English phrase "take off", NOT the example sentence
+  const [clozeQuestion] = createExercisePool([clozeCard], { ...settings, mode: "cloze" });
+  assert.equal(getExerciseEnglishSentence(clozeQuestion, { mode: "cloze", direction: "en_to_vi" }), "take off");
+  assert.notEqual(getExerciseEnglishSentence(clozeQuestion, { mode: "cloze", direction: "en_to_vi" }), clozeCard.example_en);
+
+  // 2. en_to_vi with example_en: extracts target phrase "take off", NOT example sentence
+  const [enToViWithEx] = createExercisePool([clozeCard], { ...settings, direction: "en_to_vi" });
+  assert.equal(getExerciseEnglishSentence(enToViWithEx, { mode: "translation", direction: "en_to_vi" }), "take off");
+  assert.notEqual(getExerciseEnglishSentence(enToViWithEx, { mode: "translation", direction: "en_to_vi" }), clozeCard.example_en);
+
+  // 3. en_to_vi without example_en: extracts target phrase "good morning"
   const [enToViSimple] = createExercisePool([simpleCard], { ...settings, direction: "en_to_vi" });
   assert.equal(getExerciseEnglishSentence(enToViSimple, { mode: "translation", direction: "en_to_vi" }), "good morning");
 
-  // 4. vi_to_en with example_en
+  // 4. vi_to_en with example_en: extracts target phrase "take off", NOT example sentence
   const [viToEnWithEx] = createExercisePool([clozeCard], { ...settings, direction: "vi_to_en" });
-  assert.equal(getExerciseEnglishSentence(viToEnWithEx, { mode: "translation", direction: "vi_to_en" }), "The plane will take off soon.");
+  assert.equal(getExerciseEnglishSentence(viToEnWithEx, { mode: "translation", direction: "vi_to_en" }), "take off");
+  assert.notEqual(getExerciseEnglishSentence(viToEnWithEx, { mode: "translation", direction: "vi_to_en" }), clozeCard.example_en);
 
-  // 5. vi_to_en without example_en: falls back to answer / phrase
+  // 5. vi_to_en without example_en: extracts target phrase "good morning"
   const [viToEnSimple] = createExercisePool([simpleCard], { ...settings, direction: "vi_to_en" });
   assert.equal(getExerciseEnglishSentence(viToEnSimple, { mode: "translation", direction: "vi_to_en" }), "good morning");
 });
