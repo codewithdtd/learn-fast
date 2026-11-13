@@ -2,7 +2,7 @@ export const THEMES = ["light", "dark", "retro", "playful", "journey", "island"]
 
 export type Theme = (typeof THEMES)[number];
 
-export const DEFAULT_THEME: Theme = "playful";
+export const DEFAULT_THEME: Theme = "island";
 export const THEME_STORAGE_KEY = "learn-fast-theme";
 
 export const THEME_OPTIONS: ReadonlyArray<{ id: Theme; label: string; description: string }> = [

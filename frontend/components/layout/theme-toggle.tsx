@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState, useSyncExternalStore, type CSSProperties, type KeyboardEvent } from "react";
 import { Sun, Moon, Feather, Sparkles, Compass, Palmtree, Check } from "lucide-react";
+import { useAuth } from "@/context/auth-context";
 import { setTheme, useTheme } from "@/hooks/use-theme";
 import { THEME_OPTIONS, type Theme } from "@/lib/theme";
 import { getJourneySoundsEnabled, getJourneySoundsServerSnapshot, setJourneySoundsEnabled, subscribeToJourneySoundPreference } from "@/lib/journey-sounds";
@@ -17,7 +18,17 @@ const swatches: Record<Theme, string> = {
 };
 
 export function ThemeToggle({ compact = false }: { compact?: boolean }) {
+  const { user, isLoading } = useAuth();
+  const isAdmin = Boolean(user?.is_superuser);
   const activeTheme = useTheme();
+
+  // Non-admin users are strictly locked to the Cozy Island theme
+  useEffect(() => {
+    if (!isLoading && !isAdmin && activeTheme !== "island") {
+      setTheme("island");
+    }
+  }, [isLoading, isAdmin, activeTheme]);
+
   const [isOpen, setIsOpen] = useState(false);
   const soundsEnabled = useSyncExternalStore(
     subscribeToJourneySoundPreference,
@@ -98,17 +109,21 @@ export function ThemeToggle({ compact = false }: { compact?: boolean }) {
     triggerRef.current?.focus();
   }
 
+  if (!isAdmin) {
+    return null;
+  }
+
   return (
     <div className={styles.root} data-compact={compact || undefined} ref={rootRef}>
       <button
         ref={triggerRef}
         type="button"
         className={styles.trigger + (compact ? " " + styles.compact : "")}
-        aria-label={"Choose theme. Current theme: " + (THEME_OPTIONS.find((option) => option.id === activeTheme)?.label ?? "Playful EdTech")}
+        aria-label={"Choose theme (Admin). Current theme: " + (THEME_OPTIONS.find((option) => option.id === activeTheme)?.label ?? "Cozy Sanctuary")}
         aria-haspopup="menu"
         aria-expanded={isOpen}
         aria-controls={menuId}
-        title="Choose theme"
+        title="Choose theme (Admin)"
         onClick={() => setIsOpen((open) => !open)}
         onKeyDown={(event) => {
           if (event.key === "ArrowDown" && !isOpen) {
@@ -122,7 +137,7 @@ export function ThemeToggle({ compact = false }: { compact?: boolean }) {
       </button>
       {isOpen && (
         <div id={menuId} className={styles.menu} role="menu" aria-label="Choose a theme">
-          <p className={styles.menuLabel} role="presentation">Appearance</p>
+          <p className={styles.menuLabel} role="presentation">Appearance (Admin)</p>
           {THEME_OPTIONS.map((option, index) => (
             <button
               key={option.id}

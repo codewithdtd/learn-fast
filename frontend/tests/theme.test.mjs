@@ -18,16 +18,18 @@ function initializeTheme(storedTheme, shouldThrow = false) {
   return document.documentElement.dataset.theme;
 }
 
-test("theme registry contains valid display modes and keeps Playful as default", () => {
+test("theme registry contains valid display modes and keeps Cozy Island as default", () => {
   assert.deepEqual(Array.from(THEMES), ["light", "dark", "retro", "playful", "journey", "island"]);
-  assert.equal(DEFAULT_THEME, "playful");
+  assert.equal(DEFAULT_THEME, "island");
   assert.ok(isTheme("journey"));
+  assert.ok(isTheme("island"));
   assert.equal(isTheme("unsupported"), false);
 });
 
 test("the pre-hydration initializer restores valid choices and falls back safely", () => {
   assert.equal(initializeTheme("journey"), "journey");
-  assert.equal(initializeTheme("unsupported"), "playful");
-  assert.equal(initializeTheme(null), "playful");
-  assert.equal(initializeTheme(null, true), "playful");
+  assert.equal(initializeTheme("island"), "island");
+  assert.equal(initializeTheme("unsupported"), "island");
+  assert.equal(initializeTheme(null), "island");
+  assert.equal(initializeTheme(null, true), "island");
 });
