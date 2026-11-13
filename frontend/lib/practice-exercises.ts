@@ -210,3 +210,40 @@ export function summarizeExercise(responses: readonly ExerciseResponse[]) {
   return { correct, total: responses.length,
     percentage: responses.length ? Math.round(correct / responses.length * 1000) / 10 : 0 };
 }
+
+/**
+ * Trích xuất câu tiếng Anh hoặc cụm từ tiếng Anh đại diện cho câu hỏi bài tập
+ * để hệ thống tự động phát âm khi người học hoàn thành câu trả lời đúng.
+ */
+export function getExerciseEnglishSentence(
+  question: ExerciseQuestion,
+  settings?: Pick<ExerciseSettings, "direction" | "mode">,
+): string {
+  // 1. Chế độ Cloze (Điền từ vào câu): Luôn đọc câu ví dụ tiếng Anh đầy đủ
+  if (settings?.mode === "cloze" || question.prompt.includes("____")) {
+    if (question.example_en && question.example_en.trim().length > 0) {
+      return question.example_en.trim();
+    }
+    // Nếu thiếu example_en, ghép từ cần điền vào chỗ trống ____
+    return question.prompt.replaceAll("____", question.answer).trim();
+  }
+
+  // 2. Chế độ dịch / Trắc nghiệm: Nếu thẻ từ vựng có sẵn câu ví dụ tiếng Anh, đọc câu ví dụ để người học nghe ngữ cảnh hoàn chỉnh
+  if (question.example_en && question.example_en.trim().length > 0) {
+    return question.example_en.trim();
+  }
+
+  // 3. Nếu không có câu ví dụ, đọc cụm từ tiếng Anh gốc của thẻ
+  if (question.phrase && question.phrase.trim().length > 0) {
+    return question.phrase.trim();
+  }
+
+  // 4. Nếu là chiều dịch Việt -> Anh, đáp án chính là tiếng Anh
+  if (settings?.direction === "vi_to_en") {
+    return question.answer.trim();
+  }
+
+  // 5. Mặc định: prompt câu hỏi tiếng Anh
+  return question.prompt.trim();
+}
+

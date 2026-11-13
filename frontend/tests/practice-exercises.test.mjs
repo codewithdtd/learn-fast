@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   buildExerciseQuestions,
   createExercisePool,
+  getExerciseEnglishSentence,
   gradeExerciseAnswer,
   normalizeExerciseAnswer,
   summarizeExercise,
@@ -128,3 +129,28 @@ test("summary scores actual answers rather than requested card count", () => {
   assert.deepEqual(summarizeExercise(responses), { correct: 1, total: 2, percentage: 50 });
   assert.deepEqual(summarizeExercise([]), { correct: 0, total: 0, percentage: 0 });
 });
+
+test("getExerciseEnglishSentence extracts the natural English sentence or phrase across modes", () => {
+  // 1. Cloze mode: extracts full English example sentence
+  const clozeCard = card(10, "take off", "cất cánh", { example_en: "The plane will take off soon." });
+  const [clozeQuestion] = createExercisePool([clozeCard], { ...settings, mode: "cloze" });
+  assert.equal(getExerciseEnglishSentence(clozeQuestion, { mode: "cloze", direction: "en_to_vi" }), "The plane will take off soon.");
+
+  // 2. en_to_vi with example_en
+  const [enToViWithEx] = createExercisePool([clozeCard], { ...settings, direction: "en_to_vi" });
+  assert.equal(getExerciseEnglishSentence(enToViWithEx, { mode: "translation", direction: "en_to_vi" }), "The plane will take off soon.");
+
+  // 3. en_to_vi without example_en: falls back to phrase
+  const simpleCard = card(11, "good morning", "chào buổi sáng");
+  const [enToViSimple] = createExercisePool([simpleCard], { ...settings, direction: "en_to_vi" });
+  assert.equal(getExerciseEnglishSentence(enToViSimple, { mode: "translation", direction: "en_to_vi" }), "good morning");
+
+  // 4. vi_to_en with example_en
+  const [viToEnWithEx] = createExercisePool([clozeCard], { ...settings, direction: "vi_to_en" });
+  assert.equal(getExerciseEnglishSentence(viToEnWithEx, { mode: "translation", direction: "vi_to_en" }), "The plane will take off soon.");
+
+  // 5. vi_to_en without example_en: falls back to answer / phrase
+  const [viToEnSimple] = createExercisePool([simpleCard], { ...settings, direction: "vi_to_en" });
+  assert.equal(getExerciseEnglishSentence(viToEnSimple, { mode: "translation", direction: "vi_to_en" }), "good morning");
+});
+
