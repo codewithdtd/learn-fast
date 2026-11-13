@@ -210,3 +210,38 @@ export function summarizeExercise(responses: readonly ExerciseResponse[]) {
   return { correct, total: responses.length,
     percentage: responses.length ? Math.round(correct / responses.length * 1000) / 10 : 0 };
 }
+
+/**
+ * Trích xuất từ / cụm từ tiếng Anh mục tiêu đang học của câu hỏi bài tập
+ * để hệ thống tự động phát âm khi người học hoàn thành câu trả lời đúng.
+ * 
+ * Quy định nghiệp vụ quan trọng:
+ * - Chỉ đọc từ / cụm từ tiếng Anh mục tiêu đang học (target English phrase/word).
+ * - Tuyệt đối KHÔNG đọc câu ví dụ (example_en) để tránh làm loãng trọng tâm từ vựng.
+ */
+export function getExerciseEnglishSentence(
+  question: ExerciseQuestion,
+  settings?: Pick<ExerciseSettings, "direction" | "mode">,
+): string {
+  // 1. Ưu tiên cao nhất: Cụm từ tiếng Anh mục tiêu đang học của thẻ
+  if (question.phrase && question.phrase.trim().length > 0) {
+    return question.phrase.trim();
+  }
+
+  // 2. Nếu là chiều dịch Việt -> Anh, đáp án chính là cụm từ tiếng Anh
+  if (settings?.direction === "vi_to_en") {
+    return question.answer.trim();
+  }
+
+  // 3. Nếu là chế độ Cloze (điền từ), đáp án cần điền chính là cụm từ tiếng Anh
+  if (settings?.mode === "cloze" || question.prompt.includes("____")) {
+    return question.answer.trim();
+  }
+
+  // 4. Mặc định: prompt câu hỏi tiếng Anh (chiều Anh -> Việt)
+  return question.prompt.trim();
+}
+
+export const getExerciseEnglishPhrase = getExerciseEnglishSentence;
+
+

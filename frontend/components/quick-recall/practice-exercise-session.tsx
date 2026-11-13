@@ -17,12 +17,14 @@ import {
 } from "lucide-react";
 
 import { AudioPronounceButton } from "@/components/shared/audio-pronounce-button";
-import { SoundToggleButton } from "@/components/shared/sound-toggle-button";
+import { SoundToggleButton, SpeechToggleButton } from "@/components/shared/sound-toggle-button";
 import { playJourneyCompletionSound } from "@/lib/journey-sounds";
-import { playSuccessSound } from "@/lib/sound-effects";
+import { getExerciseSoundEnabled, getExerciseSpeechEnabled, playSuccessSound } from "@/lib/sound-effects";
+import { speakEnglish, stopSpeech } from "@/lib/speech";
 import {
   buildExerciseQuestions,
   createExercisePool,
+  getExerciseEnglishSentence,
   gradeExerciseAnswer,
   summarizeExercise,
   type ExerciseCount,
@@ -121,7 +123,10 @@ export function PracticeExerciseSession({
           >
             <ArrowLeft className="h-4 w-4" /> Back to {sheet.name}
           </Link>
-          <SoundToggleButton size="md" />
+          <div className="flex items-center gap-2">
+            <SoundToggleButton size="md" />
+            <SpeechToggleButton size="md" />
+          </div>
         </div>
         <p className={styles.eyebrow}>Active Recall & Comprehension</p>
         <h1 ref={pageHeadingRef} tabIndex={-1}>
@@ -323,6 +328,7 @@ function ExerciseRound({
   const inputRef = useRef<HTMLInputElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const submitRef = useRef<HTMLButtonElement>(null);
+  const speechTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const question = remainingQuestions[0];
   const hasAnswered = Boolean(response);
@@ -331,6 +337,43 @@ function ExerciseRound({
 
   const totalQuestions = round.questions.length;
   const answeredCount = totalQuestions - remainingQuestions.length;
+
+  // Dọn dẹp tiến trình phát âm thanh và hẹn giờ khi rời khỏi component hoặc kết thúc bài tập
+  useEffect(() => {
+    return () => {
+      if (speechTimerRef.current) {
+        clearTimeout(speechTimerRef.current);
+        speechTimerRef.current = null;
+      }
+      stopSpeech();
+    };
+  }, []);
+
+  /**
+   * Điều phối âm thanh khi người học hoàn thành câu trả lời đúng:
+   * 1. Phát chuông "ting ting" nếu người học bật chuông (getExerciseSoundEnabled()).
+   * 2. Phát âm đọc từ vựng tiếng Anh nếu người học bật đọc từ (getExerciseSpeechEnabled()).
+   * Tách biệt 2 cơ chế độc lập, cho phép tắt phát âm mà vẫn giữ nguyên tiếng chuông "ting ting".
+   */
+  function triggerCorrectAnswerAudio(currentQ: ExerciseQuestion) {
+    if (getExerciseSoundEnabled()) {
+      playSuccessSound();
+    }
+
+    if (getExerciseSpeechEnabled()) {
+      if (speechTimerRef.current) {
+        clearTimeout(speechTimerRef.current);
+      }
+      const phrase = getExerciseEnglishSentence(currentQ, round.settings);
+      if (phrase) {
+        // Nếu có tiếng chuông ting thì chờ 300ms ngân vang, nếu tắt ting thì phát âm ngay lập tức
+        const delay = getExerciseSoundEnabled() ? 300 : 50;
+        speechTimerRef.current = setTimeout(() => {
+          speakEnglish(phrase);
+        }, delay);
+      }
+    }
+  }
 
   useEffect(() => {
     if (isComplete || !question) return;
@@ -349,8 +392,8 @@ function ExerciseRound({
     };
     setResponse(updated);
 
-    // Phát âm thanh chuông "ting" khích lệ khi người học chọn xem lại thành đúng
-    playSuccessSound();
+    // Phát âm thanh chuông "ting" và tự động phát âm câu tiếng Anh
+    triggerCorrectAnswerAudio(question);
 
     // Cập nhật câu trả lời này thành đúng trong danh sách responses để tính điểm chính xác
     setResponses((current) => {
@@ -374,6 +417,13 @@ function ExerciseRound({
     if (!question) return;
 
     if (response) {
+      // Dừng ngay giọng đọc của câu cũ khi bấm tiếp tục sang câu tiếp theo
+      if (speechTimerRef.current) {
+        clearTimeout(speechTimerRef.current);
+        speechTimerRef.current = null;
+      }
+      stopSpeech();
+
       const retryTranslation = round.settings.mode === "translation" && !response.is_correct;
       if (retryTranslation) {
         // Câu sai phải quay lại sau các câu còn lại để người học truy hồi lại đáp án;
@@ -402,9 +452,9 @@ function ExerciseRound({
     setResponse(graded);
     setWasOverridden(false);
 
-    // Business logic: Phát âm thanh chuông "ting" vui tai để khích lệ người học khi làm đúng câu hỏi
+    // Business logic: Phát chuông "ting" và tự động đọc câu tiếng Anh khích lệ khi làm đúng
     if (graded.is_correct) {
-      playSuccessSound();
+      triggerCorrectAnswerAudio(question);
     }
   }
 
@@ -428,7 +478,10 @@ function ExerciseRound({
       <div className={styles.roundMeta}>
         <div className={styles.roundModeWrap}>
           <span className="font-semibold text-foreground">{mode?.title}</span>
-          <SoundToggleButton size="sm" showLabel={false} />
+          <div className="flex items-center gap-1.5">
+            <SoundToggleButton size="sm" showLabel={false} />
+            <SpeechToggleButton size="sm" showLabel={false} />
+          </div>
         </div>
         <span>
           Question <strong>{answeredCount + 1}</strong> of {totalQuestions}
@@ -582,21 +635,25 @@ function ExerciseRound({
 
               <div className={styles.feedbackAnswerRow}>
                 <p className="font-semibold text-foreground">{question.answer}</p>
-                {/* Audio button for English answer (vi_to_en, cloze, or when phrase exists) */}
-                {(round.settings.direction === "vi_to_en" ||
-                  round.settings.mode === "cloze" ||
-                  Boolean(question.phrase)) && (
-                  <AudioPronounceButton
-                    text={
-                      round.settings.direction === "vi_to_en"
-                        ? question.answer
-                        : (question.phrase ?? question.answer)
-                    }
-                    size="sm"
-                    title="Listen to English answer"
-                  />
-                )}
+                {/* Nút phát âm câu / cụm từ tiếng Anh chuẩn */}
+                <AudioPronounceButton
+                  text={getExerciseEnglishSentence(question, round.settings)}
+                  size="sm"
+                  title="Listen to English pronunciation"
+                />
               </div>
+
+              {/* Hiển thị câu ví dụ tiếng Anh nếu có để người học xem và nghe lại ngữ cảnh hoàn chỉnh */}
+              {question.example_en && question.example_en !== question.answer && (
+                <div className="mt-2.5 flex items-center justify-between gap-2 rounded-lg border border-outline/60 bg-surface/80 px-3 py-2 text-xs text-foreground/80">
+                  <span className="italic leading-relaxed">&ldquo;{question.example_en}&rdquo;</span>
+                  <AudioPronounceButton
+                    text={question.example_en}
+                    size="sm"
+                    title="Listen to example sentence"
+                  />
+                </div>
+              )}
 
               {!response.is_correct && round.settings.mode === "translation" && (
                 <p className="text-xs text-muted">
