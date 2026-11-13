@@ -156,6 +156,18 @@
   gap: 22px;
 }
 
+.chartSection {
+  width: 100%;
+}
+
+.chartSection :global(.dashboard-learning-chart-card) {
+  margin-bottom: 0;
+  border: 2px solid #d4c7b2;
+  border-radius: 24px;
+  background: #f4efe6;
+  box-shadow: 0 4px 20px rgba(50, 35, 20, 0.07);
+}
+
 /* --------------------------------------------------------------------------
    3. Card Container Style (Cozy Muted Parchment Card)
    -------------------------------------------------------------------------- */

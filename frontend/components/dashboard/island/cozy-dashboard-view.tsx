@@ -1,6 +1,7 @@
 "use client";
 
 import type { DashboardSummary } from "@/services/api";
+import { DashboardLearningChart } from "@/components/dashboard/dashboard-learning-chart";
 import { CozyHeroBanner } from "./cozy-hero-banner";
 import { CozyOverviewWidget } from "./widgets/cozy-overview-widget";
 import { CozyQuestsWidget } from "./widgets/cozy-quests-widget";
@@ -35,7 +36,12 @@ export function CozyDashboardView({ dashboard, streak, userName }: CozyDashboard
         <CozyReviewQueueWidget dashboard={dashboard} />
       </div>
 
-      {/* 4. Bottom Row: Corkboard Sticky Notes */}
+      {/* 4. Learning Activity Chart (Cards reviewed & Sheets studied) */}
+      <section className={styles.chartSection} aria-label="Learning Activity Chart">
+        <DashboardLearningChart dashboard={dashboard} />
+      </section>
+
+      {/* 5. Bottom Row: Corkboard Sticky Notes */}
       <CozyMemosWidget />
     </div>
   );

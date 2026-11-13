@@ -5,13 +5,13 @@ import styles from "./startup-warmup-countdown.module.css";
 import { pingBackendHealth } from "@/services/api";
 
 export type StartupWarmupProps = {
-  /** Thời gian đếm ngược ước tính ban đầu (mặc định: 45 giây cho Render free tier cold start) */
+  /** Initial estimated countdown in seconds (default: 45s) */
   initialSeconds?: number;
-  /** Callback được kích hoạt ngay khi máy chủ phản hồi sẵn sàng */
+  /** Callback fired as soon as the service responds ready */
   onReady?: () => void;
-  /** Ngữ cảnh sử dụng: "auth" (chờ xác thực token) | "dashboard" (chờ nạp dữ liệu chính) | "general" */
+  /** Usage context: "auth" | "dashboard" | "general" */
   context?: "auth" | "dashboard" | "general";
-  /** Ẩn header để tích hợp gọn trong các widget */
+  /** Compact mode for inline widget embed */
   compact?: boolean;
 };
 
@@ -22,55 +22,55 @@ type EnglishTip = {
   example: string;
 };
 
-// Bộ sưu tập mẹo học và thành ngữ tiếng Anh ngắn gọn, hữu ích để người học đọc giải trí trong 30-50s
+// Curated bite-sized English tips and idioms to read while waiting
 const ENGLISH_TIPS: EnglishTip[] = [
   {
-    tag: "Thành ngữ thông dụng",
+    tag: "Idiom of the Day",
     phrase: "Hit the ground running",
-    meaning: "Bắt đầu một việc gì đó với toàn bộ nhiệt huyết, năng lượng và tốc độ tối đa.",
+    meaning: "To start something with great energy, enthusiasm, and full speed.",
     example: '“I\'m ready to hit the ground running with 20 new vocabulary cards today!”',
   },
   {
-    tag: "Bí quyết Spaced Repetition",
-    phrase: "Quy luật lặp lại ngắt quãng",
-    meaning: "Ôn tập từ vựng ngay tại thời điểm chuẩn bị quên giúp kích thích tế bào thần kinh, tăng độ ghi nhớ sâu gấp 3 lần so với học dồn.",
-    example: "Hệ thống Learn-Fast tự động tính toán khoảng cách ngày tối ưu cho từng từ của bạn.",
+    tag: "Spaced Repetition Secret",
+    phrase: "The Spacing Effect",
+    meaning: "Reviewing words right before you forget them boosts long-term retention up to 3x more than cramming.",
+    example: "Learn-Fast automatically computes the optimal review interval for each card.",
   },
   {
-    tag: "Thành ngữ thông dụng",
+    tag: "Common Idiom",
     phrase: "Burn the midnight oil",
-    meaning: "Thức khuya chăm chỉ học bài hoặc nghiên cứu một đề tài khó.",
-    example: '“She burned the midnight oil preparing for the speaking assessment.”',
+    meaning: "To stay up late studying diligently or working on a challenging topic.",
+    example: '“She burned the midnight oil preparing for her language assessment.”',
   },
   {
-    tag: "Bí quyết học từ vựng",
-    phrase: "Học từ theo ngữ cảnh (Collocations)",
-    meaning: "Đừng ghi nhớ các từ đơn lẻ độc lập! Luôn gắn từ mới với 1 động từ đi kèm hoặc cụm câu thực tế trong đời sống.",
-    example: "Thay vì chỉ học 'decision', hãy học cụm 'make a crucial decision'.",
+    tag: "Vocabulary Power",
+    phrase: "Learn in Collocations",
+    meaning: "Never memorize isolated single words. Always link a new word to a natural verb or everyday sentence.",
+    example: "Instead of just 'decision', learn 'make a crucial decision'.",
   },
   {
-    tag: "Thành ngữ thông dụng",
+    tag: "Common Idiom",
     phrase: "A piece of cake",
-    meaning: "Việc gì đó cực kỳ dễ dàng, không tốn nhiều công sức để hoàn thành.",
-    example: '“Once you understand the root word, guessing new meanings is a piece of cake.”',
+    meaning: "Something very easy to do without requiring much effort.",
+    example: '“Once you master the root words, guessing new vocabulary is a piece of cake.”',
   },
   {
-    tag: "Thói quen học tập",
-    phrase: "Nguyên tắc 10 phút vàng",
-    meaning: "Luyện 10 phút Flashcard đều đặn mỗi sáng hiệu quả vượt trội so với việc học dồn 2 tiếng vào cuối tuần.",
-    example: "Duy trì chuỗi Streak mỗi ngày giúp não bộ hình thành phản xạ ngôn ngữ tự nhiên.",
+    tag: "Daily Habit",
+    phrase: "The 10-Minute Golden Rule",
+    meaning: "Practicing flashcards for 10 minutes every morning is far more effective than 2 hours on the weekend.",
+    example: "Keeping your daily streak alive builds automatic language reflexes.",
   },
   {
-    tag: "Thành ngữ thông dụng",
+    tag: "Common Idiom",
     phrase: "Learn the ropes",
-    meaning: "Học hỏi và nắm bắt các kỹ năng hoặc quy trình cơ bản của một lĩnh vực mới.",
-    example: '“It only takes a couple of days to learn the ropes of this SRS flashcard app.”',
+    meaning: "To learn the basic skills and workflow of a new system or craft.",
+    example: '“It only takes a couple of sessions to learn the ropes of this SRS app.”',
   },
   {
-    tag: "Bí quyết phát âm",
-    phrase: "Phương pháp Shadowing (Nói đuổi)",
-    meaning: "Đọc to từ vựng và nhại lại giọng người bản xứ theo thời gian thực để cơ hàm và tai cùng quen với nhịp điệu tiếng Anh.",
-    example: "Tính năng Video Practice và AI Speaking trong app giúp bạn luyện Shadowing tiện lợi.",
+    tag: "Fluency Method",
+    phrase: "Shadowing Technique",
+    meaning: "Speaking words aloud and mimicking native audio in real time trains both your ears and pronunciation reflexes.",
+    example: "Use the Video Practice and AI Speaking features to shadow native speakers.",
   },
 ];
 
@@ -84,7 +84,6 @@ export function StartupWarmupCountdown({
   const [isAwake, setIsAwake] = useState<boolean>(false);
   const [isPinging, setIsPinging] = useState<boolean>(false);
   const [tipIndex, setTipIndex] = useState<number>(0);
-  const [showExplanation, setShowExplanation] = useState<boolean>(false);
 
   const onReadyRef = useRef(onReady);
   onReadyRef.current = onReady;
@@ -98,7 +97,7 @@ export function StartupWarmupCountdown({
     };
   }, []);
 
-  // 1. Quản lý đồng hồ đếm ngược từng giây
+  // 1. Manage countdown timer ticking every second
   useEffect(() => {
     if (isAwake) return;
     const timer = setInterval(() => {
@@ -107,7 +106,7 @@ export function StartupWarmupCountdown({
     return () => clearInterval(timer);
   }, [isAwake]);
 
-  // 2. Tự động xoay tua các mẹo học tiếng Anh mỗi 6 giây để chống nhàm chán
+  // 2. Rotate learning tips every 6 seconds
   useEffect(() => {
     const tipTimer = setInterval(() => {
       setTipIndex((prev) => (prev + 1) % ENGLISH_TIPS.length);
@@ -115,13 +114,12 @@ export function StartupWarmupCountdown({
     return () => clearInterval(tipTimer);
   }, []);
 
-  // 3. Hàm thăm dò sức khỏe backend (health probe) kiên nhẫn chờ Render Cold Start
+  // 3. Health probe to detect when learning services are ready
   const probeServer = useCallback(async () => {
     if (isPingingRef.current || isAwake) return;
     isPingingRef.current = true;
     setIsPinging(true);
     try {
-      // Cho phép giữ kết nối lên tới 65s để Render proxy hoàn tất khởi động container tự nhiên
       const ok = await pingBackendHealth(65000);
       if (ok && isMountedRef.current) {
         setIsAwake(true);
@@ -139,7 +137,7 @@ export function StartupWarmupCountdown({
     }
   }, [isAwake]);
 
-  // 4. Khởi động 1 probe dài duy nhất ngay khi component mount, tự động thử lại nếu đứt kết nối
+  // 4. Start probe immediately upon mount
   useEffect(() => {
     if (isAwake) return;
     let timer: ReturnType<typeof setTimeout> | null = null;
@@ -147,8 +145,6 @@ export function StartupWarmupCountdown({
     const runProbeCycle = async () => {
       if (isAwake || !isMountedRef.current) return;
       await probeServer();
-      // Nếu probe trước kết thúc mà server vẫn chưa thức (ví dụ timeout mạng sau 65s),
-      // đợi 2.5s rồi mở chu kỳ thăm dò mới
       if (!isAwake && isMountedRef.current) {
         timer = setTimeout(runProbeCycle, 2500);
       }
@@ -161,21 +157,21 @@ export function StartupWarmupCountdown({
     };
   }, [isAwake, probeServer]);
 
-  // Tính toán tỷ lệ hoàn thành thanh tiến trình (Progress Bar)
+  // Progress Bar percentage calculation
   const progressPercent = isAwake
     ? 100
     : Math.min(95, Math.max(5, Math.round(((initialSeconds - secondsLeft) / initialSeconds) * 100)));
 
-  // Lấy thông điệp tiến trình tương ứng với mốc thời gian
+  // Clean, professional English stage messages
   const getStageMessage = () => {
-    if (isAwake) return "✨ Máy chủ đã sẵn sàng! Đang vào ứng dụng...";
-    if (secondsLeft === 0) return "⏳ Máy chủ đang nạp dữ liệu cuối cùng, vui lòng đợi thêm chút...";
+    if (isAwake) return "✨ Ready! Entering your study space...";
+    if (secondsLeft === 0) return "⏳ Finalizing connection, almost there...";
     const elapsed = initialSeconds - secondsLeft;
-    if (elapsed < 8) return "☕ Đang gửi tín hiệu kích hoạt máy chủ Render...";
-    if (elapsed < 20) return "🍃 Khởi động dịch vụ FastAPI & kết nối PostgreSQL...";
-    if (elapsed < 32) return "📦 Nạp cơ sở dữ liệu từ vựng & cấu hình thuật toán SRS...";
-    if (elapsed < 42) return "🌱 Chuẩn bị bảng điều khiển học tập cá nhân cho bạn...";
-    return "🚀 Giai đoạn cuối: Đang hoàn tất kết nối, sẵn sàng trong giây lát...";
+    if (elapsed < 8) return "☕ Waking up application services...";
+    if (elapsed < 20) return "🍃 Connecting to learning services...";
+    if (elapsed < 32) return "📦 Syncing study library & preferences...";
+    if (elapsed < 42) return "🌱 Setting up your personalized dashboard...";
+    return "🚀 Final step: Getting ready in a moment...";
   };
 
   const currentTip = ENGLISH_TIPS[tipIndex];
@@ -191,39 +187,39 @@ export function StartupWarmupCountdown({
   return (
     <aside className={styles.warmupContainer} aria-live="polite" aria-busy={!isAwake}>
       <div className={styles.card}>
-        {/* Header với biểu tượng ấm áp phong cách Cozy Island */}
+        {/* Header */}
         {!compact && (
           <header className={styles.headerWrap}>
             <div className={styles.mascotBadge} aria-hidden="true">
               {isAwake ? "🎉" : "☕"}
             </div>
             <h2 className={styles.title}>
-              {isAwake ? "Máy chủ đã sẵn sàng!" : "Đang đánh thức máy chủ học tập"}
+              {isAwake ? "Workspace Ready!" : "Preparing Your Study Space"}
             </h2>
             <p className={styles.subtitle}>
               {isAwake
-                ? "Dữ liệu học tập đã được đồng bộ, chúc bạn có một buổi học hiệu quả!"
+                ? "Your learning data is ready. Have a productive study session!"
                 : context === "auth"
-                ? "Máy chủ đang khởi động lại từ chế độ ngủ miễn phí của Render để xác thực tài khoản."
-                : "Backend Render miễn phí đang khởi động lại (ước tính ~30–45 giây)."}
+                ? "Connecting to secure services to sign you in. Please hold on a moment."
+                : "Just a moment while we get everything ready for you (~30–45s)."}
             </p>
           </header>
         )}
 
-        {/* Khối hiển thị Đồng hồ đếm ngược hoặc Banner thành công */}
+        {/* Countdown display or ready banner */}
         {isAwake ? (
           <div className={styles.readyBanner}>
             <span>🚀</span>
-            <span>Kết nối thành công! Đang chuyển tiếp...</span>
+            <span>Connected! Launching your workspace...</span>
           </div>
         ) : (
           <div className={styles.timerWrap}>
             <div className={styles.timerRow}>
               <span className={styles.countdownNumber}>{secondsLeft}</span>
-              <span className={styles.countdownUnit}>giây ước tính</span>
+              <span className={styles.countdownUnit}>seconds remaining</span>
             </div>
 
-            {/* Thanh tiến trình sinh động */}
+            {/* Smooth progress bar */}
             <div
               className={styles.progressTrack}
               role="progressbar"
@@ -237,7 +233,7 @@ export function StartupWarmupCountdown({
               />
             </div>
 
-            {/* Trạng thái kỹ thuật luân chuyển */}
+            {/* Stage status indicator */}
             <div className={styles.stageStatus}>
               <span className={styles.pulsingDot} aria-hidden="true" />
               <span>{getStageMessage()}</span>
@@ -245,8 +241,8 @@ export function StartupWarmupCountdown({
           </div>
         )}
 
-        {/* Góc Học Nhanh: Giúp người dùng đọc thành ngữ & mẹo học trong khi chờ */}
-        <section className={styles.learningCorner} aria-label="Góc học nhanh">
+        {/* Quick Learning Corner */}
+        <section className={styles.learningCorner} aria-label="Quick Learning Corner">
           <div className={styles.cornerHeader}>
             <span className={styles.cornerTag}>
               <span>💡</span>
@@ -257,8 +253,8 @@ export function StartupWarmupCountdown({
                 type="button"
                 className={styles.navButton}
                 onClick={handlePrevTip}
-                aria-label="Mẹo trước"
-                title="Mẹo trước"
+                aria-label="Previous tip"
+                title="Previous tip"
               >
                 ‹
               </button>
@@ -266,8 +262,8 @@ export function StartupWarmupCountdown({
                 type="button"
                 className={styles.navButton}
                 onClick={handleNextTip}
-                aria-label="Mẹo kế tiếp"
-                title="Mẹo kế tiếp"
+                aria-label="Next tip"
+                title="Next tip"
               >
                 ›
               </button>
@@ -280,7 +276,7 @@ export function StartupWarmupCountdown({
           </div>
         </section>
 
-        {/* Nút kiểm tra thủ công & Hộp giải thích Render Free Tier */}
+        {/* Action buttons */}
         <footer className={styles.actionsRow}>
           <button
             type="button"
@@ -288,7 +284,7 @@ export function StartupWarmupCountdown({
             onClick={() => void probeServer()}
             disabled={isPinging || isAwake}
           >
-            {isPinging ? "🔄 Đang kết nối..." : "⚡ Thử kết nối ngay"}
+            {isPinging ? "🔄 Connecting..." : "⚡ Connect now"}
           </button>
           {secondsLeft === 0 && !isAwake && (
             <button
@@ -300,30 +296,10 @@ export function StartupWarmupCountdown({
                 }
               }}
             >
-              🔄 Tải lại trang
+              🔄 Reload page
             </button>
           )}
-          <button
-            type="button"
-            className={styles.infoToggle}
-            onClick={() => setShowExplanation((prev) => !prev)}
-            aria-expanded={showExplanation}
-          >
-            {showExplanation ? "Ẩn giải thích" : "Tại sao cần đợi?"}
-          </button>
         </footer>
-
-        {showExplanation && (
-          <div className={styles.explanationBox}>
-            <p>
-              <strong>Cơ chế ngủ của Render Free Tier:</strong> Để tiết kiệm tài nguyên máy chủ miễn
-              phí, dịch vụ Render sẽ tự động đưa backend vào trạng thái ngủ đông (Sleep) nếu không
-              có yêu cầu nào trong 15 phút. Lần truy cập đầu tiên sẽ đánh thức container và khởi
-              chạy lại FastAPI + PostgreSQL, thường mất từ 30 đến 50 giây. Sau khi máy chủ đã thức,
-              mọi thao tác học tập tiếp theo sẽ phản hồi ngay lập tức trong vài mili-giây!
-            </p>
-          </div>
-        )}
       </div>
     </aside>
   );
