@@ -13,11 +13,14 @@
  */
 
 const EXERCISE_SOUND_STORAGE_KEY = "learn-fast-exercise-sound";
+const EXERCISE_SPEECH_STORAGE_KEY = "learn-fast-exercise-speech";
 
 let sharedAudioContext: AudioContext | null = null;
 let lastSoundPlayTime = 0;
 let fallbackSoundEnabled = true;
+let fallbackSpeechEnabled = true;
 const soundPreferenceListeners = new Set<() => void>();
+const speechPreferenceListeners = new Set<() => void>();
 
 /**
  * Returns the singleton AudioContext instance safely in the browser.
@@ -88,6 +91,65 @@ export function subscribeToExerciseSoundPreference(listener: () => void): () => 
   }
   return () => {
     soundPreferenceListeners.delete(listener);
+    if (typeof window !== "undefined") {
+      window.removeEventListener("storage", handleStorage);
+    }
+  };
+}
+
+/**
+ * SSR safe snapshot of speech pronunciation preference (defaults to true on server).
+ */
+export function getExerciseSpeechServerSnapshot(): boolean {
+  return true;
+}
+
+/**
+ * Retrieves the user preference for automatic voice pronunciation on correct answers.
+ * Defaults to true if unconfigured.
+ */
+export function getExerciseSpeechEnabled(): boolean {
+  if (typeof window === "undefined") return fallbackSpeechEnabled;
+  try {
+    const stored = window.localStorage.getItem(EXERCISE_SPEECH_STORAGE_KEY);
+    if (stored === "off") return false;
+    if (stored === "on") return true;
+    return fallbackSpeechEnabled;
+  } catch {
+    return fallbackSpeechEnabled;
+  }
+}
+
+/**
+ * Updates the user preference for automatic voice pronunciation on correct answers.
+ */
+export function setExerciseSpeechEnabled(enabled: boolean): void {
+  fallbackSpeechEnabled = enabled;
+  if (typeof window !== "undefined") {
+    try {
+      window.localStorage.setItem(EXERCISE_SPEECH_STORAGE_KEY, enabled ? "on" : "off");
+    } catch {
+      // Storage might be restricted in private browsing
+    }
+  }
+  speechPreferenceListeners.forEach((listener) => listener());
+}
+
+/**
+ * Subscribes to speech pronunciation preference changes across tabs or UI controls.
+ */
+export function subscribeToExerciseSpeechPreference(listener: () => void): () => void {
+  speechPreferenceListeners.add(listener);
+  const handleStorage = (event: StorageEvent) => {
+    if (event.key === EXERCISE_SPEECH_STORAGE_KEY || event.key === null) {
+      listener();
+    }
+  };
+  if (typeof window !== "undefined") {
+    window.addEventListener("storage", handleStorage);
+  }
+  return () => {
+    speechPreferenceListeners.delete(listener);
     if (typeof window !== "undefined") {
       window.removeEventListener("storage", handleStorage);
     }

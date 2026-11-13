@@ -17,9 +17,9 @@ import {
 } from "lucide-react";
 
 import { AudioPronounceButton } from "@/components/shared/audio-pronounce-button";
-import { SoundToggleButton } from "@/components/shared/sound-toggle-button";
+import { SoundToggleButton, SpeechToggleButton } from "@/components/shared/sound-toggle-button";
 import { playJourneyCompletionSound } from "@/lib/journey-sounds";
-import { getExerciseSoundEnabled, playSuccessSound } from "@/lib/sound-effects";
+import { getExerciseSoundEnabled, getExerciseSpeechEnabled, playSuccessSound } from "@/lib/sound-effects";
 import { speakEnglish, stopSpeech } from "@/lib/speech";
 import {
   buildExerciseQuestions,
@@ -123,7 +123,10 @@ export function PracticeExerciseSession({
           >
             <ArrowLeft className="h-4 w-4" /> Back to {sheet.name}
           </Link>
-          <SoundToggleButton size="md" />
+          <div className="flex items-center gap-2">
+            <SoundToggleButton size="md" />
+            <SpeechToggleButton size="md" />
+          </div>
         </div>
         <p className={styles.eyebrow}>Active Recall & Comprehension</p>
         <h1 ref={pageHeadingRef} tabIndex={-1}>
@@ -348,21 +351,26 @@ function ExerciseRound({
 
   /**
    * Điều phối âm thanh khi người học hoàn thành câu trả lời đúng:
-   * 1. Phát chuông "ting" tức thì qua Web Audio API.
-   * 2. Sau khoảng nghỉ 300ms, tự động đọc câu tiếng Anh (nếu người học đang bật âm thanh).
+   * 1. Phát chuông "ting ting" nếu người học bật chuông (getExerciseSoundEnabled()).
+   * 2. Phát âm đọc từ vựng tiếng Anh nếu người học bật đọc từ (getExerciseSpeechEnabled()).
+   * Tách biệt 2 cơ chế độc lập, cho phép tắt phát âm mà vẫn giữ nguyên tiếng chuông "ting ting".
    */
   function triggerCorrectAnswerAudio(currentQ: ExerciseQuestion) {
-    playSuccessSound();
-
     if (getExerciseSoundEnabled()) {
+      playSuccessSound();
+    }
+
+    if (getExerciseSpeechEnabled()) {
       if (speechTimerRef.current) {
         clearTimeout(speechTimerRef.current);
       }
-      const sentence = getExerciseEnglishSentence(currentQ, round.settings);
-      if (sentence) {
+      const phrase = getExerciseEnglishSentence(currentQ, round.settings);
+      if (phrase) {
+        // Nếu có tiếng chuông ting thì chờ 300ms ngân vang, nếu tắt ting thì phát âm ngay lập tức
+        const delay = getExerciseSoundEnabled() ? 300 : 50;
         speechTimerRef.current = setTimeout(() => {
-          speakEnglish(sentence);
-        }, 300);
+          speakEnglish(phrase);
+        }, delay);
       }
     }
   }
@@ -470,7 +478,10 @@ function ExerciseRound({
       <div className={styles.roundMeta}>
         <div className={styles.roundModeWrap}>
           <span className="font-semibold text-foreground">{mode?.title}</span>
-          <SoundToggleButton size="sm" showLabel={false} />
+          <div className="flex items-center gap-1.5">
+            <SoundToggleButton size="sm" showLabel={false} />
+            <SpeechToggleButton size="sm" showLabel={false} />
+          </div>
         </div>
         <span>
           Question <strong>{answeredCount + 1}</strong> of {totalQuestions}

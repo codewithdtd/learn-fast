@@ -5,6 +5,10 @@ import {
   getExerciseSoundServerSnapshot,
   setExerciseSoundEnabled,
   subscribeToExerciseSoundPreference,
+  getExerciseSpeechEnabled,
+  getExerciseSpeechServerSnapshot,
+  setExerciseSpeechEnabled,
+  subscribeToExerciseSpeechPreference,
   playSuccessSound,
 } from "../lib/sound-effects.ts";
 
@@ -50,4 +54,40 @@ test("playSuccessSound executes safely in any environment without throwing", () 
     playSuccessSound();
   });
 });
+
+test("exercise speech preference defaults to true and can be toggled independently", () => {
+  assert.equal(getExerciseSpeechServerSnapshot(), true);
+  setExerciseSpeechEnabled(true);
+  assert.equal(getExerciseSpeechEnabled(), true);
+
+  // Turn speech OFF while sound (ting chime) stays ON
+  setExerciseSpeechEnabled(false);
+  assert.equal(getExerciseSpeechEnabled(), false);
+  assert.equal(getExerciseSoundEnabled(), true); // Ting chime still ON!
+
+  // Restore to true
+  setExerciseSpeechEnabled(true);
+  assert.equal(getExerciseSpeechEnabled(), true);
+});
+
+test("subscribeToExerciseSpeechPreference notifies listeners on speech preference changes", () => {
+  let callCount = 0;
+  const unsubscribe = subscribeToExerciseSpeechPreference(() => {
+    callCount += 1;
+  });
+
+  setExerciseSpeechEnabled(false);
+  assert.equal(callCount, 1);
+
+  setExerciseSpeechEnabled(true);
+  assert.equal(callCount, 2);
+
+  unsubscribe();
+  setExerciseSpeechEnabled(false);
+  assert.equal(callCount, 2);
+
+  // Restore default
+  setExerciseSpeechEnabled(true);
+});
+
 
