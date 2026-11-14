@@ -140,7 +140,7 @@ export type SheetDetail = SheetSummary & {
   interval_days: number;
   review_count: number;
   lapse_count: number;
-  workbook: { id: number; name: string };
+  workbook: { id: number; name: string; user_id?: number | null };
 };
 
 export type FlashcardListItem = {
@@ -609,7 +609,7 @@ export async function addReadingVocabularyCard(
 
 export async function createFlashcardInSheet(
   sheetId: string,
-  input: { phrase: string; meaning: string; example_en?: string },
+  input: { phrase: string; meaning: string; example_en?: string; example_vi?: string },
 ): Promise<FlashcardListItem> {
   return requestJson<FlashcardListItem>(`/api/v1/sheets/${encodeURIComponent(sheetId)}/cards`, {
     method: "POST",

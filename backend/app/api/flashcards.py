@@ -29,13 +29,33 @@ logger = logging.getLogger(__name__)
 router = APIRouter(tags=["flashcards"])
 
 
+def ensure_sheet_mutable(sheet: StudySheet, current_user: User) -> None:
+    # Quyền sửa đổi: Admin được thêm thẻ ở mọi sheet; chủ sở hữu được thêm thẻ ở sheet thuộc workbook của mình.
+    if current_user.is_superuser or (sheet.workbook and sheet.workbook.user_id == current_user.id):
+        return
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="You do not have permission to add cards to this sheet.",
+    )
+
+
 @router.post("/sheets/{sheet_id}/cards", response_model=FlashcardListItem, status_code=status.HTTP_201_CREATED)
 def create_flashcard(
     sheet_id: int,
     payload: FlashcardCreate,
     db: Session = Depends(get_db),
-    admin_user: User = Depends(get_current_admin),
+    current_user: User = Depends(get_current_user),
 ) -> FlashcardListItem:
+    sheet = db.scalar(
+        select(StudySheet)
+        .where(StudySheet.id == sheet_id)
+        .options(selectinload(StudySheet.workbook))
+    )
+    if sheet is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Study sheet not found.")
+
+    ensure_sheet_mutable(sheet, current_user)
+
     try:
         card = create_flashcard_service(
             db,

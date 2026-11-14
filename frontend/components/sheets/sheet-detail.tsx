@@ -11,8 +11,11 @@ import {
   Edit3,
   BookOpen,
   BarChart3,
+  Plus,
 } from "lucide-react";
 
+import { useAuth } from "@/context/auth-context";
+import { AddFlashcardModal } from "@/components/sheets/add-flashcard-modal";
 import { InlineNameEditor } from "@/components/shared/inline-name-editor";
 import { PrioritySelector } from "@/components/sheets/priority-selector";
 import { formatDate, formatLabel } from "@/lib/format";
@@ -34,10 +37,19 @@ type SheetDetailProps = { sheetId: string };
  * Lucide vector icons, inline renaming, and responsive mobile ergonomics.
  */
 export function SheetDetailView({ sheetId }: SheetDetailProps) {
+  const { user, isAuthenticated } = useAuth();
   const [sheet, setSheet] = useState<SheetDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [notFound, setNotFound] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
+  // Business logic: Admin has full access; workbook owners have management rights over their own sheets
+  const isAdmin = Boolean(isAuthenticated && user?.is_superuser === true);
+  const isOwner = Boolean(
+    isAuthenticated && user?.id != null && sheet?.workbook?.user_id != null && sheet.workbook.user_id === user.id
+  );
+  const canManage = isAdmin || isOwner;
 
   // Business logic: Fetches sheet metadata, card counts, and SRS interval metrics
   async function loadSheet() {
@@ -188,6 +200,15 @@ export function SheetDetailView({ sheetId }: SheetDetailProps) {
                 description="Turn 5–10 expressions into a short story or dialogue with AI coaching."
                 tone="gold"
               />
+              {canManage && (
+                <ActionButtonCard
+                  onClick={() => setIsAddModalOpen(true)}
+                  icon={Plus}
+                  title="Add Vocabulary"
+                  description="Add new words, meanings and examples directly to this sheet."
+                  tone="mint"
+                />
+              )}
             </div>
           </section>
         </div>
@@ -231,7 +252,50 @@ export function SheetDetailView({ sheetId }: SheetDetailProps) {
           </section>
         </aside>
       </div>
+
+      {canManage && (
+        <AddFlashcardModal
+          isOpen={isAddModalOpen}
+          onClose={() => setIsAddModalOpen(false)}
+          sheetId={sheet.id}
+          sheetName={sheet.name}
+          onCardCreated={() => {
+            setSheet((prevSheet) => (prevSheet ? { ...prevSheet, card_count: prevSheet.card_count + 1 } : null));
+          }}
+        />
+      )}
     </section>
+  );
+}
+
+function ActionButtonCard({
+  icon: IconComponent,
+  title,
+  description,
+  tone,
+  onClick,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  description: string;
+  tone: "mint" | "gold";
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`sheet-action-card ${tone} text-left cursor-pointer border-0 w-full`}
+    >
+      <span className="sheet-action-icon">
+        <IconComponent className="h-5 w-5" />
+      </span>
+      <span>
+        <strong>{title}</strong>
+        <small>{description}</small>
+      </span>
+      <ArrowRight className="h-5 w-5" />
+    </button>
   );
 }
 

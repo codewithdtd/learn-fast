@@ -184,3 +184,82 @@ def test_add_word_rejects_duplicates_invalid_data_and_missing_sheet(
     assert duplicate.status_code == 409
     assert invalid.status_code == 422
     assert missing.status_code == 404
+
+
+def test_owner_can_add_words_to_own_private_sheet_and_other_users_are_forbidden(
+    api_client: TestClient, db_session: Session
+) -> None:
+    from app.models import StudySheet, SheetStatus, SheetPriority
+
+    owner = User(
+        email="sheet_owner@example.com",
+        username="sheet_owner",
+        hashed_password=get_password_hash("OwnerPass123"),
+        is_active=True,
+        is_superuser=False,
+    )
+    stranger = User(
+        email="sheet_stranger@example.com",
+        username="sheet_stranger",
+        hashed_password=get_password_hash("StrangerPass123"),
+        is_active=True,
+        is_superuser=False,
+    )
+    db_session.add_all([owner, stranger])
+    db_session.commit()
+
+    workbook = Workbook(
+        name="Owner Private Workbook",
+        user_id=owner.id,
+        original_filename="owner.xlsx",
+        sheet_count=1,
+        total_cards=0,
+    )
+    db_session.add(workbook)
+    db_session.commit()
+
+    sheet = StudySheet(
+        workbook_id=workbook.id,
+        name="Chapter 1",
+        position=1,
+        card_count=0,
+        status=SheetStatus.NOT_STARTED,
+        priority=SheetPriority.MEDIUM,
+    )
+    db_session.add(sheet)
+    db_session.commit()
+
+    owner_token = create_access_token(subject=owner.id)
+    stranger_token = create_access_token(subject=stranger.id)
+
+    # 1. Owner successfully adds word
+    add_response = api_client.post(
+        f"/api/v1/sheets/{sheet.id}/cards",
+        json={
+            "phrase": "serendipity",
+            "meaning": "sự tình cờ may mắn",
+            "example_en": "Finding this book was pure serendipity.",
+            "example_vi": "Tìm thấy cuốn sách này là một sự tình cờ may mắn.",
+        },
+        headers={"Authorization": f"Bearer {owner_token}"},
+    )
+    assert add_response.status_code == 201
+    card = add_response.json()
+    assert card["phrase"] == "serendipity"
+    assert card["meaning"] == "sự tình cờ may mắn"
+    assert card["example_en"] == "Finding this book was pure serendipity."
+    assert card["example_vi"] == "Tìm thấy cuốn sách này là một sự tình cờ may mắn."
+
+    db_session.refresh(sheet)
+    db_session.refresh(workbook)
+    assert sheet.card_count == 1
+    assert workbook.total_cards == 1
+
+    # 2. Stranger cannot add word to owner's sheet (IDOR protection)
+    stranger_response = api_client.post(
+        f"/api/v1/sheets/{sheet.id}/cards",
+        json={"phrase": "intruder", "meaning": "kẻ đột nhập"},
+        headers={"Authorization": f"Bearer {stranger_token}"},
+    )
+    assert stranger_response.status_code == 403
+    assert "permission" in stranger_response.json()["detail"].lower()
