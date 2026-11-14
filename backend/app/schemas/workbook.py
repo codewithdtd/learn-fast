@@ -104,3 +104,4 @@ class WorkbookReference(BaseModel):
 
     id: int
     name: str
+    user_id: int | None = None

@@ -17,9 +17,11 @@ import {
   ChevronDown,
   BookOpen,
   Volume2,
+  Plus,
 } from "lucide-react";
 
 import { FlashcardFlagButtons } from "@/components/sheets/flashcard-flag-buttons";
+import { AddFlashcardModal } from "@/components/sheets/add-flashcard-modal";
 import {
   ApiRequestError,
   deleteFlashcard,
@@ -88,7 +90,7 @@ function getTableGridStyle(visible: VisibleColumns): CSSProperties {
  */
 export function ResponsiveSheetTableView({ sheetId }: ResponsiveSheetTableViewProps) {
   const { user, isAuthenticated } = useAuth();
-  const isAdmin = isAuthenticated && user?.is_superuser === true;
+  const isAdmin = Boolean(isAuthenticated && user?.is_superuser === true);
   const [sheet, setSheet] = useState<SheetDetail | null>(null);
   const [cards, setCards] = useState<FlashcardListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -97,6 +99,20 @@ export function ResponsiveSheetTableView({ sheetId }: ResponsiveSheetTableViewPr
   const [notFound, setNotFound] = useState(false);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<CardFilter>("all");
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
+  // Business logic: Admin has full access; workbook owners have management rights over their own sheets
+  const isOwner = Boolean(
+    isAuthenticated && user?.id != null && sheet?.workbook?.user_id != null && sheet.workbook.user_id === user.id
+  );
+  const canManage = isAdmin || isOwner;
+
+  function handleCardCreated(newCard: FlashcardListItem) {
+    setCards((currentCards) => [...currentCards, newCard]);
+    setSheet((currentSheet) =>
+      currentSheet ? { ...currentSheet, card_count: currentSheet.card_count + 1 } : null
+    );
+  }
   const [visibleColumns, setVisibleColumns] = useState<VisibleColumns>({
     phrase: true,
     meaning: true,
@@ -208,7 +224,7 @@ export function ResponsiveSheetTableView({ sheetId }: ResponsiveSheetTableViewPr
     setError(null);
 
     // Guest and member previews may test the controls locally, but shared admin card flags must remain untouched.
-    if (!isAdmin) return;
+    if (!canManage) return;
 
     try {
       const updatedCard =
@@ -236,7 +252,7 @@ export function ResponsiveSheetTableView({ sheetId }: ResponsiveSheetTableViewPr
     phrase: string,
     meaning: string,
   ): Promise<boolean> {
-    if (!isAdmin) return false;
+    if (!canManage) return false;
     setError(null);
     try {
       const updatedCard = await updateFlashcardContent(String(cardId), { phrase, meaning });
@@ -251,6 +267,7 @@ export function ResponsiveSheetTableView({ sheetId }: ResponsiveSheetTableViewPr
   }
 
   async function removeFlashcard(cardId: number): Promise<boolean> {
+    if (!canManage) return false;
     setError(null);
     try {
       await deleteFlashcard(String(cardId));
@@ -300,6 +317,8 @@ export function ResponsiveSheetTableView({ sheetId }: ResponsiveSheetTableViewPr
         sheet={sheet}
         cardCount={filteredCards.length}
         totalCards={cards.length}
+        canManage={canManage}
+        onAddClick={() => setIsAddModalOpen(true)}
       />
 
       {/* 2. Controls Toolbar: Search & Filter Pills */}
@@ -449,6 +468,18 @@ export function ResponsiveSheetTableView({ sheetId }: ResponsiveSheetTableViewPr
         <TableViewMessage
           title="No flashcards yet"
           message="This sheet does not contain any flashcards to display."
+          action={
+            canManage ? (
+              <button
+                type="button"
+                onClick={() => setIsAddModalOpen(true)}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-xs sm:text-sm font-bold text-white shadow-xs hover:opacity-90 active:scale-[0.98] transition-all"
+              >
+                <Plus className="h-4 w-4" />
+                <span>Add first word</span>
+              </button>
+            ) : undefined
+          }
         />
       ) : filteredCards.length === 0 ? (
         <TableViewMessage
@@ -514,7 +545,7 @@ export function ResponsiveSheetTableView({ sheetId }: ResponsiveSheetTableViewPr
                 visibleColumns={visibleColumns}
                 gridStyle={tableGridStyle}
                 isExampleExpanded={expandedExamples.has(card.id)}
-                canEdit={isAdmin}
+                canEdit={canManage}
                 onToggleExamples={() => toggleCardExamples(card.id)}
                 onContentSave={(phrase, meaning) => persistCardContent(card.id, phrase, meaning)}
                 onDelete={() => removeFlashcard(card.id)}
@@ -525,6 +556,16 @@ export function ResponsiveSheetTableView({ sheetId }: ResponsiveSheetTableViewPr
           </div>
         </div>
       )}
+
+      {canManage && (
+        <AddFlashcardModal
+          isOpen={isAddModalOpen}
+          onClose={() => setIsAddModalOpen(false)}
+          sheetId={sheetId}
+          sheetName={sheet.name}
+          onCardCreated={handleCardCreated}
+        />
+      )}
     </section>
   );
 }
@@ -533,10 +574,14 @@ function TableViewHeader({
   sheet,
   cardCount,
   totalCards,
+  canManage,
+  onAddClick,
 }: {
   sheet: SheetDetail;
   cardCount: number;
   totalCards: number;
+  canManage: boolean;
+  onAddClick: () => void;
 }) {
   return (
     <header className="mb-4">
@@ -568,14 +613,24 @@ function TableViewHeader({
           </p>
         </div>
 
-        {/* Study Flashcards Button - ALWAYS visible on Desktop & Mobile */}
-        <div className="flex items-center">
+        {/* Study Flashcards & Add Word Actions */}
+        <div className="flex items-center gap-2">
+          {canManage && (
+            <button
+              type="button"
+              onClick={onAddClick}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs sm:text-sm font-bold text-primary hover:bg-primary hover:text-white transition-all shadow-xs active:scale-[0.98]"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              <span>Add Word</span>
+            </button>
+          )}
           <Link
             href={`/sheets/${sheet.id}/study`}
             className={buttonVariants({
               variant: "default",
               size: "sm",
-              className: "w-full sm:w-auto shadow-xs",
+              className: "shadow-xs",
             })}
           >
             <Play className="h-3.5 w-3.5 fill-current mr-1.5" /> Study Deck
@@ -895,12 +950,21 @@ function TableViewLoading() {
   );
 }
 
-function TableViewMessage({ title, message }: { title: string; message: string }) {
+function TableViewMessage({
+  title,
+  message,
+  action,
+}: {
+  title: string;
+  message: string;
+  action?: React.ReactNode;
+}) {
   return (
     <section className="max-w-md mx-auto my-12 rounded-2xl border border-outline/40 bg-surface p-8 text-center shadow-xs">
       <BookOpen className="mx-auto h-8 w-8 text-muted mb-2" />
       <h2 className="text-base font-bold text-foreground">{title}</h2>
       <p className="mt-1 text-xs text-muted">{message}</p>
+      {action && <div className="mt-4 flex justify-center">{action}</div>}
     </section>
   );
 }
