@@ -350,13 +350,17 @@ function ExerciseRound({
   }, []);
 
   /**
-   * Điều phối âm thanh khi người học hoàn thành câu trả lời đúng:
-   * 1. Phát chuông "ting ting" nếu người học bật chuông (getExerciseSoundEnabled()).
-   * 2. Phát âm đọc từ vựng tiếng Anh nếu người học bật đọc từ (getExerciseSpeechEnabled()).
-   * Tách biệt 2 cơ chế độc lập, cho phép tắt phát âm mà vẫn giữ nguyên tiếng chuông "ting ting".
+   * Điều phối âm thanh khi người học hoàn thành câu trả lời (Đúng hoặc Sai):
+   * 1. Khi trả lời ĐÚNG:
+   *    - Phát chuông "ting ting" nếu người học bật chuông (getExerciseSoundEnabled()).
+   *    - Phát âm đọc từ / cụm từ tiếng Anh chuẩn sau 300ms (nếu có chuông) hoặc 50ms (nếu tắt chuông) nếu bật đọc từ (getExerciseSpeechEnabled()).
+   * 2. Khi trả lời SAI:
+   *    - KHÔNG phát chuông "ting ting" (chỉ chuông khi đúng).
+   *    - Vẫn tự động phát âm đọc từ / cụm từ tiếng Anh ĐÚNG sau 50ms để người học nghe và sửa lỗi (nếu getExerciseSpeechEnabled()).
+   * Tách biệt 2 cơ chế độc lập, tôn trọng cài đặt âm thanh và giọng đọc của người dùng.
    */
-  function triggerCorrectAnswerAudio(currentQ: ExerciseQuestion) {
-    if (getExerciseSoundEnabled()) {
+  function triggerAnswerFeedbackAudio(currentQ: ExerciseQuestion, isCorrect: boolean) {
+    if (isCorrect && getExerciseSoundEnabled()) {
       playSuccessSound();
     }
 
@@ -366,8 +370,8 @@ function ExerciseRound({
       }
       const phrase = getExerciseEnglishSentence(currentQ, round.settings);
       if (phrase) {
-        // Nếu có tiếng chuông ting thì chờ 300ms ngân vang, nếu tắt ting thì phát âm ngay lập tức
-        const delay = getExerciseSoundEnabled() ? 300 : 50;
+        // Nếu có tiếng chuông ting thì chờ 300ms ngân vang, nếu sai hoặc tắt ting thì phát âm ngay sau 50ms
+        const delay = isCorrect && getExerciseSoundEnabled() ? 300 : 50;
         speechTimerRef.current = setTimeout(() => {
           speakEnglish(phrase);
         }, delay);
@@ -393,7 +397,7 @@ function ExerciseRound({
     setResponse(updated);
 
     // Phát âm thanh chuông "ting" và tự động phát âm câu tiếng Anh
-    triggerCorrectAnswerAudio(question);
+    triggerAnswerFeedbackAudio(question, true);
 
     // Cập nhật câu trả lời này thành đúng trong danh sách responses để tính điểm chính xác
     setResponses((current) => {
@@ -452,10 +456,10 @@ function ExerciseRound({
     setResponse(graded);
     setWasOverridden(false);
 
-    // Business logic: Phát chuông "ting" và tự động đọc câu tiếng Anh khích lệ khi làm đúng
-    if (graded.is_correct) {
-      triggerCorrectAnswerAudio(question);
-    }
+    // Business logic: Tự động phát âm thanh phản hồi:
+    // - Dù trả lời đúng hay sai, hệ thống đều tự động đọc câu/từ vựng tiếng Anh đúng (nếu bật đọc từ).
+    // - Tiếng chuông "ting ting" chỉ phát khi trả lời đúng (nếu bật chuông).
+    triggerAnswerFeedbackAudio(question, graded.is_correct);
   }
 
   if (isComplete) {

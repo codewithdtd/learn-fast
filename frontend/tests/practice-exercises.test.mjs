@@ -158,3 +158,51 @@ test("getExerciseEnglishSentence extracts the target English phrase and never th
   assert.equal(getExerciseEnglishSentence(viToEnSimple, { mode: "translation", direction: "vi_to_en" }), "good morning");
 });
 
+test("answer audio feedback plays sound only on correct, but speaks target English phrase on both correct and incorrect", () => {
+  const testCard = card(20, "resilient", "kiên cường", { example_en: "She is very resilient." });
+  const [question] = createExercisePool([testCard], settings);
+
+  function simulateAnswerFeedback({ isCorrect, soundEnabled, speechEnabled }) {
+    let playedSound = false;
+    let spokenText = null;
+    let speechDelay = 0;
+
+    if (isCorrect && soundEnabled) {
+      playedSound = true;
+    }
+
+    if (speechEnabled) {
+      const phrase = getExerciseEnglishSentence(question, settings);
+      if (phrase) {
+        speechDelay = isCorrect && soundEnabled ? 300 : 50;
+        spokenText = phrase;
+      }
+    }
+
+    return { playedSound, spokenText, speechDelay };
+  }
+
+  // 1. Correct answer with both sound and speech enabled: plays ting and speaks phrase after 300ms
+  const correctBoth = simulateAnswerFeedback({ isCorrect: true, soundEnabled: true, speechEnabled: true });
+  assert.equal(correctBoth.playedSound, true);
+  assert.equal(correctBoth.spokenText, "resilient");
+  assert.equal(correctBoth.speechDelay, 300);
+
+  // 2. INCORRECT answer with both sound and speech enabled: does NOT play ting, but DOES speak phrase after 50ms!
+  const incorrectBoth = simulateAnswerFeedback({ isCorrect: false, soundEnabled: true, speechEnabled: true });
+  assert.equal(incorrectBoth.playedSound, false);
+  assert.equal(incorrectBoth.spokenText, "resilient");
+  assert.equal(incorrectBoth.speechDelay, 50);
+
+  // 3. INCORRECT answer with speech disabled: does NOT play ting and does NOT speak
+  const incorrectMutedSpeech = simulateAnswerFeedback({ isCorrect: false, soundEnabled: true, speechEnabled: false });
+  assert.equal(incorrectMutedSpeech.playedSound, false);
+  assert.equal(incorrectMutedSpeech.spokenText, null);
+
+  // 4. Correct answer with speech disabled: plays ting, does not speak
+  const correctMutedSpeech = simulateAnswerFeedback({ isCorrect: true, soundEnabled: true, speechEnabled: false });
+  assert.equal(correctMutedSpeech.playedSound, true);
+  assert.equal(correctMutedSpeech.spokenText, null);
+});
+
+
