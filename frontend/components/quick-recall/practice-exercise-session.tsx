@@ -14,10 +14,13 @@ import {
   AlertCircle,
   Play,
   HelpCircle,
+  BookOpen,
+  Pencil,
 } from "lucide-react";
 
 import { AudioPronounceButton } from "@/components/shared/audio-pronounce-button";
 import { SoundToggleButton, SpeechToggleButton } from "@/components/shared/sound-toggle-button";
+import { EditExampleModal } from "./edit-example-modal";
 import { playJourneyCompletionSound } from "@/lib/journey-sounds";
 import { getExerciseSoundEnabled, getExerciseSpeechEnabled, playSuccessSound } from "@/lib/sound-effects";
 import { speakEnglish, stopSpeech } from "@/lib/speech";
@@ -58,6 +61,12 @@ const modes: {
     icon: Sparkles,
   },
   {
+    value: "example_translation",
+    title: "Translate Examples",
+    description: "Practice translating complete example sentences between English and Vietnamese.",
+    icon: BookOpen,
+  },
+  {
     value: "cloze",
     title: "Fill in the Blank",
     description: "Complete an English sentence with the missing phrase.",
@@ -81,6 +90,11 @@ export function PracticeExerciseSession({
   cards: FlashcardListItem[];
   backHref?: string;
 }) {
+  const [sessionCards, setSessionCards] = useState<FlashcardListItem[]>(cards);
+  useEffect(() => {
+    setSessionCards(cards);
+  }, [cards]);
+
   const [settings, setSettings] = useState<ExerciseSettings>(() => {
     const initial: ExerciseSettings = {
       mode: "multiple_choice",
@@ -95,7 +109,7 @@ export function PracticeExerciseSession({
   const [round, setRound] = useState<Round | null>(null);
   const nextRoundId = useRef(0);
   const pageHeadingRef = useRef<HTMLHeadingElement>(null);
-  const pool = createExercisePool(cards, settings);
+  const pool = createExercisePool(sessionCards, settings);
   const actualCount =
     settings.count === "all" ? pool.length : Math.min(Number(settings.count), pool.length);
 
@@ -104,9 +118,8 @@ export function PracticeExerciseSession({
   }, [round]);
 
   function startRound(configuration: ExerciseSettings) {
-    // Generate once per attempt so the same visible question stays attached to
-    // its answer while the learner types, submits, and reviews feedback.
-    const questions = buildExerciseQuestions(cards, configuration);
+    // Chốt snapshot câu hỏi theo danh sách thẻ hiện tại (đã bao gồm các cập nhật ví dụ nếu có)
+    const questions = buildExerciseQuestions(sessionCards, configuration);
     if (!questions.length) return;
     nextRoundId.current += 1;
     setRound({ id: nextRoundId.current, settings: { ...configuration }, questions });
@@ -142,6 +155,11 @@ export function PracticeExerciseSession({
           round={round}
           onRestart={() => startRound(round.settings)}
           onConfigure={() => setRound(null)}
+          onCardUpdated={(updated) =>
+            setSessionCards((prev) =>
+              prev.map((c) => (c.id === updated.id ? updated : c)),
+            )
+          }
         />
       ) : (
         <>
@@ -187,9 +205,11 @@ export function PracticeExerciseSession({
                           ? `${available} eligible card${available === 1 ? "" : "s"}`
                           : mode.value === "cloze"
                             ? "Needs an example sentence containing the phrase."
-                            : mode.value === "multiple_choice"
-                              ? "Needs distinct answers to generate distractors."
-                              : "No matching cards with unambiguous translation."}
+                            : mode.value === "example_translation"
+                              ? "Needs cards with both English and Vietnamese example sentences."
+                              : mode.value === "multiple_choice"
+                                ? "Needs distinct answers to generate distractors."
+                                : "No matching cards with unambiguous translation."}
                       </small>
                     </label>
                   );
@@ -264,6 +284,14 @@ export function PracticeExerciseSession({
                   : "For Vietnamese to English, match the flashcard phrase. Punctuation and capitalization are flexible."}
               </p>
             )}
+            {settings.mode === "example_translation" && (
+              <p className={styles.hint}>
+                {/* User instructions for example translation mode in English */}
+                {settings.direction === "en_to_vi"
+                  ? "Practice translating the full English example sentence into Vietnamese. Equivalent phrasings are supported; you can edit examples anytime."
+                  : "Practice translating the example sentence from Vietnamese into English. Flexible with capitalization, punctuation, and common contractions."}
+              </p>
+            )}
 
             {/* Start Button Row */}
             <div className={styles.startRow}>
@@ -313,11 +341,13 @@ function ExerciseRound({
   sheetId,
   onRestart,
   onConfigure,
+  onCardUpdated,
 }: {
   round: Round;
   sheetId: number;
   onRestart: () => void;
   onConfigure: () => void;
+  onCardUpdated?: (updatedCard: FlashcardListItem) => void;
 }) {
   const [responses, setResponses] = useState<ExerciseResponse[]>([]);
   const [remainingQuestions, setRemainingQuestions] = useState(round.questions);
@@ -325,6 +355,7 @@ function ExerciseRound({
   const [response, setResponse] = useState<ExerciseResponse | null>(null);
   const [wasOverridden, setWasOverridden] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
+  const [isEditingExample, setIsEditingExample] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const submitRef = useRef<HTMLButtonElement>(null);
@@ -337,6 +368,41 @@ function ExerciseRound({
 
   const totalQuestions = round.questions.length;
   const answeredCount = totalQuestions - remainingQuestions.length;
+
+  function handleCardExampleSaved(updatedCard: FlashcardListItem) {
+    onCardUpdated?.(updatedCard);
+    if (!question || question.cardId !== updatedCard.id) return;
+
+    const isEnToVi = round.settings.direction === "en_to_vi";
+    const isExampleMode = round.settings.mode === "example_translation" || question.is_example === true;
+    const updatedQuestion: ExerciseQuestion = {
+      ...question,
+      example_en: updatedCard.example_en,
+      example_vi: updatedCard.example_vi,
+      phrase: updatedCard.phrase,
+      meaning: updatedCard.meaning,
+      prompt: isExampleMode
+        ? (isEnToVi ? (updatedCard.example_en ?? "") : (updatedCard.example_vi ?? ""))
+        : question.prompt,
+      answer: isExampleMode
+        ? (isEnToVi ? (updatedCard.example_vi ?? "") : (updatedCard.example_en ?? ""))
+        : question.answer,
+    };
+
+    setRemainingQuestions((curr) =>
+      curr.map((q, idx) =>
+        idx === 0
+          ? updatedQuestion
+          : q.cardId === updatedCard.id
+            ? { ...q, example_en: updatedCard.example_en, example_vi: updatedCard.example_vi }
+            : q,
+      ),
+    );
+
+    if (response && response.question.cardId === updatedCard.id) {
+      setResponse((prev) => (prev ? { ...prev, question: updatedQuestion } : null));
+    }
+  }
 
   // Dọn dẹp tiến trình phát âm thanh và hẹn giờ khi rời khỏi component hoặc kết thúc bài tập
   useEffect(() => {
@@ -428,7 +494,9 @@ function ExerciseRound({
       }
       stopSpeech();
 
-      const retryTranslation = round.settings.mode === "translation" && !response.is_correct;
+      const retryTranslation =
+        (round.settings.mode === "translation" || round.settings.mode === "example_translation") &&
+        !response.is_correct;
       if (retryTranslation) {
         // Câu sai phải quay lại sau các câu còn lại để người học truy hồi lại đáp án;
         // vì vậy nó chỉ rời hàng đợi khi được chấm đúng.
@@ -467,7 +535,7 @@ function ExerciseRound({
       <ExerciseResults
         completionId={`exercise-${sheetId}-${round.id}`}
         responses={responses}
-        retryUntilCorrect={round.settings.mode === "translation"}
+        retryUntilCorrect={round.settings.mode === "translation" || round.settings.mode === "example_translation"}
         onRestart={onRestart}
         onConfigure={onConfigure}
       />
@@ -500,13 +568,28 @@ function ExerciseRound({
       />
 
       <form className={styles.questionCard} onSubmit={submit}>
-        <p className={styles.eyebrow}>
-          {round.settings.mode === "cloze"
-            ? "Complete the English sentence"
-            : round.settings.direction === "en_to_vi"
-              ? "Translate into Vietnamese"
-              : "Translate into English"}
-        </p>
+        <div className="flex items-center justify-between gap-2 mb-1">
+          <p className={styles.eyebrow}>
+            {round.settings.mode === "cloze"
+              ? "Complete the English sentence"
+              : round.settings.mode === "example_translation"
+                ? round.settings.direction === "en_to_vi"
+                  ? "Translate example into Vietnamese"
+                  : "Translate example into English"
+                : round.settings.direction === "en_to_vi"
+                  ? "Translate into Vietnamese"
+                  : "Translate into English"}
+          </p>
+          <button
+            type="button"
+            onClick={() => setIsEditingExample(true)}
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-muted hover:text-primary transition-colors py-1 px-2.5 rounded-lg hover:bg-surface-hover/80 border border-outline/40 hover:border-outline"
+            title="Edit English or Vietnamese example sentence for this card"
+          >
+            <Pencil className="h-3 w-3" />
+            <span>Edit example</span>
+          </button>
+        </div>
 
         {/* Question Prompt with Instant Audio Button */}
         <div className={styles.questionPromptWrap}>
@@ -607,11 +690,15 @@ function ExerciseRound({
 
         {!response && !isMultipleChoice && (
           <p className={styles.hint} id="exercise-answer-help">
-            {round.settings.mode === "translation" && round.settings.direction === "en_to_vi"
-              ? "Over 60% of the words must match the card meaning. Punctuation and spaces are ignored; accents matter."
-              : round.settings.mode === "cloze"
-                ? "Type the missing phrase exactly as it appears in the example."
-                : "Match the English phrase on your flashcard."}
+            {round.settings.mode === "example_translation"
+              ? round.settings.direction === "en_to_vi"
+                ? "Translate the example sentence into Vietnamese. Synonyms and equivalent phrasing are accepted; you can edit the example anytime."
+                : "Translate the example sentence into English. Capitalization, punctuation, and common contractions are flexible."
+              : round.settings.mode === "translation" && round.settings.direction === "en_to_vi"
+                ? "Over 60% of the words must match the card meaning. Punctuation and spaces are ignored; accents matter."
+                : round.settings.mode === "cloze"
+                  ? "Type the missing phrase exactly as it appears in the example."
+                  : "Match the English phrase on your flashcard."}
           </p>
         )}
 
@@ -651,15 +738,25 @@ function ExerciseRound({
               {question.example_en && question.example_en !== question.answer && (
                 <div className="mt-2.5 flex items-center justify-between gap-2 rounded-lg border border-outline/60 bg-surface/80 px-3 py-2 text-xs text-foreground/80">
                   <span className="italic leading-relaxed">&ldquo;{question.example_en}&rdquo;</span>
-                  <AudioPronounceButton
-                    text={question.example_en}
-                    size="sm"
-                    title="Listen to example sentence"
-                  />
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <AudioPronounceButton
+                      text={question.example_en}
+                      size="sm"
+                      title="Listen to example sentence"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setIsEditingExample(true)}
+                      className="p-1 text-muted hover:text-primary transition-colors rounded hover:bg-surface"
+                      title="Edit example sentence"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 </div>
               )}
 
-              {!response.is_correct && round.settings.mode === "translation" && (
+              {!response.is_correct && (round.settings.mode === "translation" || round.settings.mode === "example_translation") && (
                 <p className="text-xs text-muted">
                   This question will return later in this round until answered correctly.
                 </p>
@@ -674,7 +771,7 @@ function ExerciseRound({
                     onClick={handleOverrideAsCorrect}
                     title="Mark my answer as correct if you used a synonym or abbreviation"
                   >
-                    <Check className="h-4 w-4" /> Tôi đã trả lời đúng
+                    <Check className="h-4 w-4" /> I was correct
                   </button>
                 </div>
               )}
@@ -709,6 +806,22 @@ function ExerciseRound({
           </span>
         </div>
       </form>
+
+      {/* Modal chỉnh sửa ví dụ tiện dụng */}
+      {isEditingExample && question && (
+        <EditExampleModal
+          isOpen={isEditingExample}
+          onClose={() => setIsEditingExample(false)}
+          card={{
+            id: question.cardId,
+            phrase: question.phrase ?? "",
+            meaning: question.meaning ?? question.hint ?? "",
+            example_en: question.example_en,
+            example_vi: question.example_vi,
+          }}
+          onSaved={handleCardExampleSaved}
+        />
+      )}
     </div>
   );
 }

@@ -82,15 +82,19 @@ def update_flashcard_content(
     card_id: int,
     phrase: str,
     meaning: str,
+    example_en: str | None = None,
+    example_vi: str | None = None,
 ) -> Flashcard | None:
     card = get_flashcard(db, card_id)
     if card is None:
         return None
 
     try:
-        # Phrase và meaning tạo thành một thẻ học; lưu cùng transaction để không lộ trạng thái chỉ sửa được một trường.
+        # Cập nhật từ vựng, nghĩa và câu ví dụ (Anh & Việt) trong cùng transaction để đảm bảo tính nguyên tử.
         card.phrase = phrase
         card.meaning = meaning
+        card.example_en = example_en
+        card.example_vi = example_vi
         db.commit()
         db.refresh(card)
     except SQLAlchemyError as error:

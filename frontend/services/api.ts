@@ -438,8 +438,18 @@ export async function importWorkbook(
   const formData = new FormData();
   formData.append("file", file);
 
+  // Endpoint /api/v1/workbooks/import yêu cầu quyền Administrator (Depends(get_current_admin)).
+  // Do gửi multipart FormData nên ta không can thiệp thủ công vào Content-Type (để trình duyệt tự tính boundary),
+  // nhưng bắt buộc phải đính kèm header Authorization chứa Bearer token của admin đăng nhập.
+  const token = getStoredAuthToken();
+  const headers = new Headers();
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
+
   const response = await fetch(`${apiBaseUrl}/api/v1/workbooks/import`, {
     method: "POST",
+    headers,
     body: formData,
   });
 
@@ -670,7 +680,12 @@ export async function updateFlashcardBookmark(
 
 export async function updateFlashcardContent(
   id: string,
-  content: Pick<FlashcardListItem, "phrase" | "meaning">,
+  content: {
+    phrase: string;
+    meaning: string;
+    example_en?: string | null;
+    example_vi?: string | null;
+  },
 ): Promise<FlashcardListItem> {
   return requestJson<FlashcardListItem>(`/api/v1/flashcards/${encodeURIComponent(id)}`, {
     method: "PATCH",

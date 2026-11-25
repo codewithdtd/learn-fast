@@ -120,7 +120,14 @@ def update_flashcard_content(
 ) -> FlashcardListItem:
     ensure_flashcard_mutable(get_flashcard_or_404(db, card_id), current_user)
     try:
-        flashcard = update_flashcard_content_service(db, card_id, update.phrase, update.meaning)
+        flashcard = update_flashcard_content_service(
+            db,
+            card_id,
+            update.phrase,
+            update.meaning,
+            update.example_en,
+            update.example_vi,
+        )
     except FlashcardPersistenceError as error:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
