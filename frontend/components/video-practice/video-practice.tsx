@@ -502,7 +502,7 @@ export function VideoPractice() {
         {mode === "shadowing" ? <>
           <p className={styles.eyebrow}>SHADOWING · TAP A LINE TO PLAY</p>
           <div className={styles.transcriptHelpBar}>
-            <p className={styles.captionNotice}>💡 <strong>Chạm vào bất kỳ từ nào</strong> để nghe phát âm ngay và tra từ điển. Nhấp vào dòng để tua video. <span className={styles.iosTip}>· Hỗ trợ phát âm kể cả khi bật chế độ im lặng trên iOS (chỉ cần đảm bảo âm lượng Media bật).</span></p>
+            <p className={styles.captionNotice}>💡 <strong>Tap any word</strong> for instant pronunciation and dictionary lookup. Click a line to seek video. <span className={styles.iosTip}>· Audio works even in silent mode on iOS (ensure media volume is on).</span></p>
           </div>
           <div className={styles.segmentList} aria-label="Timestamped transcript">
             {transcript.segments.map((segment, index) => <div ref={(element) => {

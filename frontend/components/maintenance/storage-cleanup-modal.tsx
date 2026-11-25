@@ -98,7 +98,7 @@ export function StorageCleanupModal({
       setError(
         caughtError instanceof Error
           ? caughtError.message
-          : "Đã xảy ra lỗi trong quá trình dọn dẹp bộ nhớ."
+          : "An error occurred during storage cleanup."
       );
     } finally {
       setIsCleaning(false);
@@ -122,10 +122,10 @@ export function StorageCleanupModal({
             </div>
             <div>
               <h2 id="storage-modal-title" className={styles.title}>
-                Tối ưu Bộ nhớ Cơ sở dữ liệu
+                Optimize Database Storage
               </h2>
               <p className={styles.subtitle}>
-                Dọn dẹp thông báo cũ và dữ liệu rác để tiết kiệm dung lượng Neon Free (0.5 GB)
+                Clean up stale notifications and temporary data to conserve Neon Free (0.5 GB) quota
               </p>
             </div>
           </div>
@@ -133,7 +133,7 @@ export function StorageCleanupModal({
             type="button"
             className={styles.closeButton}
             onClick={onClose}
-            aria-label="Đóng cửa sổ"
+            aria-label="Close dialog"
           >
             ✕
           </button>
@@ -145,34 +145,34 @@ export function StorageCleanupModal({
           <div className={styles.neonNotice}>
             <span aria-hidden="true">💡</span>
             <div>
-              <strong>Lưu ý gói Neon Free:</strong> Cơ sở dữ liệu Neon có hạn mức lưu trữ 500 MB.
-              Việc định kỳ dọn dẹp thông báo đã đọc, phiên học ẩn danh của khách vãng lai và các bản
-              nháp rác sẽ giúp hệ thống luôn vận hành nhanh chóng và không bị quá tải lưu lượng.
+              <strong>Neon Free quota note:</strong> Neon PostgreSQL has a 500 MB storage cap.
+              Periodically cleaning up read notifications, anonymous guest study sessions, and empty
+              drafts helps keep the system running fast and well below storage limits.
             </div>
           </div>
 
           {/* Stats Overview */}
           {isLoadingStats ? (
             <p style={{ textAlign: "center", color: "var(--muted)", margin: "12px 0" }}>
-              Đang thống kê dữ liệu trong database...
+              Fetching database storage statistics...
             </p>
           ) : stats ? (
             <div className={styles.statsGrid}>
               <div className={styles.statCard}>
-                <span className={styles.statLabel}>Thông báo đã đọc</span>
-                <span className={styles.statValue}>{stats.read_notifications} mục</span>
+                <span className={styles.statLabel}>Read notifications</span>
+                <span className={styles.statValue}>{stats.read_notifications} items</span>
               </div>
               <div className={styles.statCard}>
-                <span className={styles.statLabel}>Phiên học khách cũ (&gt;7 ngày)</span>
-                <span className={styles.statValue}>{stats.guest_study_sessions} phiên</span>
+                <span className={styles.statLabel}>Old guest sessions (&gt;7 days)</span>
+                <span className={styles.statValue}>{stats.guest_study_sessions} sessions</span>
               </div>
               <div className={styles.statCard}>
-                <span className={styles.statLabel}>Phiên học bỏ dở (&gt;14 ngày)</span>
-                <span className={styles.statValue}>{stats.abandoned_study_sessions} phiên</span>
+                <span className={styles.statLabel}>Abandoned sessions (&gt;14 days)</span>
+                <span className={styles.statValue}>{stats.abandoned_study_sessions} sessions</span>
               </div>
               <div className={styles.statCard}>
-                <span className={styles.statLabel}>Tổng bản ghi có thể dọn dẹp</span>
-                <span className={styles.statValue}>{stats.total_cleanable_records} mục</span>
+                <span className={styles.statLabel}>Total cleanable records</span>
+                <span className={styles.statValue}>{stats.total_cleanable_records} items</span>
               </div>
             </div>
           ) : null}
@@ -204,7 +204,7 @@ export function StorageCleanupModal({
 
           {/* Checklist Options */}
           <div className={styles.optionsSection}>
-            <p className={styles.sectionHeading}>Chọn các hạng mục cần dọn dẹp:</p>
+            <p className={styles.sectionHeading}>Select cleanup categories:</p>
 
             <label className={styles.checkOption}>
               <input
@@ -214,9 +214,9 @@ export function StorageCleanupModal({
                 onChange={(e) => setClearReadNotifs(e.target.checked)}
               />
               <div className={styles.optionTexts}>
-                <span className={styles.optionLabel}>Xóa thông báo đã đọc</span>
+                <span className={styles.optionLabel}>Delete read notifications</span>
                 <span className={styles.optionDesc}>
-                  Xóa toàn bộ các thông báo trong hệ thống mà người dùng đã đọc xong.
+                  Purge all notifications across the system that users have already marked as read.
                 </span>
               </div>
             </label>
@@ -229,9 +229,9 @@ export function StorageCleanupModal({
                 onChange={(e) => setClearStaleNotifs(e.target.checked)}
               />
               <div className={styles.optionTexts}>
-                <span className={styles.optionLabel}>Xóa thông báo chưa đọc quá cũ (&gt;30 ngày)</span>
+                <span className={styles.optionLabel}>Delete old unread notifications (&gt;30 days)</span>
                 <span className={styles.optionDesc}>
-                  Xóa các lời nhắc lịch học hoặc điểm danh đã quá hạn hơn 1 tháng.
+                  Remove study reminders and check-in alerts that have been overdue for over 1 month.
                 </span>
               </div>
             </label>
@@ -245,10 +245,10 @@ export function StorageCleanupModal({
               />
               <div className={styles.optionTexts}>
                 <span className={styles.optionLabel}>
-                  Xóa phiên học của khách vãng lai (&gt;7 ngày)
+                  Delete guest study sessions (&gt;7 days)
                 </span>
                 <span className={styles.optionDesc}>
-                  Giải phóng dữ liệu thẻ, vòng học và kết quả của các phiên học thử ẩn danh.
+                  Release temporary cards, rounds, and results from anonymous practice sessions.
                 </span>
               </div>
             </label>
@@ -262,10 +262,10 @@ export function StorageCleanupModal({
               />
               <div className={styles.optionTexts}>
                 <span className={styles.optionLabel}>
-                  Xóa phiên học active bị bỏ dở (&gt;14 ngày)
+                  Delete abandoned active sessions (&gt;14 days)
                 </span>
                 <span className={styles.optionDesc}>
-                  Xóa các phiên học mở dở dang từ hơn 2 tuần trước không còn sử dụng.
+                  Clean up study sessions opened and abandoned more than 2 weeks ago.
                 </span>
               </div>
             </label>
@@ -278,9 +278,9 @@ export function StorageCleanupModal({
                 onChange={(e) => setClearGuestAi(e.target.checked)}
               />
               <div className={styles.optionTexts}>
-                <span className={styles.optionLabel}>Xóa tracking guest AI (&gt;14 ngày)</span>
+                <span className={styles.optionLabel}>Delete guest AI tracking (&gt;14 days)</span>
                 <span className={styles.optionDesc}>
-                  Xóa hash bản ghi kiểm soát dùng thử tính năng AI của khách vãng lai.
+                  Clear rate-limiting hashes for guest AI feature trials.
                 </span>
               </div>
             </label>
@@ -293,9 +293,9 @@ export function StorageCleanupModal({
                 onChange={(e) => setClearEmptyDrafts(e.target.checked)}
               />
               <div className={styles.optionTexts}>
-                <span className={styles.optionLabel}>Xóa bản nháp viết trống (&gt;7 ngày)</span>
+                <span className={styles.optionLabel}>Delete empty writing drafts (&gt;7 days)</span>
                 <span className={styles.optionDesc}>
-                  Xóa các bản nháp bài viết Writing chưa có nội dung văn bản.
+                  Remove IELTS Writing drafts that contain no essay text.
                 </span>
               </div>
             </label>
@@ -310,7 +310,7 @@ export function StorageCleanupModal({
             onClick={onClose}
             disabled={isCleaning}
           >
-            Đóng
+            Close
           </button>
           <button
             type="button"
@@ -318,7 +318,7 @@ export function StorageCleanupModal({
             onClick={() => void handleExecuteCleanup()}
             disabled={isCleaning}
           >
-            {isCleaning ? "🔄 Đang dọn dẹp..." : "🧹 Dọn dẹp dữ liệu thừa ngay"}
+            {isCleaning ? "🔄 Cleaning up..." : "🧹 Clean up temporary data now"}
           </button>
         </footer>
       </div>
