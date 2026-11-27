@@ -121,9 +121,9 @@ export function NotificationsPageView() {
               className="button secondary"
               onClick={() => void handleDeleteRead()}
               disabled={isDeletingRead}
-              title="Xóa tất cả các thông báo đã đọc để tiết kiệm dung lượng Neon"
+              title="Clear all read notifications to save database storage"
             >
-              {isDeletingRead ? "Đang xóa..." : "Dọn dẹp đã đọc"}
+              {isDeletingRead ? "Clearing..." : "Clear Read"}
             </button>
           )}
 
@@ -131,9 +131,9 @@ export function NotificationsPageView() {
             type="button"
             className="button secondary"
             onClick={() => setIsStorageModalOpen(true)}
-            title="Mở bảng điều khiển dọn dẹp dung lượng Neon PostgreSQL"
+            title="Open database storage optimization panel"
           >
-            🧹 Tối ưu bộ nhớ Neon
+            🧹 Optimize Storage
           </button>
 
           <Link href="/calendar" className="button primary">
@@ -235,10 +235,10 @@ export function NotificationsPageView() {
                     type="button"
                     className="button secondary small"
                     onClick={() => void handleDeleteOne(item.id)}
-                    title="Xóa thông báo này"
+                    title="Delete this notification"
                     style={{ marginLeft: "auto", color: "#a84538" }}
                   >
-                    Xóa
+                    Delete
                   </button>
                 </div>
               </div>

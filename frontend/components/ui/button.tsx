@@ -81,7 +81,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         {isLoading ? (
           <>
             <Loader2 className="h-4 w-4 animate-spin shrink-0" aria-hidden="true" />
-            <span className="sr-only">Đang xử lý…</span>
+            <span className="sr-only">Loading…</span>
           </>
         ) : (
           leftIcon

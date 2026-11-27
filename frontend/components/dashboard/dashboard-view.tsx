@@ -709,7 +709,7 @@ function DashboardError({
       <section role="alert" className="error-card mt-4 p-4 text-center">
         <p className="mb-2 text-xs text-muted">Connection note: {message}</p>
         <Button variant="secondary" size="sm" onClick={() => void onRetry()}>
-          Thử tải lại Dashboard
+          Reload Dashboard
         </Button>
       </section>
     </main>

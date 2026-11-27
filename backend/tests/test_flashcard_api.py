@@ -263,3 +263,43 @@ def test_owner_can_add_words_to_own_private_sheet_and_other_users_are_forbidden(
     )
     assert stranger_response.status_code == 403
     assert "permission" in stranger_response.json()["detail"].lower()
+
+
+def test_update_flashcard_content_and_examples(
+    api_client: TestClient, db_session: Session
+) -> None:
+    _, cards = get_first_sheet_and_cards(db_session)
+    card_id = cards[0].id
+
+    # Cập nhật cả phrase, meaning, example_en và example_vi
+    update_response = api_client.patch(
+        f"/api/v1/flashcards/{card_id}",
+        json={
+            "phrase": "take off",
+            "meaning": "cất cánh / cởi đồ",
+            "example_en": "The plane will take off soon.",
+            "example_vi": "Máy bay sẽ sớm cất cánh.",
+        },
+    )
+    assert update_response.status_code == 200
+    updated = update_response.json()
+    assert updated["phrase"] == "take off"
+    assert updated["meaning"] == "cất cánh / cởi đồ"
+    assert updated["example_en"] == "The plane will take off soon."
+    assert updated["example_vi"] == "Máy bay sẽ sớm cất cánh."
+
+    # Cho phép xóa ví dụ bằng cách truyền null hoặc chuỗi rỗng
+    clear_examples_response = api_client.patch(
+        f"/api/v1/flashcards/{card_id}",
+        json={
+            "phrase": "take off",
+            "meaning": "cất cánh",
+            "example_en": "",
+            "example_vi": None,
+        },
+    )
+    assert clear_examples_response.status_code == 200
+    cleared = clear_examples_response.json()
+    assert cleared["example_en"] is None
+    assert cleared["example_vi"] is None
+

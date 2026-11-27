@@ -1,7 +1,7 @@
 import type { FlashcardListItem } from "@/services/api";
 import type { RecallDirection, RecallFilter } from "@/lib/quick-recall";
 
-export type ExerciseMode = "multiple_choice" | "translation" | "cloze";
+export type ExerciseMode = "multiple_choice" | "translation" | "example_translation" | "cloze";
 export type ExerciseCount = "10" | "20" | "all";
 
 export type ExerciseSettings = {
@@ -18,7 +18,10 @@ export type ExerciseQuestion = {
   hint: string | null;
   options: string[];
   phrase?: string;
+  meaning?: string;
   example_en?: string | null;
+  example_vi?: string | null;
+  is_example?: boolean;
 };
 
 export type ExerciseResponse = {
@@ -58,6 +61,7 @@ export const CONTRACTION_MAP: [RegExp, string | ((match: string) => string)][] =
   }],
   [/\bwont\b/gi, "will not"],
   [/\bcant\b/gi, "can not"],
+  [/\blets\b/gi, "let us"],
   [/\b(im)\b/gi, "i am"],
   [/\b(youre)\b/gi, "you are"],
   [/\b(theyre)\b/gi, "they are"],
@@ -101,9 +105,13 @@ export function gradeExerciseAnswer(
     expected.length > 0 &&
     normalized.replace(/\s+/gu, "") === expected.replace(/\s+/gu, "");
 
-  // Nghĩa tiếng Việt đôi khi có giải thích dài, nên đáp án gõ EN → VI chỉ cần có trên 60% từ
-  // khác nhau xuất hiện trong nghĩa mẫu. Chiều dịch và dạng bài còn lại giữ so khớp chính xác (cho phép châm chước khoảng cách).
-  const matchesVietnameseMeaning = settings?.mode === "translation" && settings.direction === "en_to_vi"
+  // Nghĩa tiếng Việt đôi khi có giải thích dài hoặc nhiều cách diễn đạt (nhất là câu ví dụ),
+  // nên đáp án gõ EN → VI chỉ cần có trên 60% từ khác nhau xuất hiện trong nghĩa mẫu hoặc khớp dạng compact.
+  // Chiều dịch VI → EN và các dạng còn lại so khớp chính xác (cho phép châm chước khoảng cách và viết tắt).
+  const isExampleTranslation = settings?.mode === "example_translation" || question.is_example === true;
+  const isEnToViTranslation = (settings?.mode === "translation" || isExampleTranslation) && settings?.direction === "en_to_vi";
+
+  const matchesVietnameseMeaning = isEnToViTranslation
     ? hasAnswerWordCoverage(expected, normalized) || isCompactMatch
     : isDirectMatch || isCompactMatch;
 
@@ -142,7 +150,7 @@ function createClozeQuestion(card: FlashcardListItem): ExerciseQuestion | null {
   if (!firstMatch) return null;
   const prompt = example.replace(matcher, (_match, prefix: string) => `${prefix}____`);
   if (!normalizeExerciseAnswer(prompt.replaceAll("____", ""))) return null;
-  return { cardId: card.id, prompt, answer: firstMatch[2], hint: card.meaning, options: [], phrase: card.phrase, example_en: card.example_en };
+  return { cardId: card.id, prompt, answer: firstMatch[2], hint: card.meaning, options: [], phrase: card.phrase, meaning: card.meaning, example_en: card.example_en };
 }
 
 export function createExercisePool(
@@ -155,6 +163,32 @@ export function createExercisePool(
     return selectedCards.flatMap((card) => {
       const question = createClozeQuestion(card);
       return question ? [question] : [];
+    });
+  }
+
+  // Chế độ dịch câu ví dụ (Example Translation): dịch trọn vẹn câu ví dụ Anh ↔ Việt
+  if (settings.mode === "example_translation") {
+    return selectedCards.flatMap((card) => {
+      const exampleEn = card.example_en?.normalize("NFKC").trim();
+      const exampleVi = card.example_vi?.normalize("NFKC").trim();
+      if (!exampleEn || !exampleVi) return [];
+      const isEnToVi = settings.direction === "en_to_vi";
+      const prompt = isEnToVi ? exampleEn : exampleVi;
+      const answer = isEnToVi ? exampleVi : exampleEn;
+      // Tuyệt đối không hiển thị gợi ý (hint: null) để người học tự luyện dịch câu ví dụ,
+      // nhưng vẫn lưu meaning vào question để các tính năng bổ trợ (như modal sửa ví dụ) có đủ dữ liệu.
+      return [{
+        cardId: card.id,
+        prompt,
+        answer,
+        hint: null,
+        options: [],
+        phrase: card.phrase,
+        meaning: card.meaning,
+        example_en: card.example_en,
+        example_vi: card.example_vi,
+        is_example: true,
+      }];
     });
   }
 
@@ -185,7 +219,7 @@ export function createExercisePool(
     if (!promptKey || !normalizeExerciseAnswer(answer)
       || answersByPrompt.get(promptKey)?.size !== 1 || seen.has(promptKey)) return [];
     seen.add(promptKey);
-    return [{ cardId: card.id, prompt, answer, hint: null, options, phrase: card.phrase, example_en: card.example_en }];
+    return [{ cardId: card.id, prompt, answer, hint: null, options, phrase: card.phrase, meaning: card.meaning, example_en: card.example_en }];
   });
 }
 
@@ -223,22 +257,35 @@ export function getExerciseEnglishSentence(
   question: ExerciseQuestion,
   settings?: Pick<ExerciseSettings, "direction" | "mode">,
 ): string {
-  // 1. Ưu tiên cao nhất: Cụm từ tiếng Anh mục tiêu đang học của thẻ
+  // 1. Nếu là dạng bài tập dịch câu ví dụ (example_translation):
+  // Câu tiếng Anh phát âm chính là câu ví dụ tiếng Anh (example_en) để người học luyện nghe/nói trọn câu.
+  if (settings?.mode === "example_translation" || question.is_example === true) {
+    if (question.example_en && question.example_en.trim().length > 0) {
+      return question.example_en.trim();
+    }
+    if (settings?.direction === "vi_to_en") {
+      return question.answer.trim();
+    }
+    return question.prompt.trim();
+  }
+
+  // 2. Đối với các bài tập từ vựng thông thường:
+  // Ưu tiên cao nhất là cụm từ tiếng Anh mục tiêu đang học của thẻ.
   if (question.phrase && question.phrase.trim().length > 0) {
     return question.phrase.trim();
   }
 
-  // 2. Nếu là chiều dịch Việt -> Anh, đáp án chính là cụm từ tiếng Anh
+  // 3. Nếu là chiều dịch Việt -> Anh, đáp án chính là cụm từ tiếng Anh
   if (settings?.direction === "vi_to_en") {
     return question.answer.trim();
   }
 
-  // 3. Nếu là chế độ Cloze (điền từ), đáp án cần điền chính là cụm từ tiếng Anh
+  // 4. Nếu là chế độ Cloze (điền từ), đáp án cần điền chính là cụm từ tiếng Anh
   if (settings?.mode === "cloze" || question.prompt.includes("____")) {
     return question.answer.trim();
   }
 
-  // 4. Mặc định: prompt câu hỏi tiếng Anh (chiều Anh -> Việt)
+  // 5. Mặc định: prompt câu hỏi tiếng Anh (chiều Anh -> Việt)
   return question.prompt.trim();
 }
 

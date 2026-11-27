@@ -251,11 +251,18 @@ export function ResponsiveSheetTableView({ sheetId }: ResponsiveSheetTableViewPr
     cardId: number,
     phrase: string,
     meaning: string,
+    example_en?: string | null,
+    example_vi?: string | null,
   ): Promise<boolean> {
     if (!canManage) return false;
     setError(null);
     try {
-      const updatedCard = await updateFlashcardContent(String(cardId), { phrase, meaning });
+      const updatedCard = await updateFlashcardContent(String(cardId), {
+        phrase,
+        meaning,
+        example_en,
+        example_vi,
+      });
       setCards((currentCards) =>
         currentCards.map((card) => (card.id === cardId ? updatedCard : card)),
       );
@@ -547,7 +554,9 @@ export function ResponsiveSheetTableView({ sheetId }: ResponsiveSheetTableViewPr
                 isExampleExpanded={expandedExamples.has(card.id)}
                 canEdit={canManage}
                 onToggleExamples={() => toggleCardExamples(card.id)}
-                onContentSave={(phrase, meaning) => persistCardContent(card.id, phrase, meaning)}
+                onContentSave={(phrase, meaning, example_en, example_vi) =>
+                  persistCardContent(card.id, phrase, meaning, example_en, example_vi)
+                }
                 onDelete={() => removeFlashcard(card.id)}
                 onWeakChange={(nextValue) => persistFlag(card.id, "is_weak", nextValue)}
                 onBookmarkChange={(nextValue) => persistFlag(card.id, "is_bookmarked", nextValue)}
@@ -648,7 +657,12 @@ type VocabularyRowProps = {
   isExampleExpanded: boolean;
   canEdit: boolean;
   onToggleExamples: () => void;
-  onContentSave: (phrase: string, meaning: string) => Promise<boolean>;
+  onContentSave: (
+    phrase: string,
+    meaning: string,
+    example_en?: string | null,
+    example_vi?: string | null,
+  ) => Promise<boolean>;
   onDelete: () => Promise<boolean>;
   onWeakChange: (nextValue: boolean) => Promise<void>;
   onBookmarkChange: (nextValue: boolean) => Promise<void>;
@@ -669,6 +683,8 @@ function VocabularyRow({
   const [isEditing, setIsEditing] = useState(false);
   const [phraseDraft, setPhraseDraft] = useState(card.phrase);
   const [meaningDraft, setMeaningDraft] = useState(card.meaning);
+  const [exampleEnDraft, setExampleEnDraft] = useState(card.example_en ?? "");
+  const [exampleViDraft, setExampleViDraft] = useState(card.example_vi ?? "");
   const [isSaving, setIsSaving] = useState(false);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -679,6 +695,8 @@ function VocabularyRow({
   function startEditing() {
     setPhraseDraft(card.phrase);
     setMeaningDraft(card.meaning);
+    setExampleEnDraft(card.example_en ?? "");
+    setExampleViDraft(card.example_vi ?? "");
     setEditError(null);
     setIsEditing(true);
   }
@@ -686,6 +704,8 @@ function VocabularyRow({
   async function saveContent() {
     const phrase = phraseDraft.trim();
     const meaning = meaningDraft.trim();
+    const example_en = exampleEnDraft.trim() || null;
+    const example_vi = exampleViDraft.trim() || null;
     if (!phrase || !meaning) {
       setEditError("Phrase and meaning are required.");
       return;
@@ -693,7 +713,7 @@ function VocabularyRow({
     setIsSaving(true);
     setEditError(null);
     try {
-      if (await onContentSave(phrase, meaning)) setIsEditing(false);
+      if (await onContentSave(phrase, meaning, example_en, example_vi)) setIsEditing(false);
       else setEditError("The changes could not be saved. Please try again.");
     } finally {
       setIsSaving(false);
@@ -778,7 +798,36 @@ function VocabularyRow({
         {visibleColumns.examples && (
           <>
             <span className="vocabulary-mobile-field-label">Examples</span>
-            {!hasExamples ? (
+            {isEditing ? (
+              <div className="vocabulary-edit-examples space-y-2 py-1 w-full">
+                <div>
+                  <label className="text-[10px] font-bold uppercase text-muted block mb-0.5">Example (EN)</label>
+                  <textarea
+                    form={formId}
+                    className="vocabulary-edit-example-en w-full text-xs rounded border border-outline bg-surface p-1.5 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary text-foreground resize-y"
+                    rows={2}
+                    maxLength={2000}
+                    placeholder="English example sentence"
+                    value={exampleEnDraft}
+                    disabled={isSaving}
+                    onChange={(event) => setExampleEnDraft(event.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold uppercase text-muted block mb-0.5">Example (VI)</label>
+                  <textarea
+                    form={formId}
+                    className="vocabulary-edit-example-vi w-full text-xs rounded border border-outline bg-surface p-1.5 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary text-foreground resize-y"
+                    rows={2}
+                    maxLength={2000}
+                    placeholder="Vietnamese translation of the example"
+                    value={exampleViDraft}
+                    disabled={isSaving}
+                    onChange={(event) => setExampleViDraft(event.target.value)}
+                  />
+                </div>
+              </div>
+            ) : !hasExamples ? (
               <span className="examples-muted text-xs text-muted">No examples</span>
             ) : isExampleExpanded ? (
               <div className="example-content space-y-1.5 text-xs">

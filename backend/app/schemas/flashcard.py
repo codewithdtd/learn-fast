@@ -31,21 +31,30 @@ class FlashcardBookmarkUpdate(BaseModel):
 
 
 class FlashcardContentUpdate(BaseModel):
-    """Update only the learner-facing phrase and meaning on an existing card."""
+    """Cập nhật nội dung thẻ học bao gồm cụm từ, nghĩa và câu ví dụ (tiếng Anh & tiếng Việt)."""
 
     model_config = ConfigDict(extra="forbid")
 
     phrase: StrictStr = Field(min_length=1, max_length=200)
     meaning: StrictStr = Field(min_length=1, max_length=600)
+    example_en: StrictStr | None = Field(default=None, max_length=2000)
+    example_vi: StrictStr | None = Field(default=None, max_length=2000)
 
-    @field_validator("phrase", "meaning", mode="before")
+    @field_validator("phrase", "meaning", "example_en", "example_vi", mode="before")
     @classmethod
-    def trim_required_text(cls, value: object) -> object:
-        # Trim at the API boundary so a value containing only whitespace cannot erase a card.
+    def trim_text(cls, value: object) -> object:
+        # Chuẩn hóa khoảng trắng đầu cuối; chuỗi rỗng được chuyển về None đối với trường ví dụ
         if isinstance(value, str):
             value = value.strip()
-            if not value:
-                raise ValueError("This field cannot be empty.")
+            return value or None
+        return value
+
+    @field_validator("phrase", "meaning")
+    @classmethod
+    def require_text(cls, value: str | None) -> str:
+        # Phrase và meaning là bắt buộc, không được phép rỗng
+        if not value:
+            raise ValueError("This field cannot be empty.")
         return value
 
 

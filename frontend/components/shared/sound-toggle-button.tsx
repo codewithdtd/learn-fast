@@ -57,13 +57,13 @@ export function SoundToggleButton({
       data-muted={!isEnabled}
       aria-label={
         isEnabled
-          ? "Chuông ting ting: Đang bật (Bấm để tắt)"
-          : "Chuông ting ting: Đang tắt (Bấm để bật)"
+          ? "Notification chime: Enabled (Click to mute)"
+          : "Notification chime: Muted (Click to enable)"
       }
       title={
         isEnabled
-          ? "Chuông ting ting khi làm đúng: Đang bật (Bấm để tắt)"
-          : "Chuông ting ting khi làm đúng: Đang tắt (Bấm để bật)"
+          ? "Chime sound on correct answer: Enabled (Click to mute)"
+          : "Chime sound on correct answer: Muted (Click to enable)"
       }
     >
       {isEnabled ? (
@@ -71,7 +71,7 @@ export function SoundToggleButton({
       ) : (
         <BellOff className="text-muted shrink-0" style={{ width: iconDimension, height: iconDimension }} />
       )}
-      {showLabel && <span>{isEnabled ? "Ting ON" : "Ting OFF"}</span>}
+      {showLabel && <span>{isEnabled ? "Chime ON" : "Chime OFF"}</span>}
     </button>
   );
 }
@@ -112,13 +112,13 @@ export function SpeechToggleButton({
       data-muted={!isEnabled}
       aria-label={
         isEnabled
-          ? "Phát âm từ vựng: Đang bật (Bấm để tắt)"
-          : "Phát âm từ vựng: Đang tắt (Bấm để bật)"
+          ? "Vocabulary pronunciation: Enabled (Click to disable)"
+          : "Vocabulary pronunciation: Disabled (Click to enable)"
       }
       title={
         isEnabled
-          ? "Tự động phát âm từ tiếng Anh khi làm đúng: Đang bật (Bấm để tắt)"
-          : "Tự động phát âm từ tiếng Anh khi làm đúng: Đang tắt (Bấm để bật)"
+          ? "Auto-pronounce English vocabulary on correct answer: Enabled (Click to disable)"
+          : "Auto-pronounce English vocabulary on correct answer: Disabled (Click to enable)"
       }
     >
       {isEnabled ? (
@@ -126,7 +126,7 @@ export function SpeechToggleButton({
       ) : (
         <VolumeX className="text-muted shrink-0" style={{ width: iconDimension, height: iconDimension }} />
       )}
-      {showLabel && <span>{isEnabled ? "Đọc từ ON" : "Đọc từ OFF"}</span>}
+      {showLabel && <span>{isEnabled ? "Speech ON" : "Speech OFF"}</span>}
     </button>
   );
 }
